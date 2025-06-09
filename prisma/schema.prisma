@@ -14,10 +14,122 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+// ================================
+// ENUM TYPES
+// ================================
+
 enum UserRole {
-  USER
+  IMPORTADOR
   SUPERADMIN
 }
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum RegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum RequestStatus {
+  DRAFT
+  PENDING
+  IN_REVIEW
+  APPROVED
+  REJECTED
+  COMPLETED
+  CANCELLED
+}
+
+enum DocumentType {
+  MATRICULA_COMERCIO
+  NIT
+  CERTIFICADO_ADUANA
+  PODER_REPRESENTANTE
+  CARNET_IDENTIDAD
+  PROFORMA_INVOICE
+  FACTURA_COMERCIAL
+  CONTRATO
+  COMPROBANTE_PAGO
+  OTHER
+}
+
+enum DocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum QuotationStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+enum ContractStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+enum PaymentStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentType {
+  DEPOSIT
+  PARTIAL
+  FINAL
+  REFUND
+}
+
+enum Currency {
+  USD
+  EUR
+  CNY
+  JPY
+  BOB
+  PEN
+  COP
+  USDT
+}
+
+enum NotificationType {
+  INFO
+  WARNING
+  ERROR
+  SUCCESS
+}
+
+enum ActivityType {
+  IMPORTACION_GENERAL
+  IMPORTACION_ALIMENTOS
+  IMPORTACION_TEXTILES
+  IMPORTACION_MAQUINARIA
+  IMPORTACION_ELECTRONICA
+  IMPORTACION_VEHICULOS
+  COMERCIO_MAYORISTA
+  COMERCIO_MINORISTA
+  OTROS
+}
+
+// ================================
+// CORE MODELS
+// ================================
 
 model Profile {
   id            String               @id @default(cuid())
@@ -28,8 +140,414 @@ model Profile {
   active        Boolean              @default(true)
   firstName     String?              @map("first_name")
   lastName      String?              @map("last_name")
-  role          UserRole             @default(USER)
+  role          UserRole             @default(IMPORTADOR)
+  
+  // Additional fields from users table (email/password handled by Supabase Auth)
+  status        UserStatus           @default(ACTIVE)
+  phone         String?
+  lastLogin     DateTime?            @map("last_login")
+  
+  // Relations
+  company                   Company?
+  createdRequests           Request[]               @relation("RequestCreatedBy")
+  assignedRequests          Request[]               @relation("RequestAssignedTo")
+  createdQuotations         Quotation[]             @relation("QuotationCreatedBy")
+  assignedQuotations        Quotation[]             @relation("QuotationAssignedTo")
+  createdContracts          Contract[]              @relation("ContractCreatedBy")
+  assignedContracts         Contract[]              @relation("ContractAssignedTo")
+  notifications             Notification[]
+  auditLogs                 AuditLog[]
 
   @@index([userId])
+  @@index([role])
+  @@index([status])
   @@map("profiles")
+}
+
+model Company {
+  id              String           @id @default(cuid())
+  name            String
+  ruc             String           @unique
+  country         String
+  activity        ActivityType
+  
+  // Contact information
+  contactName     String           @map("contact_name")
+  contactPosition String           @map("contact_position")
+  email           String
+  phone           String
+  
+  // Status and timestamps
+  status          UserStatus       @default(ACTIVE)
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  
+  // Relations
+  profileId       String           @unique @map("user_id")
+  profile         Profile          @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  
+  registrationRequest RegistrationRequest?
+  requests            Request[]
+  documents          Document[]
+  quotations         Quotation[]
+  contracts          Contract[]
+  payments           Payment[]
+
+  @@index([ruc])
+  @@index([status])
+  @@index([profileId])
+  @@map("companies")
+}
+
+model RegistrationRequest {
+  id              String               @id @default(cuid())
+  
+  // Company information
+  companyName     String               @map("company_name")
+  ruc             String
+  country         String
+  activity        ActivityType
+  
+  // Contact information
+  contactName     String               @map("contact_name")
+  contactPosition String               @map("contact_position")
+  email           String
+  phone           String
+  
+  // Banking information
+  bankingDetails  String               @map("banking_details")
+  
+  // Status and review
+  status          RegistrationStatus   @default(PENDING)
+  reviewedAt      DateTime?            @map("reviewed_at")
+  reviewedBy      String?              @map("reviewed_by")
+  reviewNotes     String?              @map("review_notes")
+  rejectionReason String?              @map("rejection_reason")
+  
+  // Generated credentials
+  generatedPassword String?            @map("generated_password")
+  
+  // Timestamps
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+  
+  // Relations
+  companyId       String?              @unique @map("company_id")
+  company         Company?             @relation(fields: [companyId], references: [id])
+  documents       Document[]
+
+  @@map("registration_requests")
+}
+
+model Provider {
+  id              String           @id @default(cuid())
+  name            String
+  country         String
+  
+  // Banking information
+  bankingDetails  String           @map("banking_details")
+  
+  // Contact information
+  email           String?
+  phone           String?
+  
+  // Timestamps
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  
+  // Relations
+  requests        Request[]
+
+  @@map("providers")
+}
+
+model Request {
+  id            String             @id @default(cuid())
+  code          String             @unique
+  amount        Decimal            @db.Decimal(15,2)
+  currency      Currency           @default(USDT)
+  description   String
+  status        RequestStatus      @default(PENDING)
+  
+  // Review information
+  reviewNotes   String?            @map("review_notes")
+  reviewedAt    DateTime?          @map("reviewed_at")
+  
+  // Timestamps
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
+  
+  // Relations
+  providerId    String             @map("provider_id")
+  provider      Provider           @relation(fields: [providerId], references: [id])
+  
+  companyId     String             @map("company_id")
+  company       Company            @relation(fields: [companyId], references: [id])
+  
+  createdById   String             @map("created_by_id")
+  createdBy     Profile            @relation("RequestCreatedBy", fields: [createdById], references: [id])
+  
+  assignedToId  String?            @map("assigned_to_id")
+  assignedTo    Profile?           @relation("RequestAssignedTo", fields: [assignedToId], references: [id])
+  
+  documents     Document[]
+  quotations    Quotation[]
+  contracts     Contract[]
+  payments      Payment[]
+
+  @@index([code])
+  @@index([status])
+  @@index([companyId])
+  @@index([createdById])
+  @@index([createdAt])
+  @@map("solicitudes")
+}
+
+model Document {
+  id          String            @id @default(cuid())
+  filename    String
+  fileUrl     String            @map("file_url")
+  fileSize    Int               @map("file_size")
+  mimeType    String            @map("mime_type")
+  type        DocumentType
+  status      DocumentStatus    @default(PENDING)
+  
+  // Review information
+  reviewNotes String?           @map("review_notes")
+  reviewedAt  DateTime?         @map("reviewed_at")
+  reviewedBy  String?           @map("reviewed_by")
+  
+  // Timestamps
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+  
+  // Relations (nullable - document can belong to different entities)
+  companyId             String?        @map("company_id")
+  company               Company?       @relation(fields: [companyId], references: [id])
+  
+  requestId             String?        @map("solicitud_id")
+  request               Request?       @relation(fields: [requestId], references: [id])
+  
+  registrationRequestId String?        @map("registration_request_id")
+  registrationRequest   RegistrationRequest? @relation(fields: [registrationRequestId], references: [id])
+  
+  quotationId           String?        @map("cotizacion_id")
+  quotation             Quotation?     @relation(fields: [quotationId], references: [id])
+  
+  contractId            String?        @map("contrato_id")
+  contract              Contract?      @relation(fields: [contractId], references: [id])
+  
+  paymentId             String?        @map("pago_id")
+  payment               Payment?       @relation(fields: [paymentId], references: [id])
+
+  @@index([type])
+  @@index([status])
+  @@index([companyId])
+  @@index([requestId])
+  @@map("documents")
+}
+
+model Quotation {
+  id            String              @id @default(cuid())
+  code          String              @unique
+  amount        Decimal             @db.Decimal(15,2)
+  currency      Currency            @default(USD)
+  description   String
+  validUntil    DateTime            @map("valid_until")
+  status        QuotationStatus     @default(DRAFT)
+  
+  // Pricing breakdown
+  baseAmount    Decimal             @default(0) @map("base_amount") @db.Decimal(15,2)
+  fees          Decimal             @default(0) @db.Decimal(15,2)
+  taxes         Decimal             @default(0) @db.Decimal(15,2)
+  totalAmount   Decimal             @map("total_amount") @db.Decimal(15,2)
+  
+  // Terms and conditions
+  terms         String?
+  notes         String?
+  
+  // Timestamps
+  createdAt     DateTime            @default(now()) @map("created_at")
+  updatedAt     DateTime            @updatedAt @map("updated_at")
+  sentAt        DateTime?           @map("sent_at")
+  respondedAt   DateTime?           @map("responded_at")
+  
+  // Relations
+  requestId     String              @map("solicitud_id")
+  request       Request             @relation(fields: [requestId], references: [id])
+  
+  companyId     String              @map("company_id")
+  company       Company             @relation(fields: [companyId], references: [id])
+  
+  createdById   String              @map("created_by_id")
+  createdBy     Profile             @relation("QuotationCreatedBy", fields: [createdById], references: [id])
+  
+  assignedToId  String?             @map("assigned_to_id")
+  assignedTo    Profile?            @relation("QuotationAssignedTo", fields: [assignedToId], references: [id])
+  
+  documents     Document[]
+  contracts     Contract[]
+
+  @@index([code])
+  @@index([status])
+  @@index([requestId])
+  @@index([validUntil])
+  @@map("cotizaciones")
+}
+
+model Contract {
+  id            String           @id @default(cuid())
+  code          String           @unique
+  title         String
+  description   String
+  amount        Decimal          @db.Decimal(15,2)
+  currency      Currency         @default(USD)
+  status        ContractStatus   @default(DRAFT)
+  
+  // Contract dates
+  startDate     DateTime         @map("start_date")
+  endDate       DateTime         @map("end_date")
+  
+  // Terms
+  terms         String
+  conditions    String?
+  
+  // Timestamps
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+  signedAt      DateTime?        @map("signed_at")
+  
+  // Relations
+  requestId     String?          @map("solicitud_id")
+  request       Request?         @relation(fields: [requestId], references: [id])
+  
+  quotationId   String?          @map("cotizacion_id")
+  quotation     Quotation?       @relation(fields: [quotationId], references: [id])
+  
+  companyId     String           @map("company_id")
+  company       Company          @relation(fields: [companyId], references: [id])
+  
+  createdById   String           @map("created_by_id")
+  createdBy     Profile          @relation("ContractCreatedBy", fields: [createdById], references: [id])
+  
+  assignedToId  String?          @map("assigned_to_id")
+  assignedTo    Profile?         @relation("ContractAssignedTo", fields: [assignedToId], references: [id])
+  
+  documents     Document[]
+  payments      Payment[]
+
+  @@index([code])
+  @@index([status])
+  @@index([companyId])
+  @@map("contratos")
+}
+
+model Payment {
+  id            String         @id @default(cuid())
+  code          String         @unique
+  amount        Decimal        @db.Decimal(15,2)
+  currency      Currency       @default(USDT)
+  type          PaymentType
+  status        PaymentStatus  @default(PENDING)
+  
+  // Payment details
+  description   String
+  reference     String?
+  transactionId String?        @map("transaction_id")
+  
+  // Banking information
+  fromAccount   String?        @map("from_account")
+  toAccount     String?        @map("to_account")
+  
+  // Dates
+  dueDate       DateTime?      @map("due_date")
+  paidAt        DateTime?      @map("paid_at")
+  
+  // Timestamps
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  
+  // Relations
+  requestId     String?        @map("solicitud_id")
+  request       Request?       @relation(fields: [requestId], references: [id])
+  
+  contractId    String?        @map("contrato_id")
+  contract      Contract?      @relation(fields: [contractId], references: [id])
+  
+  companyId     String         @map("company_id")
+  company       Company        @relation(fields: [companyId], references: [id])
+  
+  documents     Document[]
+
+  @@index([code])
+  @@index([status])
+  @@index([companyId])
+  @@index([dueDate])
+  @@map("pagos")
+}
+
+model Notification {
+  id        String             @id @default(cuid())
+  title     String
+  message   String
+  type      NotificationType   @default(INFO)
+  read      Boolean            @default(false)
+  
+  // Metadata
+  metadata  Json?
+  
+  // Timestamps
+  createdAt DateTime           @default(now()) @map("created_at")
+  readAt    DateTime?          @map("read_at")
+  
+  // Relations
+  profileId String             @map("user_id")
+  profile   Profile            @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, read])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id        String     @id @default(cuid())
+  action    String
+  entity    String
+  entityId  String     @map("entity_id")
+  
+  // Change details
+  oldValues Json?      @map("old_values")
+  newValues Json?      @map("new_values")
+  
+  // Context
+  ipAddress String?    @map("ip_address")
+  userAgent String?    @map("user_agent")
+  
+  // Timestamps
+  createdAt DateTime   @default(now()) @map("created_at")
+  
+  // Relations
+  profileId String     @map("user_id")
+  profile   Profile    @relation(fields: [profileId], references: [id])
+
+  @@index([profileId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model Configuration {
+  id          String     @id @default(cuid())
+  key         String     @unique
+  value       String
+  
+  // Metadata
+  description String?
+  category    String?
+  
+  // Timestamps
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  @@map("configurations")
 }
