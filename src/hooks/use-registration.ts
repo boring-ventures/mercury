@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 export interface RegistrationData {
   companyName: string;
@@ -61,9 +62,86 @@ export interface RegistrationResponse {
   error?: string;
 }
 
+export interface EmailValidationResponse {
+  status:
+    | "AVAILABLE"
+    | "PENDING"
+    | "APPROVED"
+    | "REJECTED"
+    | "ACTIVE_ACCOUNT"
+    | "UNKNOWN";
+  message: string;
+  canProceed: boolean;
+  requestId?: string;
+  previousRequestId?: string;
+  rejectionReason?: string;
+  submittedAt?: Date;
+}
+
+// Helper function to upload a single file to Supabase storage
+async function uploadFileToStorage(
+  file: File,
+  bucketName: string,
+  filePath: string
+): Promise<{ url: string | null; error: string | null }> {
+  try {
+    const supabase = createClientComponentClient();
+
+    // Upload file to Supabase storage
+    const { data, error } = await supabase.storage
+      .from(bucketName)
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: false, // Don't overwrite existing files
+      });
+
+    if (error) {
+      console.error("Storage upload error:", error);
+      return { url: null, error: error.message };
+    }
+
+    // Get the public URL of the uploaded file
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from(bucketName).getPublicUrl(data.path);
+
+    return { url: data.path, error: null }; // Return the path, not public URL
+  } catch (error) {
+    console.error("Upload error:", error);
+    return { url: null, error: (error as Error).message };
+  }
+}
+
 export function useRegistration() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const validateEmail = async (
+    email: string
+  ): Promise<EmailValidationResponse> => {
+    try {
+      const response = await fetch("/api/validate-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error validating email");
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Email validation error:", error);
+      return {
+        status: "UNKNOWN",
+        message: "Error validando el email. Por favor inténtelo de nuevo.",
+        canProceed: false,
+      };
+    }
+  };
 
   const submitRegistration = async (
     data: RegistrationData,
@@ -73,6 +151,42 @@ export function useRegistration() {
     setError(null);
 
     try {
+      // First validate the email
+      const emailValidation = await validateEmail(data.email);
+
+      if (!emailValidation.canProceed) {
+        const errorMsg = emailValidation.message;
+        setError(errorMsg);
+
+        // Show different toast types based on status
+        const toastVariant =
+          emailValidation.status === "REJECTED" ? "default" : "destructive";
+        toast({
+          title:
+            emailValidation.status === "PENDING"
+              ? "Solicitud Pendiente"
+              : emailValidation.status === "ACTIVE_ACCOUNT"
+                ? "Cuenta Existente"
+                : emailValidation.status === "APPROVED"
+                  ? "Solicitud Aprobada"
+                  : "Error",
+          description: errorMsg,
+          variant: toastVariant,
+        });
+        return { success: false, error: errorMsg };
+      }
+
+      // Show special message for rejected resubmissions
+      if (emailValidation.status === "REJECTED") {
+        toast({
+          title: "Reenvío de Solicitud",
+          description: emailValidation.rejectionReason
+            ? `Motivo de rechazo anterior: ${emailValidation.rejectionReason}`
+            : "Enviando nueva solicitud para email previamente rechazado.",
+          variant: "default",
+        });
+      }
+
       // Validate required fields
       if (!data.terms || !data.privacy) {
         const errorMsg =
@@ -118,21 +232,56 @@ export function useRegistration() {
         return { success: false, error: errorMsg };
       }
 
-      // Prepare the request payload
+      // Upload files to Supabase storage first
+      const bucketName = "mercury"; // Your bucket name
+      const uploadedDocuments: Record<string, any> = {};
+      const timestamp = Date.now();
+      const sanitizedCompanyName = data.companyName.replace(
+        /[^a-zA-Z0-9]/g,
+        "_"
+      );
+
+      toast({
+        title: "Subiendo documentos...",
+        description: "Por favor espere mientras subimos sus archivos.",
+      });
+
+      // Upload each document
+      for (const [docType, file] of Object.entries(documents)) {
+        if (file) {
+          const fileExtension = file.name.split(".").pop() || "";
+          const fileName = `registration/${sanitizedCompanyName}_${timestamp}_${docType}.${fileExtension}`;
+
+          const { url, error: uploadError } = await uploadFileToStorage(
+            file.file,
+            bucketName,
+            fileName
+          );
+
+          if (uploadError) {
+            const errorMsg = `Error subiendo ${docType}: ${uploadError}`;
+            setError(errorMsg);
+            toast({
+              title: "Error de subida",
+              description: errorMsg,
+              variant: "destructive",
+            });
+            return { success: false, error: errorMsg };
+          }
+
+          uploadedDocuments[docType] = {
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            fileUrl: url, // Include the file URL from storage
+          };
+        }
+      }
+
+      // Prepare the request payload with uploaded file URLs
       const payload = {
         ...data,
-        documents: Object.fromEntries(
-          Object.entries(documents).map(([key, file]) => [
-            key,
-            file
-              ? {
-                  name: file.name,
-                  size: file.size,
-                  type: file.type,
-                }
-              : null,
-          ])
-        ),
+        documents: uploadedDocuments,
       };
 
       // Submit the registration request
@@ -188,6 +337,7 @@ export function useRegistration() {
   const clearError = () => setError(null);
 
   return {
+    validateEmail,
     submitRegistration,
     isLoading,
     error,

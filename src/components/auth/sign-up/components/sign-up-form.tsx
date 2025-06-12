@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { UploadCloud } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/providers/auth-provider";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +23,6 @@ import { toast } from "@/components/ui/use-toast";
 import Image from "next/image";
 import { uploadAvatar } from "@/lib/supabase/upload-avatar";
 import { useRouter } from "next/navigation";
-import { saltAndHashPassword } from "@/lib/auth/password-crypto";
 
 export function SignUpForm({ className, ...props }: SignUpFormProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -66,15 +65,10 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
     try {
       setIsLoading(true);
 
-      // Hash the password with email as salt before sending to server
-      const hashedPassword = await saltAndHashPassword(
-        data.password,
-        data.email
-      );
-
+      // Send plain password to Supabase Auth - it handles password hashing internally
       const { success, user, session, confirmEmail, error } = await signUp(
         data.email,
-        hashedPassword
+        data.password
       );
 
       if (!success || error) {

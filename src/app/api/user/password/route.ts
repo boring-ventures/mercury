@@ -17,7 +17,27 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const { newPassword } = await request.json();
+    const { currentPassword, newPassword } = await request.json();
+
+    if (!currentPassword || !newPassword) {
+      return NextResponse.json(
+        { error: "Current password and new password are required" },
+        { status: 400 }
+      );
+    }
+
+    // First verify the current password by attempting to sign in with it
+    const { error: verifyError } = await supabase.auth.signInWithPassword({
+      email: session.user.email!,
+      password: currentPassword,
+    });
+
+    if (verifyError) {
+      return NextResponse.json(
+        { error: "Current password is incorrect" },
+        { status: 400 }
+      );
+    }
 
     // Update the password using Supabase Auth API
     const { error } = await supabase.auth.updateUser({

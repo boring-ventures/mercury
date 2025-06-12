@@ -135,6 +135,12 @@ export default function RegisterPage() {
   const [progress, setProgress] = useState(25);
   const [isValidating, setIsValidating] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
+  const [emailValidationMessage, setEmailValidationMessage] = useState<
+    string | null
+  >(null);
+  const [emailValidationStatus, setEmailValidationStatus] = useState<
+    string | null
+  >(null);
   const [submittedData, setSubmittedData] = useState<SubmittedData | null>(
     null
   );
@@ -153,7 +159,8 @@ export default function RegisterPage() {
   });
 
   // Use registration hook
-  const { submitRegistration, isLoading, clearError } = useRegistration();
+  const { validateEmail, submitRegistration, isLoading, clearError } =
+    useRegistration();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -176,11 +183,28 @@ export default function RegisterPage() {
   // Cleanup file URLs when component unmounts to prevent memory leaks
   useEffect(() => {
     return () => {
+      // Clean up all preview URLs when component unmounts
       Object.values(uploadedFiles).forEach((file) => {
         if (file?.previewUrl) {
           URL.revokeObjectURL(file.previewUrl);
         }
       });
+    };
+  }, []); // Only run on unmount
+
+  // Clean up URLs when uploadedFiles changes (except during initial mount)
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      Object.values(uploadedFiles).forEach((file) => {
+        if (file?.previewUrl) {
+          URL.revokeObjectURL(file.previewUrl);
+        }
+      });
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, [uploadedFiles]);
 
@@ -195,6 +219,30 @@ export default function RegisterPage() {
       "bankingDetails",
     ] as const,
     3: ["terms", "privacy"] as const,
+  };
+
+  // Handle email validation on blur
+  const handleEmailBlur = async (email: string) => {
+    if (!email || !email.includes("@")) {
+      setEmailValidationMessage(null);
+      setEmailValidationStatus(null);
+      return;
+    }
+
+    setIsValidating(true);
+    setEmailValidationMessage(null);
+
+    try {
+      const validation = await validateEmail(email);
+      setEmailValidationStatus(validation.status);
+      setEmailValidationMessage(validation.message);
+    } catch (error) {
+      console.error("Email validation error:", error);
+      setEmailValidationMessage("Error validando el email");
+      setEmailValidationStatus("UNKNOWN");
+    } finally {
+      setIsValidating(false);
+    }
   };
 
   // Validate current step
@@ -252,7 +300,7 @@ export default function RegisterPage() {
           response: result.registrationRequest,
         });
         setStep(4);
-        setProgress(100);
+        setProgress(100); // Set to 100% for confirmation step
         setShowErrors(false);
       }
     } catch (error) {
@@ -272,19 +320,94 @@ export default function RegisterPage() {
   ) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setUploadedFiles({
-        ...uploadedFiles,
+
+      // File validation
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      const allowedTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+        "application/pdf",
+      ];
+
+      // Check file size
+      if (file.size > maxSize) {
+        toast({
+          title: "Archivo muy grande",
+          description: `El archivo excede el tamaño máximo de 5MB. Tamaño actual: ${(file.size / 1024 / 1024).toFixed(1)}MB`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check file type
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          title: "Tipo de archivo no válido",
+          description: "Solo se permiten archivos PDF, JPG, PNG, GIF y WebP",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Clean up previous preview URL to prevent memory leaks
+      const previousFile =
+        uploadedFiles[fileType as keyof typeof uploadedFiles];
+      if (previousFile?.previewUrl) {
+        URL.revokeObjectURL(previousFile.previewUrl);
+      }
+
+      // Create new preview URL for images
+      let previewUrl = null;
+      if (file.type.startsWith("image/")) {
+        try {
+          previewUrl = URL.createObjectURL(file);
+        } catch (error) {
+          console.error("Error creating preview URL:", error);
+          toast({
+            title: "Error de vista previa",
+            description: "No se pudo crear la vista previa del archivo",
+            variant: "destructive",
+          });
+        }
+      }
+
+      setUploadedFiles((prev) => ({
+        ...prev,
         [fileType]: {
           name: file.name,
           size: file.size,
           type: file.type,
           file: file,
-          previewUrl: file.type.startsWith("image/")
-            ? URL.createObjectURL(file)
-            : null,
+          previewUrl: previewUrl,
         },
+      }));
+
+      toast({
+        title: "Archivo cargado",
+        description: `${file.name} se ha cargado correctamente`,
       });
     }
+
+    // Clear the input value to allow re-uploading the same file
+    if (e.target) {
+      e.target.value = "";
+    }
+  };
+
+  // Helper function to remove a file and clean up its preview URL
+  const removeFile = (fileType: string) => {
+    const file = uploadedFiles[fileType as keyof typeof uploadedFiles];
+    if (file?.previewUrl) {
+      URL.revokeObjectURL(file.previewUrl);
+    }
+
+    setUploadedFiles((prev) => ({
+      ...prev,
+      [fileType]: null,
+    }));
   };
 
   // Avanzar al siguiente paso con validación
@@ -298,10 +421,10 @@ export default function RegisterPage() {
       const newStep = step + 1;
       setStep(newStep);
 
-      // Update progress based on step
+      // Update progress based on step - step 3 is now 100% since it's the final step in indicator
       if (newStep === 2) setProgress(50);
-      else if (newStep === 3) setProgress(75);
-      else if (newStep === 4) setProgress(100);
+      else if (newStep === 3) setProgress(100);
+      // Remove step 4 progress update since it won't be in indicator
 
       setShowErrors(false); // Reset errors for next step
     } else {
@@ -320,6 +443,7 @@ export default function RegisterPage() {
   const prevStep = () => {
     const newStep = step - 1;
     setStep(newStep);
+    // Update progress for 3-step indicator: step 1=25%, step 2=50%, step 3=100%
     setProgress(newStep === 1 ? 25 : newStep === 2 ? 50 : 100);
     setShowErrors(false); // Reset errors when going back
   };
@@ -367,12 +491,7 @@ export default function RegisterPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() =>
-                    setUploadedFiles({
-                      ...uploadedFiles,
-                      [fileType]: null,
-                    })
-                  }
+                  onClick={() => removeFile(fileType)}
                 >
                   Cambiar
                 </Button>
@@ -384,15 +503,45 @@ export default function RegisterPage() {
                   <p className="text-xs text-muted-foreground mb-2">
                     Vista previa:
                   </p>
-                  <Image
-                    src={uploadedFile.previewUrl}
-                    alt="Vista previa"
-                    width={200}
-                    height={100}
-                    className="max-w-full h-32 object-contain mx-auto rounded"
-                  />
+                  <div className="relative w-full max-w-sm mx-auto">
+                    <Image
+                      src={uploadedFile.previewUrl}
+                      alt={`Vista previa de ${uploadedFile.name}`}
+                      width={200}
+                      height={150}
+                      className="w-full h-32 object-contain mx-auto rounded border"
+                      unoptimized={true} // Needed for blob URLs
+                      onError={(e) => {
+                        console.error("Error loading preview image:", e);
+                        // Hide the image if it fails to load
+                        e.currentTarget.style.display = "none";
+                      }}
+                      onLoad={() => {
+                        console.log("Preview image loaded successfully");
+                      }}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center mt-2">
+                    {uploadedFile.name} ({(uploadedFile.size / 1024).toFixed(1)}{" "}
+                    KB)
+                  </p>
                 </div>
               )}
+
+              {/* Fallback for images without preview or non-image files */}
+              {uploadedFile.type.startsWith("image/") &&
+                !uploadedFile.previewUrl && (
+                  <div className="border rounded-lg p-4 bg-muted/30 text-center">
+                    <FileText className="w-8 h-8 text-primary mx-auto mb-2" />
+                    <p className="text-xs text-muted-foreground">
+                      Imagen cargada
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {uploadedFile.name} (
+                      {(uploadedFile.size / 1024).toFixed(1)} KB)
+                    </p>
+                  </div>
+                )}
 
               {uploadedFile.type === "application/pdf" && (
                 <div className="border rounded-lg p-4 bg-muted/30 text-center">
@@ -482,16 +631,6 @@ export default function RegisterPage() {
                 <FileText className="w-4 h-4" />
               </div>
               <span className="ml-2 text-sm font-medium">Documentación</span>
-            </div>
-            <div className="flex items-center">
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  step >= 4 ? "bg-primary text-primary-foreground" : "bg-muted"
-                }`}
-              >
-                <CheckCircle2 className="w-4 h-4" />
-              </div>
-              <span className="ml-2 text-sm font-medium">Confirmación</span>
             </div>
           </div>
           <Progress value={progress} className="h-2" />
@@ -763,10 +902,59 @@ export default function RegisterPage() {
                                     placeholder="email@empresa.com"
                                     className="pl-10 h-11"
                                     {...field}
+                                    onChange={(e) => {
+                                      field.onChange(e);
+                                      // Clear validation messages when user types
+                                      if (emailValidationMessage) {
+                                        setEmailValidationMessage(null);
+                                        setEmailValidationStatus(null);
+                                      }
+                                    }}
+                                    onBlur={(e) => {
+                                      field.onBlur(e);
+                                      handleEmailBlur(e.target.value);
+                                    }}
                                   />
+                                  {isValidating && (
+                                    <div className="absolute right-3 top-2.5">
+                                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                    </div>
+                                  )}
                                 </div>
                               </FormControl>
                               {showErrors && <FormMessage />}
+                              {emailValidationMessage && (
+                                <div
+                                  className={`text-sm mt-1 flex items-center ${
+                                    emailValidationStatus === "AVAILABLE"
+                                      ? "text-green-600"
+                                      : emailValidationStatus === "REJECTED"
+                                        ? "text-yellow-600"
+                                        : "text-red-600"
+                                  }`}
+                                >
+                                  {emailValidationStatus === "AVAILABLE" && (
+                                    <CheckCircle2 className="w-4 h-4 mr-1" />
+                                  )}
+                                  {emailValidationStatus === "PENDING" && (
+                                    <AlertCircle className="w-4 h-4 mr-1" />
+                                  )}
+                                  {emailValidationStatus ===
+                                    "ACTIVE_ACCOUNT" && (
+                                    <AlertCircle className="w-4 h-4 mr-1" />
+                                  )}
+                                  {emailValidationStatus === "APPROVED" && (
+                                    <AlertCircle className="w-4 h-4 mr-1" />
+                                  )}
+                                  {emailValidationStatus === "REJECTED" && (
+                                    <AlertCircle className="w-4 h-4 mr-1" />
+                                  )}
+                                  {emailValidationStatus === "UNKNOWN" && (
+                                    <AlertCircle className="w-4 h-4 mr-1" />
+                                  )}
+                                  {emailValidationMessage}
+                                </div>
+                              )}
                             </FormItem>
                           )}
                         />

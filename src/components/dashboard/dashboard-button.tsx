@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useAuth } from "@/providers/auth-provider";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,9 @@ interface DashboardButtonProps {
   className?: string;
 }
 
-export default function DashboardButton({ className }: DashboardButtonProps = {}) {
+export default function DashboardButton({
+  className,
+}: DashboardButtonProps = {}) {
   const { user, isLoading } = useAuth();
   const router = useRouter();
 
@@ -21,7 +23,7 @@ export default function DashboardButton({ className }: DashboardButtonProps = {}
       className={`flex items-center gap-2 shadow-lg ${className}`}
     >
       <LayoutDashboard className="h-4 w-4" />
-      Go to Dashboard
+      Ir al Dashboard
     </Button>
   );
-} 
+}

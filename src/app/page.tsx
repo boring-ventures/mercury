@@ -9,34 +9,12 @@ import {
   Package,
   Shield,
 } from "lucide-react";
-import Image from "next/image";
+import Header from "@/components/views/landing-page/Header";
 
 export default function Home() {
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b">
-        <div className="container mx-auto py-4 px-4 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <div className="relative w-10 h-10">
-              <Image
-                src="/logo.svg"
-                alt="Mercury Logo"
-                fill
-                className="object-contain"
-              />
-            </div>
-            <h1 className="text-2xl font-bold text-primary">MERCURY</h1>
-          </div>
-          <div className="flex gap-4">
-            <Link href="/sign-in">
-              <Button variant="outline">Iniciar Sesión</Button>
-            </Link>
-            <Link href="/sign-up">
-              <Button>Registrarse</Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       <main className="flex-1">
         <section className="py-20 bg-gradient-to-b from-secondary/20 to-background">

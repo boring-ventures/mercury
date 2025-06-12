@@ -46,16 +46,65 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if email already exists in registration requests
+    // Check email status and validate if registration is allowed
     const existingRequest = await prisma.registrationRequest.findFirst({
       where: { email },
+      orderBy: { createdAt: "desc" }, // Get the most recent request
     });
 
-    if (existingRequest) {
+    // Check if email is associated with an active company
+    const existingCompany = await prisma.company.findFirst({
+      where: {
+        email,
+        status: "ACTIVE",
+      },
+    });
+
+    // If there's an active company with this email
+    if (existingCompany) {
       return NextResponse.json(
-        { error: "Ya existe una solicitud con este email" },
+        {
+          error:
+            "Ya existe una cuenta activa con este email. Por favor inicie sesión.",
+        },
         { status: 409 }
       );
+    }
+
+    // If there's a registration request, check its status
+    if (existingRequest) {
+      switch (existingRequest.status) {
+        case "PENDING":
+          return NextResponse.json(
+            {
+              error:
+                "Ya existe una solicitud pendiente con este email. Por favor espere la revisión.",
+            },
+            { status: 409 }
+          );
+
+        case "APPROVED":
+          return NextResponse.json(
+            {
+              error:
+                "Su solicitud ya fue aprobada. Por favor revise su email para las credenciales de acceso.",
+            },
+            { status: 409 }
+          );
+
+        case "REJECTED":
+          // Allow resubmission for rejected requests - don't return error
+          console.log(
+            `Allowing resubmission for rejected email: ${email}, previous request: ${existingRequest.id}`
+          );
+          break;
+
+        default:
+          return NextResponse.json(
+            { error: "Estado de solicitud desconocido" },
+            { status: 409 }
+          );
+      }
     }
 
     // Create the registration request
@@ -84,7 +133,7 @@ export async function POST(request: NextRequest) {
           prisma.document.create({
             data: {
               filename: documents.matricula.name,
-              fileUrl: "", // This will be filled when actual file upload is implemented
+              fileUrl: documents.matricula.fileUrl || "", // Use the uploaded file URL
               fileSize: documents.matricula.size,
               mimeType: documents.matricula.type,
               type: "MATRICULA_COMERCIO",
@@ -99,7 +148,7 @@ export async function POST(request: NextRequest) {
           prisma.document.create({
             data: {
               filename: documents.nit.name,
-              fileUrl: "", // This will be filled when actual file upload is implemented
+              fileUrl: documents.nit.fileUrl || "", // Use the uploaded file URL
               fileSize: documents.nit.size,
               mimeType: documents.nit.type,
               type: "NIT",
@@ -114,7 +163,7 @@ export async function POST(request: NextRequest) {
           prisma.document.create({
             data: {
               filename: documents.poder.name,
-              fileUrl: "", // This will be filled when actual file upload is implemented
+              fileUrl: documents.poder.fileUrl || "", // Use the uploaded file URL
               fileSize: documents.poder.size,
               mimeType: documents.poder.type,
               type: "PODER_REPRESENTANTE",
@@ -129,7 +178,7 @@ export async function POST(request: NextRequest) {
           prisma.document.create({
             data: {
               filename: documents.carnet.name,
-              fileUrl: "", // This will be filled when actual file upload is implemented
+              fileUrl: documents.carnet.fileUrl || "", // Use the uploaded file URL
               fileSize: documents.carnet.size,
               mimeType: documents.carnet.type,
               type: "CARNET_IDENTIDAD",
@@ -145,7 +194,7 @@ export async function POST(request: NextRequest) {
           prisma.document.create({
             data: {
               filename: documents.aduana.name,
-              fileUrl: "", // This will be filled when actual file upload is implemented
+              fileUrl: documents.aduana.fileUrl || "", // Use the uploaded file URL
               fileSize: documents.aduana.size,
               mimeType: documents.aduana.type,
               type: "CERTIFICADO_ADUANA",

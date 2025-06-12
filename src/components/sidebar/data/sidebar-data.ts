@@ -1,45 +1,25 @@
 import {
-  AlertCircle,
-  AppWindow,
-  AudioWaveform,
-  Ban,
-  Bug,
-  CheckSquare,
-  Command,
-  GalleryVerticalEnd,
-  HelpCircle,
   LayoutDashboard,
-  Lock,
-  LockKeyhole,
-  MessageSquare,
   Settings,
-  ServerCrash,
-  UserX,
-  Users,
+  HelpCircle,
+  Ship,
+  Package,
+  FileText,
+  TrendingUp,
 } from "lucide-react";
 import type { SidebarData } from "../types";
 
 export const sidebarData: SidebarData = {
   user: {
-    name: "satnaing",
-    email: "satnaingdev@gmail.com",
-    avatar: "/avatars/shadcn.jpg",
+    name: "Mercury User",
+    email: "user@mercury.com",
+    avatar: "/avatars/default.jpg",
   },
   teams: [
     {
-      name: "Shadcn Admin",
-      logo: Command,
-      plan: "Vite + ShadcnUI",
-    },
-    {
-      name: "Acme Inc",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
+      name: "Mercury Platform",
+      logo: Ship,
+      plan: "Gestión de Envíos Internacionales",
     },
   ],
   navGroups: [
@@ -48,104 +28,36 @@ export const sidebarData: SidebarData = {
       items: [
         {
           title: "Dashboard",
-          url: "/",
+          url: "/dashboard",
           icon: LayoutDashboard,
         },
         {
-          title: "Tasks",
-          url: "/tasks",
-          icon: CheckSquare,
+          title: "Solicitudes",
+          url: "/requests",
+          icon: Package,
         },
         {
-          title: "Apps",
-          url: "/apps",
-          icon: AppWindow,
+          title: "Cotizaciones",
+          url: "/quotations",
+          icon: FileText,
         },
         {
-          title: "Chats",
-          url: "/chats",
-          badge: "3",
-          icon: MessageSquare,
-        },
-        {
-          title: "Users",
-          url: "/users",
-          icon: Users,
+          title: "Reportes",
+          url: "/reports",
+          icon: TrendingUp,
         },
       ],
     },
     {
-      title: "Pages",
+      title: "Configuración",
       items: [
         {
-          title: "Auth",
-          icon: Lock,
-          items: [
-            {
-              title: "Sign In",
-              url: "/sign-in",
-            },
-            {
-              title: "Sign In (2 Col)",
-              url: "/sign-in-2",
-            },
-            {
-              title: "Sign Up",
-              url: "/sign-up",
-            },
-            {
-              title: "Forgot Password",
-              url: "/forgot-password",
-            },
-            {
-              title: "OTP",
-              url: "/otp",
-            },
-          ],
-        },
-        {
-          title: "Errors",
-          icon: Bug,
-          items: [
-            {
-              title: "Unauthorized",
-              url: "/401",
-              icon: LockKeyhole,
-            },
-            {
-              title: "Forbidden",
-              url: "/403",
-              icon: UserX,
-            },
-            {
-              title: "Not Found",
-              url: "/404",
-              icon: AlertCircle,
-            },
-            {
-              title: "Internal Server Error",
-              url: "/500",
-              icon: ServerCrash,
-            },
-            {
-              title: "Maintenance Error",
-              url: "/503",
-              icon: Ban,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      title: "Other",
-      items: [
-        {
-          title: "Settings",
+          title: "Ajustes",
           icon: Settings,
           url: "/settings",
         },
         {
-          title: "Help Center",
+          title: "Centro de Ayuda",
           url: "/help-center",
           icon: HelpCircle,
         },

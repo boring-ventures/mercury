@@ -138,17 +138,20 @@ model Profile {
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
   active        Boolean              @default(true)
-  firstName     String?              @map("first_name")
-  lastName      String?              @map("last_name")
+  firstName     String?
+  lastName      String?
   role          UserRole             @default(IMPORTADOR)
   
   // Additional fields from users table (email/password handled by Supabase Auth)
   status        UserStatus           @default(ACTIVE)
   phone         String?
-  lastLogin     DateTime?            @map("last_login")
+  lastLogin     DateTime?
+  
+  // Company association (optional - superadmins don't belong to companies)
+  companyId     String?
+  company       Company?             @relation(fields: [companyId], references: [id], onDelete: SetNull)
   
   // Relations
-  company                   Company?
   createdRequests           Request[]               @relation("RequestCreatedBy")
   assignedRequests          Request[]               @relation("RequestAssignedTo")
   createdQuotations         Quotation[]             @relation("QuotationCreatedBy")
@@ -161,7 +164,7 @@ model Profile {
   @@index([userId])
   @@index([role])
   @@index([status])
-  @@map("profiles")
+  @@index([companyId])
 }
 
 model Company {
@@ -172,71 +175,68 @@ model Company {
   activity        ActivityType
   
   // Contact information
-  contactName     String           @map("contact_name")
-  contactPosition String           @map("contact_position")
+  contactName     String
+  contactPosition String
   email           String
   phone           String
   
+  // Banking information (from registration request)
+  bankingDetails  String?
+  
   // Status and timestamps
   status          UserStatus       @default(ACTIVE)
-  createdAt       DateTime         @default(now()) @map("created_at")
-  updatedAt       DateTime         @updatedAt @map("updated_at")
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
   
-  // Relations
-  profileId       String           @unique @map("user_id")
-  profile         Profile          @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  
-  registrationRequest RegistrationRequest?
-  requests            Request[]
-  documents          Document[]
-  quotations         Quotation[]
-  contracts          Contract[]
-  payments           Payment[]
+  // Relations - now a company can have multiple users
+  users                   Profile[]
+  registrationRequest     RegistrationRequest?
+  requests                Request[]
+  documents              Document[]
+  quotations             Quotation[]
+  contracts              Contract[]
+  payments               Payment[]
 
   @@index([ruc])
   @@index([status])
-  @@index([profileId])
-  @@map("companies")
 }
 
 model RegistrationRequest {
   id              String               @id @default(cuid())
   
   // Company information
-  companyName     String               @map("company_name")
+  companyName     String
   ruc             String
   country         String
   activity        ActivityType
   
   // Contact information
-  contactName     String               @map("contact_name")
-  contactPosition String               @map("contact_position")
+  contactName     String
+  contactPosition String
   email           String
   phone           String
   
   // Banking information
-  bankingDetails  String               @map("banking_details")
+  bankingDetails  String
   
   // Status and review
   status          RegistrationStatus   @default(PENDING)
-  reviewedAt      DateTime?            @map("reviewed_at")
-  reviewedBy      String?              @map("reviewed_by")
-  reviewNotes     String?              @map("review_notes")
-  rejectionReason String?              @map("rejection_reason")
+  reviewedAt      DateTime?
+  reviewedBy      String?
+  reviewNotes     String?
+  rejectionReason String?
   
   // Generated credentials
-  generatedPassword String?            @map("generated_password")
+  generatedPassword String?
   
   // Timestamps
-  createdAt       DateTime             @default(now()) @map("created_at")
-  updatedAt       DateTime             @updatedAt @map("updated_at")
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
   
   // Relations
-  companyId       String?              @unique @map("company_id")
-  company         Company?             @relation(fields: [companyId], references: [id])
+  companyId       String?              @unique
+  company         Company?             @relation(fields: [companyId], references: [id], onDelete: SetNull)
   documents       Document[]
-
-  @@map("registration_requests")
 }
 
 model Provider {
@@ -245,20 +245,18 @@ model Provider {
   country         String
   
   // Banking information
-  bankingDetails  String           @map("banking_details")
+  bankingDetails  String
   
   // Contact information
   email           String?
   phone           String?
   
   // Timestamps
-  createdAt       DateTime         @default(now()) @map("created_at")
-  updatedAt       DateTime         @updatedAt @map("updated_at")
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
   
   // Relations
   requests        Request[]
-
-  @@map("providers")
 }
 
 model Request {
@@ -270,24 +268,24 @@ model Request {
   status        RequestStatus      @default(PENDING)
   
   // Review information
-  reviewNotes   String?            @map("review_notes")
-  reviewedAt    DateTime?          @map("reviewed_at")
+  reviewNotes   String?
+  reviewedAt    DateTime?
   
   // Timestamps
-  createdAt     DateTime           @default(now()) @map("created_at")
-  updatedAt     DateTime           @updatedAt @map("updated_at")
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
   
   // Relations
-  providerId    String             @map("provider_id")
+  providerId    String
   provider      Provider           @relation(fields: [providerId], references: [id])
   
-  companyId     String             @map("company_id")
+  companyId     String
   company       Company            @relation(fields: [companyId], references: [id])
   
-  createdById   String             @map("created_by_id")
+  createdById   String
   createdBy     Profile            @relation("RequestCreatedBy", fields: [createdById], references: [id])
   
-  assignedToId  String?            @map("assigned_to_id")
+  assignedToId  String?
   assignedTo    Profile?           @relation("RequestAssignedTo", fields: [assignedToId], references: [id])
   
   documents     Document[]
@@ -300,51 +298,49 @@ model Request {
   @@index([companyId])
   @@index([createdById])
   @@index([createdAt])
-  @@map("solicitudes")
 }
 
 model Document {
   id          String            @id @default(cuid())
   filename    String
-  fileUrl     String            @map("file_url")
-  fileSize    Int               @map("file_size")
-  mimeType    String            @map("mime_type")
+  fileUrl     String
+  fileSize    Int
+  mimeType    String
   type        DocumentType
   status      DocumentStatus    @default(PENDING)
   
   // Review information
-  reviewNotes String?           @map("review_notes")
-  reviewedAt  DateTime?         @map("reviewed_at")
-  reviewedBy  String?           @map("reviewed_by")
+  reviewNotes String?
+  reviewedAt  DateTime?
+  reviewedBy  String?
   
   // Timestamps
-  createdAt   DateTime          @default(now()) @map("created_at")
-  updatedAt   DateTime          @updatedAt @map("updated_at")
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
   
   // Relations (nullable - document can belong to different entities)
-  companyId             String?        @map("company_id")
+  companyId             String?
   company               Company?       @relation(fields: [companyId], references: [id])
   
-  requestId             String?        @map("solicitud_id")
+  requestId             String?
   request               Request?       @relation(fields: [requestId], references: [id])
   
-  registrationRequestId String?        @map("registration_request_id")
+  registrationRequestId String?
   registrationRequest   RegistrationRequest? @relation(fields: [registrationRequestId], references: [id])
   
-  quotationId           String?        @map("cotizacion_id")
+  quotationId           String?
   quotation             Quotation?     @relation(fields: [quotationId], references: [id])
   
-  contractId            String?        @map("contrato_id")
+  contractId            String?
   contract              Contract?      @relation(fields: [contractId], references: [id])
   
-  paymentId             String?        @map("pago_id")
+  paymentId             String?
   payment               Payment?       @relation(fields: [paymentId], references: [id])
 
   @@index([type])
   @@index([status])
   @@index([companyId])
   @@index([requestId])
-  @@map("documents")
 }
 
 model Quotation {
@@ -353,36 +349,36 @@ model Quotation {
   amount        Decimal             @db.Decimal(15,2)
   currency      Currency            @default(USD)
   description   String
-  validUntil    DateTime            @map("valid_until")
+  validUntil    DateTime
   status        QuotationStatus     @default(DRAFT)
   
   // Pricing breakdown
-  baseAmount    Decimal             @default(0) @map("base_amount") @db.Decimal(15,2)
+  baseAmount    Decimal             @default(0) @db.Decimal(15,2)
   fees          Decimal             @default(0) @db.Decimal(15,2)
   taxes         Decimal             @default(0) @db.Decimal(15,2)
-  totalAmount   Decimal             @map("total_amount") @db.Decimal(15,2)
+  totalAmount   Decimal             @db.Decimal(15,2)
   
   // Terms and conditions
   terms         String?
   notes         String?
   
   // Timestamps
-  createdAt     DateTime            @default(now()) @map("created_at")
-  updatedAt     DateTime            @updatedAt @map("updated_at")
-  sentAt        DateTime?           @map("sent_at")
-  respondedAt   DateTime?           @map("responded_at")
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  sentAt        DateTime?
+  respondedAt   DateTime?
   
   // Relations
-  requestId     String              @map("solicitud_id")
+  requestId     String
   request       Request             @relation(fields: [requestId], references: [id])
   
-  companyId     String              @map("company_id")
+  companyId     String
   company       Company             @relation(fields: [companyId], references: [id])
   
-  createdById   String              @map("created_by_id")
+  createdById   String
   createdBy     Profile             @relation("QuotationCreatedBy", fields: [createdById], references: [id])
   
-  assignedToId  String?             @map("assigned_to_id")
+  assignedToId  String?
   assignedTo    Profile?            @relation("QuotationAssignedTo", fields: [assignedToId], references: [id])
   
   documents     Document[]
@@ -392,7 +388,6 @@ model Quotation {
   @@index([status])
   @@index([requestId])
   @@index([validUntil])
-  @@map("cotizaciones")
 }
 
 model Contract {
@@ -405,32 +400,32 @@ model Contract {
   status        ContractStatus   @default(DRAFT)
   
   // Contract dates
-  startDate     DateTime         @map("start_date")
-  endDate       DateTime         @map("end_date")
+  startDate     DateTime
+  endDate       DateTime
   
   // Terms
   terms         String
   conditions    String?
   
   // Timestamps
-  createdAt     DateTime         @default(now()) @map("created_at")
-  updatedAt     DateTime         @updatedAt @map("updated_at")
-  signedAt      DateTime?        @map("signed_at")
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  signedAt      DateTime?
   
   // Relations
-  requestId     String?          @map("solicitud_id")
+  requestId     String?
   request       Request?         @relation(fields: [requestId], references: [id])
   
-  quotationId   String?          @map("cotizacion_id")
+  quotationId   String?
   quotation     Quotation?       @relation(fields: [quotationId], references: [id])
   
-  companyId     String           @map("company_id")
+  companyId     String
   company       Company          @relation(fields: [companyId], references: [id])
   
-  createdById   String           @map("created_by_id")
+  createdById   String
   createdBy     Profile          @relation("ContractCreatedBy", fields: [createdById], references: [id])
   
-  assignedToId  String?          @map("assigned_to_id")
+  assignedToId  String?
   assignedTo    Profile?         @relation("ContractAssignedTo", fields: [assignedToId], references: [id])
   
   documents     Document[]
@@ -439,7 +434,6 @@ model Contract {
   @@index([code])
   @@index([status])
   @@index([companyId])
-  @@map("contratos")
 }
 
 model Payment {
@@ -453,28 +447,28 @@ model Payment {
   // Payment details
   description   String
   reference     String?
-  transactionId String?        @map("transaction_id")
+  transactionId String?
   
   // Banking information
-  fromAccount   String?        @map("from_account")
-  toAccount     String?        @map("to_account")
+  fromAccount   String?
+  toAccount     String?
   
   // Dates
-  dueDate       DateTime?      @map("due_date")
-  paidAt        DateTime?      @map("paid_at")
+  dueDate       DateTime?
+  paidAt        DateTime?
   
   // Timestamps
-  createdAt     DateTime       @default(now()) @map("created_at")
-  updatedAt     DateTime       @updatedAt @map("updated_at")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   
   // Relations
-  requestId     String?        @map("solicitud_id")
+  requestId     String?
   request       Request?       @relation(fields: [requestId], references: [id])
   
-  contractId    String?        @map("contrato_id")
+  contractId    String?
   contract      Contract?      @relation(fields: [contractId], references: [id])
   
-  companyId     String         @map("company_id")
+  companyId     String
   company       Company        @relation(fields: [companyId], references: [id])
   
   documents     Document[]
@@ -483,7 +477,6 @@ model Payment {
   @@index([status])
   @@index([companyId])
   @@index([dueDate])
-  @@map("pagos")
 }
 
 model Notification {
@@ -497,43 +490,41 @@ model Notification {
   metadata  Json?
   
   // Timestamps
-  createdAt DateTime           @default(now()) @map("created_at")
-  readAt    DateTime?          @map("read_at")
+  createdAt DateTime           @default(now())
+  readAt    DateTime?
   
   // Relations
-  profileId String             @map("user_id")
+  profileId String
   profile   Profile            @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@index([profileId, read])
   @@index([createdAt])
-  @@map("notifications")
 }
 
 model AuditLog {
   id        String     @id @default(cuid())
   action    String
   entity    String
-  entityId  String     @map("entity_id")
+  entityId  String
   
   // Change details
-  oldValues Json?      @map("old_values")
-  newValues Json?      @map("new_values")
+  oldValues Json?
+  newValues Json?
   
   // Context
-  ipAddress String?    @map("ip_address")
-  userAgent String?    @map("user_agent")
+  ipAddress String?
+  userAgent String?
   
   // Timestamps
-  createdAt DateTime   @default(now()) @map("created_at")
+  createdAt DateTime   @default(now())
   
   // Relations
-  profileId String     @map("user_id")
+  profileId String
   profile   Profile    @relation(fields: [profileId], references: [id])
 
   @@index([profileId])
   @@index([entity, entityId])
   @@index([createdAt])
-  @@map("audit_logs")
 }
 
 model Configuration {
@@ -546,8 +537,6 @@ model Configuration {
   category    String?
   
   // Timestamps
-  createdAt   DateTime   @default(now()) @map("created_at")
-  updatedAt   DateTime   @updatedAt @map("updated_at")
-
-  @@map("configurations")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 }

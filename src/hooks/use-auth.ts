@@ -34,13 +34,13 @@ export function useAuth() {
   /**
    * Sign in with email and password
    * @param email User's email
-   * @param hashedPassword Password that has been hashed client-side
+   * @param password Plain text password - Supabase Auth handles hashing internally
    */
-  const signIn = async (email: string, hashedPassword: string) => {
-    // The password has already been hashed client-side
+  const signIn = async (email: string, password: string) => {
+    // Send plain password to Supabase Auth - it handles password hashing internally
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
-      password: hashedPassword,
+      password,
     });
 
     if (error) throw error;
@@ -56,18 +56,18 @@ export function useAuth() {
   /**
    * Sign up with email and password
    * @param email User's email
-   * @param hashedPassword Password that has been hashed client-side
+   * @param password Plain text password - Supabase Auth handles hashing internally
    */
-  const signUp = async (email: string, hashedPassword: string) => {
+  const signUp = async (email: string, password: string) => {
     try {
       // Get the site URL from the environment or current location
       const siteUrl =
         process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
 
-      // The password has already been hashed client-side
+      // Send plain password to Supabase Auth - it handles password hashing internally
       const { data, error } = await supabase.auth.signUp({
         email,
-        password: hashedPassword,
+        password,
         options: {
           emailRedirectTo: `${siteUrl}/auth/callback`,
           data: {

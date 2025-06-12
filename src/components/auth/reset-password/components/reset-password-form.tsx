@@ -19,7 +19,6 @@ import { toast } from "@/components/ui/use-toast";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { PasswordInput } from "@/components/utils/password-input";
 import { PasswordStrengthIndicator } from "@/components/utils/password-strength-indicator";
-import { hashPassword } from "@/lib/auth/password-crypto";
 
 const formSchema = z
   .object({
@@ -78,12 +77,9 @@ export function ResetPasswordForm({
         throw new Error("User not found. Please try logging in again.");
       }
 
-      // Hash the password before sending to server
-      const hashedPassword = await hashPassword(data.password);
-
-      // Update the user's password
+      // Send plain password to Supabase Auth - it handles password hashing internally
       const { error } = await supabase.auth.updateUser({
-        password: hashedPassword,
+        password: data.password,
       });
 
       if (error) {
