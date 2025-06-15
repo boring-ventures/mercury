@@ -12,7 +12,16 @@ type AuthContextType = {
   profile: Profile | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (
+    email: string,
+    password: string
+  ) => Promise<{
+    success: boolean;
+    user: User | null;
+    session: Session | null;
+    confirmEmail: boolean;
+    error: Error | null;
+  }>;
   signOut: () => Promise<void>;
 };
 
@@ -22,7 +31,13 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   isLoading: true,
   signIn: async () => {},
-  signUp: async () => {},
+  signUp: async () => ({
+    success: false,
+    user: null,
+    session: null,
+    confirmEmail: false,
+    error: null,
+  }),
   signOut: async () => {},
 });
 
@@ -95,11 +110,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-    if (error) throw error;
+    try {
+      // Get the site URL from the environment or current location
+      const siteUrl =
+        process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${siteUrl}/auth/callback`,
+          data: {
+            email_confirmed: false,
+          },
+        },
+      });
+
+      if (error) {
+        return {
+          success: false,
+          user: null,
+          session: null,
+          confirmEmail: false,
+          error: error,
+        };
+      }
+
+      return {
+        success: true,
+        user: data.user,
+        session: data.session,
+        confirmEmail: true,
+        error: null,
+      };
+    } catch (error) {
+      console.error("Sign up error:", error);
+      return {
+        success: false,
+        user: null,
+        session: null,
+        confirmEmail: false,
+        error: error as Error,
+      };
+    }
   };
 
   const signOut = async () => {
@@ -118,4 +171,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export const useAuth = () => useContext(AuthContext); 
+export const useAuth = () => useContext(AuthContext);

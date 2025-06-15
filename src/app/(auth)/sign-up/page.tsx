@@ -190,6 +190,7 @@ export default function RegisterPage() {
         }
       });
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run on unmount
 
   // Clean up URLs when uploadedFiles changes (except during initial mount)
@@ -911,7 +912,7 @@ export default function RegisterPage() {
                                       }
                                     }}
                                     onBlur={(e) => {
-                                      field.onBlur(e);
+                                      field.onBlur();
                                       handleEmailBlur(e.target.value);
                                     }}
                                   />

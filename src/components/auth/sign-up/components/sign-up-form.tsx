@@ -66,14 +66,13 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
       setIsLoading(true);
 
       // Send plain password to Supabase Auth - it handles password hashing internally
-      const { success, user, session, confirmEmail, error } = await signUp(
-        data.email,
-        data.password
-      );
+      const signUpResult = await signUp(data.email, data.password);
 
-      if (!success || error) {
-        throw error || new Error("Failed to sign up");
+      if (!signUpResult.success || signUpResult.error) {
+        throw signUpResult.error || new Error("Failed to sign up");
       }
+
+      const { user, session, confirmEmail } = signUpResult;
 
       if (user) {
         let avatarUrl = null;

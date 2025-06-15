@@ -3,6 +3,10 @@ import { cookies } from "next/headers";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import prisma from "@/lib/prisma";
 
+interface WhereClause {
+  status?: "PENDING" | "APPROVED" | "REJECTED";
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Check authentication
@@ -36,9 +40,9 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit;
 
     // Build where clause
-    const where: any = {};
+    const where: WhereClause = {};
     if (status && status !== "all") {
-      where.status = status;
+      where.status = status as "PENDING" | "APPROVED" | "REJECTED";
     }
 
     // Fetch registration petitions with associated documents

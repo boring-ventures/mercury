@@ -78,6 +78,13 @@ export interface EmailValidationResponse {
   submittedAt?: Date;
 }
 
+interface UploadedDocument {
+  name: string;
+  size: number;
+  type: string;
+  fileUrl: string;
+}
+
 // Helper function to upload a single file to Supabase storage
 async function uploadFileToStorage(
   file: File,
@@ -85,25 +92,17 @@ async function uploadFileToStorage(
   filePath: string
 ): Promise<{ url: string | null; error: string | null }> {
   try {
+    // Create a client for uploading
     const supabase = createClientComponentClient();
 
-    // Upload file to Supabase storage
     const { data, error } = await supabase.storage
       .from(bucketName)
-      .upload(filePath, file, {
-        cacheControl: "3600",
-        upsert: false, // Don't overwrite existing files
-      });
+      .upload(filePath, file);
 
     if (error) {
       console.error("Storage upload error:", error);
       return { url: null, error: error.message };
     }
-
-    // Get the public URL of the uploaded file
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from(bucketName).getPublicUrl(data.path);
 
     return { url: data.path, error: null }; // Return the path, not public URL
   } catch (error) {
@@ -234,7 +233,7 @@ export function useRegistration() {
 
       // Upload files to Supabase storage first
       const bucketName = "mercury"; // Your bucket name
-      const uploadedDocuments: Record<string, any> = {};
+      const uploadedDocuments: Record<string, UploadedDocument> = {};
       const timestamp = Date.now();
       const sanitizedCompanyName = data.companyName.replace(
         /[^a-zA-Z0-9]/g,
@@ -258,8 +257,8 @@ export function useRegistration() {
             fileName
           );
 
-          if (uploadError) {
-            const errorMsg = `Error subiendo ${docType}: ${uploadError}`;
+          if (uploadError || !url) {
+            const errorMsg = `Error subiendo ${docType}: ${uploadError || "URL de archivo inválida"}`;
             setError(errorMsg);
             toast({
               title: "Error de subida",
@@ -273,7 +272,7 @@ export function useRegistration() {
             name: file.name,
             size: file.size,
             type: file.type,
-            fileUrl: url, // Include the file URL from storage
+            fileUrl: url, // url is now guaranteed to be string (not null)
           };
         }
       }

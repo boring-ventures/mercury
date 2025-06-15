@@ -58,7 +58,16 @@ export function useAuth() {
    * @param email User's email
    * @param password Plain text password - Supabase Auth handles hashing internally
    */
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (
+    email: string,
+    password: string
+  ): Promise<{
+    success: boolean;
+    user: User | null;
+    session: Session | null;
+    confirmEmail: boolean;
+    error: Error | null;
+  }> => {
     try {
       // Get the site URL from the environment or current location
       const siteUrl =
@@ -100,7 +109,7 @@ export function useAuth() {
         user: null,
         session: null,
         confirmEmail: false,
-        error,
+        error: error as Error,
       };
     }
   };

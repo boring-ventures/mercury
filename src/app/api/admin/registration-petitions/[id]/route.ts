@@ -6,14 +6,44 @@ import { resend, FROM_EMAIL } from "@/lib/resend";
 import crypto from "crypto";
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
+}
+
+interface RegistrationRequest {
+  id: string;
+  companyName: string;
+  ruc: string;
+  country: string;
+  activity: string;
+  contactName: string;
+  contactPosition: string;
+  email: string;
+  phone: string;
+  bankingDetails: string;
+  status: string;
+  reviewedAt: Date | null;
+  reviewedBy: string | null;
+  reviewNotes: string | null;
+  rejectionReason: string | null;
+  generatedPassword: string | null;
+  companyId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  documents?: Array<{
+    id: string;
+    filename: string;
+    mimeType: string;
+    type: string;
+    status: string;
+    url?: string;
+  }>;
 }
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     // Check authentication
     const supabase = createServerComponentClient({ cookies });
@@ -83,7 +113,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const { action, reviewNotes, rejectionReason } = body;
 
@@ -224,7 +254,16 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
             name: registrationRequest.companyName,
             ruc: registrationRequest.ruc,
             country: registrationRequest.country,
-            activity: registrationRequest.activity as any,
+            activity: registrationRequest.activity as
+              | "IMPORTACION_GENERAL"
+              | "IMPORTACION_ALIMENTOS"
+              | "IMPORTACION_TEXTILES"
+              | "IMPORTACION_MAQUINARIA"
+              | "IMPORTACION_ELECTRONICA"
+              | "IMPORTACION_VEHICULOS"
+              | "COMERCIO_MAYORISTA"
+              | "COMERCIO_MINORISTA"
+              | "OTROS",
             contactName: registrationRequest.contactName,
             contactPosition: registrationRequest.contactPosition,
             email: registrationRequest.email,
@@ -368,7 +407,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 }
 
 function generateApprovalEmail(
-  request: any,
+  request: RegistrationRequest,
   temporaryPassword: string,
   adminName: string,
   reviewDate: Date,
@@ -634,7 +673,7 @@ function generateApprovalEmail(
 }
 
 function generateRejectionEmail(
-  request: any,
+  request: RegistrationRequest,
   adminName: string,
   reviewDate: Date,
   reviewNotes?: string

@@ -82,18 +82,6 @@ const statusLabels = {
   REJECTED: "Rechazada",
 };
 
-const activityLabels = {
-  IMPORTACION_GENERAL: "Importación General",
-  IMPORTACION_ALIMENTOS: "Importación de Alimentos",
-  IMPORTACION_TEXTILES: "Importación de Textiles",
-  IMPORTACION_MAQUINARIA: "Importación de Maquinaria",
-  IMPORTACION_ELECTRONICA: "Importación de Electrónicos",
-  IMPORTACION_VEHICULOS: "Importación de Vehículos",
-  COMERCIO_MAYORISTA: "Comercio Mayorista",
-  COMERCIO_MINORISTA: "Comercio Minorista",
-  OTROS: "Otros",
-};
-
 function PetitionsPageContent() {
   const [petitions, setPetitions] = useState<RegistrationPetition[]>([]);
   const [loading, setLoading] = useState(true);

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -11,8 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -21,35 +19,34 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/use-toast";
+import { useParams, useRouter } from "next/navigation";
 import {
+  Download,
   ArrowLeft,
   Calendar,
   Clock,
-  Download,
   FileText,
   MessageSquare,
-  UserCheck,
-  UserX,
-  Eye,
-  Building2,
   User,
   Mail,
   Phone,
   MapPin,
   Briefcase,
   ZoomIn,
-  ZoomOut,
-  RotateCw,
   X,
   CheckCircle,
   Loader2,
   XCircle,
+  Eye,
+  Building2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { AdminRouteGuard } from "@/components/admin/admin-route-guard";
 import Link from "next/link";
+import Image from "next/image";
 
 interface RegistrationPetition {
   id: string;
@@ -78,6 +75,28 @@ interface RegistrationPetition {
     url?: string;
   }[];
 }
+
+// Add this type definition after the RegistrationPetition interface
+type TimelineItem =
+  | {
+      type: "system";
+      timestamp: Date;
+      id: string;
+    }
+  | {
+      type: "note";
+      timestamp: Date;
+      author: string;
+      content: string;
+      id: string;
+    }
+  | {
+      type: "decision";
+      timestamp: Date;
+      status: "APPROVED" | "REJECTED";
+      rejectionReason?: string;
+      id: string;
+    };
 
 const statusColors = {
   PENDING: "bg-yellow-100 text-yellow-800 border-yellow-200",
@@ -130,9 +149,11 @@ function DocumentViewer({ document }: DocumentViewerProps) {
     return (
       <div className="relative group">
         <div className="border rounded-lg overflow-hidden bg-gray-50">
-          <img
+          <Image
             src={documentUrl}
             alt={document.filename}
+            width={400}
+            height={256}
             className="w-full h-64 object-contain"
             onError={(e) => {
               // Fallback to placeholder if image fails to load
@@ -165,9 +186,11 @@ function DocumentViewer({ document }: DocumentViewerProps) {
               >
                 <X className="h-4 w-4" />
               </Button>
-              <img
+              <Image
                 src={documentUrl}
                 alt={document.filename}
+                width={800}
+                height={600}
                 className="max-w-full max-h-full object-contain"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src =
@@ -249,15 +272,8 @@ function PetitionDetailPageContent() {
   const [addingNote, setAddingNote] = useState(false);
   const [downloadingDocuments, setDownloadingDocuments] = useState(false);
   const [showAddNoteDialog, setShowAddNoteDialog] = useState(false);
-  const [noteAddedRecently, setNoteAddedRecently] = useState(false);
 
-  useEffect(() => {
-    if (petitionId) {
-      fetchPetition();
-    }
-  }, [petitionId]);
-
-  const fetchPetition = async () => {
+  const fetchPetition = useCallback(async () => {
     try {
       const response = await fetch(
         `/api/admin/registration-petitions/${petitionId}`
@@ -286,7 +302,13 @@ function PetitionDetailPageContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [petitionId, router]);
+
+  useEffect(() => {
+    if (petitionId) {
+      fetchPetition();
+    }
+  }, [petitionId, fetchPetition]);
 
   const handleAddNote = async () => {
     if (!petition || !newNote.trim()) {
@@ -331,10 +353,6 @@ function PetitionDetailPageContent() {
       // Reset form
       setNewNote("");
       setShowAddNoteDialog(false);
-
-      // Show recent note indicator
-      setNoteAddedRecently(true);
-      setTimeout(() => setNoteAddedRecently(false), 5000); // Remove after 5 seconds
     } catch (error) {
       console.error("Error adding note:", error);
       toast({
@@ -1032,7 +1050,7 @@ function PetitionDetailPageContent() {
         <CardContent className="space-y-4">
           {/* Collect all timeline items and sort by date */}
           {(() => {
-            const timelineItems = [];
+            const timelineItems: TimelineItem[] = [];
 
             // Add system entry
             timelineItems.push({
@@ -1047,7 +1065,7 @@ function PetitionDetailPageContent() {
                 .split("\n\n")
                 .filter((note) => note.trim())
                 .forEach((note, index) => {
-                  const noteMatch = note.match(/^\[(.*?) - (.*?)\] (.*)$/s);
+                  const noteMatch = note.match(/^\[(.*?) - (.*?)\] ([\s\S]*)$/);
                   if (noteMatch) {
                     const [, timestamp, author, content] = noteMatch;
                     timelineItems.push({
@@ -1206,8 +1224,8 @@ function PetitionDetailPageContent() {
             <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
               <MessageSquare className="h-8 w-8 text-gray-400 mx-auto mb-2" />
               <p className="text-sm text-gray-500">
-                No hay notas agregadas aún. Utiliza el botón "Agregar Nota" para
-                añadir comentarios internos.
+                No hay notas agregadas aún. Utiliza el botón &ldquo;Agregar
+                Nota&rdquo; para añadir comentarios internos.
               </p>
             </div>
           )}

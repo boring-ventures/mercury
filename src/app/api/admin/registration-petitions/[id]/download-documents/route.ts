@@ -5,20 +5,17 @@ import prisma from "@/lib/prisma";
 import JSZip from "jszip";
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
-    // Check authentication - await cookies()
-    const cookieStore = await cookies();
-    const supabase = createServerComponentClient({
-      cookies: () => cookieStore,
-    });
+    // Check authentication
+    const supabase = createServerComponentClient({ cookies });
     const {
       data: { session },
     } = await supabase.auth.getSession();

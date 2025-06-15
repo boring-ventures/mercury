@@ -4,14 +4,14 @@ import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import prisma from "@/lib/prisma";
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const { note } = await request.json();
 
     // Validate input
@@ -22,11 +22,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Check authentication - await cookies()
-    const cookieStore = await cookies();
-    const supabase = createServerComponentClient({
-      cookies: () => cookieStore,
-    });
+    // Check authentication
+    const supabase = createServerComponentClient({ cookies });
     const {
       data: { session },
     } = await supabase.auth.getSession();
