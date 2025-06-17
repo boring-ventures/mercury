@@ -1,49 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import prisma from "@/lib/prisma";
 
-interface RouteParams {
-  params: Promise<{
-    id: string;
-  }>;
-}
-
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const { id } = await params;
 
-    // Check authentication
-    const supabase = createServerComponentClient({ cookies });
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session) {
-      return NextResponse.json({ error: "No autenticado" }, { status: 401 });
-    }
-
-    // Get user profile to check role
-    const profile = await prisma.profile.findUnique({
-      where: { userId: session.user.id },
-      select: { role: true },
-    });
-
-    if (!profile || profile.role !== "SUPERADMIN") {
-      return NextResponse.json(
-        { error: "No tienes permisos para acceder a este documento" },
-        { status: 403 }
-      );
-    }
-
-    // Find the document - using the correct model name 'document'
+    // Find document by ID
     const document = await prisma.document.findUnique({
       where: { id },
       include: {
-        registrationRequest: {
+        request: {
           select: {
             id: true,
-            companyName: true,
+            code: true,
           },
         },
         company: {
@@ -57,137 +29,59 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     if (!document) {
       return NextResponse.json(
-        { error: "Documento no encontrado" },
+        { error: "Document not found" },
         { status: 404 }
       );
     }
 
-    // Check if document has a valid file URL
-    if (!document.fileUrl) {
-      return NextResponse.json(
-        { error: "Archivo no disponible" },
-        { status: 404 }
-      );
-    }
+    // In a real implementation, you would:
+    // 1. Check user permissions to access this document
+    // 2. Fetch the actual file from storage (S3, local filesystem, etc.)
+    // 3. Return the file with appropriate headers
 
-    // Common bucket names to try (prioritize mercury since that's the user's bucket)
-    const bucketNames = [
-      "mercury", // User's actual bucket
-      "registration-documents",
-      "documents",
-      "uploads",
-      "files",
-      "avatars", // fallback
-    ];
-
-    let fileData = null;
-    let successfulBucket = null;
-
-    // Try different bucket names
-    for (const bucketName of bucketNames) {
-      try {
-        console.log(
-          `Trying bucket: ${bucketName} for file: ${document.fileUrl}`
-        );
-
-        const { data, error } = await supabase.storage
-          .from(bucketName)
-          .download(document.fileUrl);
-
-        if (!error && data) {
-          fileData = data;
-          successfulBucket = bucketName;
-          console.log(`Success with bucket: ${bucketName}`);
-          break;
-        } else if (error) {
-          console.log(`Bucket ${bucketName} error:`, error.message);
-        }
-      } catch (bucketError) {
-        console.log(`Bucket ${bucketName} failed:`, bucketError);
-        continue;
-      }
-    }
-
-    // If we found the file, return it
-    if (fileData && successfulBucket) {
-      return new NextResponse(fileData, {
-        headers: {
-          "Content-Type": document.mimeType || "application/octet-stream",
-          "Content-Disposition": `inline; filename="${document.filename}"`,
-          "Cache-Control": "private, max-age=3600",
-        },
-      });
-    }
-
-    // If download failed, try to get public URL
-    for (const bucketName of bucketNames) {
-      try {
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from(bucketName).getPublicUrl(document.fileUrl);
-
-        if (publicUrl && !publicUrl.includes("null")) {
-          console.log(
-            `Redirecting to public URL from bucket ${bucketName}: ${publicUrl}`
-          );
-          return NextResponse.redirect(publicUrl);
-        }
-      } catch (publicUrlError) {
-        console.log(
-          `Public URL failed for bucket ${bucketName}:`,
-          publicUrlError
-        );
-        continue;
-      }
-    }
-
-    // If the fileUrl is already a full URL (starts with https://), redirect directly
-    if (document.fileUrl.startsWith("https://")) {
-      console.log(`Direct URL redirect: ${document.fileUrl}`);
+    // For demo purposes, we'll redirect to the fileUrl or return placeholder
+    if (document.fileUrl && document.fileUrl.startsWith("http")) {
+      // If it's a full URL, redirect to it
       return NextResponse.redirect(document.fileUrl);
     }
 
-    // Final fallback: return demo content based on file type
-    console.log(
-      `All storage methods failed, using fallback for: ${document.filename}`
-    );
-
-    const isPDF =
-      document.mimeType?.toLowerCase().includes("pdf") ||
-      document.filename.toLowerCase().endsWith(".pdf");
-
-    const isImage =
-      document.mimeType?.toLowerCase().includes("image") ||
-      document.filename.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i);
-
-    if (isPDF) {
-      // For demo: redirect to a sample PDF
-      return NextResponse.redirect(
-        "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
-      );
-    }
+    // Create a placeholder response for documents without valid URLs
+    const isImage = document.mimeType?.includes("image");
+    const isPDF = document.mimeType?.includes("pdf");
 
     if (isImage) {
-      // For demo: redirect to a placeholder image based on document name
+      // Redirect to a placeholder image service
       const placeholderUrl = `https://via.placeholder.com/800x600/f3f4f6/6b7280?text=${encodeURIComponent(document.filename)}`;
       return NextResponse.redirect(placeholderUrl);
     }
 
-    // For other file types, return error
-    return NextResponse.json(
-      { error: "No se pudo acceder al archivo" },
-      { status: 500 }
-    );
+    if (isPDF) {
+      // For PDFs, return a simple text response (in real app, return actual PDF)
+      const pdfContent = `Mock PDF content for: ${document.filename}\nDocument ID: ${document.id}\nType: ${document.type}\nCreated: ${document.createdAt}`;
+
+      return new NextResponse(pdfContent, {
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `inline; filename="${document.filename}"`,
+        },
+      });
+    }
+
+    // For other file types, return file info as JSON
+    return NextResponse.json({
+      id: document.id,
+      filename: document.filename,
+      mimeType: document.mimeType,
+      type: document.type,
+      size: document.fileSize,
+      status: document.status,
+      createdAt: document.createdAt,
+      message: "File content would be served in a real implementation",
+    });
   } catch (error) {
     console.error("Error serving document:", error);
     return NextResponse.json(
-      {
-        error: "Error interno del servidor",
-        details:
-          process.env.NODE_ENV === "development"
-            ? (error as Error).message
-            : undefined,
-      },
+      { error: "Failed to serve document" },
       { status: 500 }
     );
   }

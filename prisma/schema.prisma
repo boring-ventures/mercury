@@ -1,22 +1,310 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
-// ================================
-// ENUM TYPES
-// ================================
+model Profile {
+  id                 String         @id @default(cuid())
+  userId             String         @unique
+  avatarUrl          String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  active             Boolean        @default(true)
+  firstName          String?
+  lastName           String?
+  role               UserRole       @default(IMPORTADOR)
+  status             UserStatus     @default(ACTIVE)
+  phone              String?
+  lastLogin          DateTime?
+  companyId          String?
+  auditLogs          AuditLog[]
+  assignedContracts  Contract[]     @relation("ContractAssignedTo")
+  createdContracts   Contract[]     @relation("ContractCreatedBy")
+  notifications      Notification[]
+  company            Company?       @relation(fields: [companyId], references: [id])
+  assignedQuotations Quotation[]    @relation("QuotationAssignedTo")
+  createdQuotations  Quotation[]    @relation("QuotationCreatedBy")
+  assignedRequests   Request[]      @relation("RequestAssignedTo")
+  createdRequests    Request[]      @relation("RequestCreatedBy")
+
+  @@index([userId])
+  @@index([role])
+  @@index([status])
+  @@index([companyId])
+  @@map("profiles")
+}
+
+model Company {
+  id                  String               @id @default(cuid())
+  name                String
+  ruc                 String               @unique
+  country             String
+  activity            ActivityType
+  contactName         String
+  contactPosition     String
+  email               String
+  phone               String
+  bankingDetails      String?
+  status              UserStatus           @default(ACTIVE)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  contracts           Contract[]
+  documents           Document[]
+  payments            Payment[]
+  users               Profile[]
+  quotations          Quotation[]
+  registrationRequest RegistrationRequest?
+  requests            Request[]
+
+  @@index([ruc])
+  @@index([status])
+}
+
+model RegistrationRequest {
+  id                String             @id @default(cuid())
+  companyName       String
+  ruc               String
+  country           String
+  activity          ActivityType
+  contactName       String
+  contactPosition   String
+  email             String
+  phone             String
+  bankingDetails    String
+  status            RegistrationStatus @default(PENDING)
+  reviewedAt        DateTime?
+  reviewedBy        String?
+  reviewNotes       String?
+  rejectionReason   String?
+  generatedPassword String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  companyId         String?            @unique
+  documents         Document[]
+  company           Company?           @relation(fields: [companyId], references: [id])
+}
+
+model Provider {
+  id             String    @id @default(cuid())
+  name           String
+  country        String
+  bankingDetails String
+  email          String?
+  phone          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  requests       Request[]
+}
+
+model Request {
+  id           String        @id @default(cuid())
+  code         String        @unique
+  amount       Decimal       @db.Decimal(15, 2)
+  currency     Currency      @default(USDT)
+  description  String
+  status       RequestStatus @default(PENDING)
+  reviewNotes  String?
+  reviewedAt   DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  providerId   String
+  companyId    String
+  createdById  String
+  assignedToId String?
+  contracts    Contract[]
+  documents    Document[]
+  payments     Payment[]
+  quotations   Quotation[]
+  assignedTo   Profile?      @relation("RequestAssignedTo", fields: [assignedToId], references: [id])
+  company      Company       @relation(fields: [companyId], references: [id])
+  createdBy    Profile       @relation("RequestCreatedBy", fields: [createdById], references: [id])
+  provider     Provider      @relation(fields: [providerId], references: [id])
+
+  @@index([code])
+  @@index([status])
+  @@index([companyId])
+  @@index([createdById])
+  @@index([createdAt])
+}
+
+model Document {
+  id                    String               @id @default(cuid())
+  filename              String
+  fileUrl               String
+  fileSize              Int
+  mimeType              String
+  type                  DocumentType
+  status                DocumentStatus       @default(PENDING)
+  reviewNotes           String?
+  reviewedAt            DateTime?
+  reviewedBy            String?
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  companyId             String?
+  requestId             String?
+  registrationRequestId String?
+  quotationId           String?
+  contractId            String?
+  paymentId             String?
+  company               Company?             @relation(fields: [companyId], references: [id])
+  contract              Contract?            @relation(fields: [contractId], references: [id])
+  payment               Payment?             @relation(fields: [paymentId], references: [id])
+  quotation             Quotation?           @relation(fields: [quotationId], references: [id])
+  registrationRequest   RegistrationRequest? @relation(fields: [registrationRequestId], references: [id])
+  request               Request?             @relation(fields: [requestId], references: [id])
+
+  @@index([type])
+  @@index([status])
+  @@index([companyId])
+  @@index([requestId])
+}
+
+model Quotation {
+  id           String          @id @default(cuid())
+  code         String          @unique
+  amount       Decimal         @db.Decimal(15, 2)
+  currency     Currency        @default(USD)
+  description  String
+  validUntil   DateTime
+  status       QuotationStatus @default(DRAFT)
+  baseAmount   Decimal         @default(0) @db.Decimal(15, 2)
+  fees         Decimal         @default(0) @db.Decimal(15, 2)
+  taxes        Decimal         @default(0) @db.Decimal(15, 2)
+  totalAmount  Decimal         @db.Decimal(15, 2)
+  terms        String?
+  notes        String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  sentAt       DateTime?
+  respondedAt  DateTime?
+  requestId    String
+  companyId    String
+  createdById  String
+  assignedToId String?
+  contracts    Contract[]
+  documents    Document[]
+  assignedTo   Profile?        @relation("QuotationAssignedTo", fields: [assignedToId], references: [id])
+  company      Company         @relation(fields: [companyId], references: [id])
+  createdBy    Profile         @relation("QuotationCreatedBy", fields: [createdById], references: [id])
+  request      Request         @relation(fields: [requestId], references: [id])
+
+  @@index([code])
+  @@index([status])
+  @@index([requestId])
+  @@index([validUntil])
+}
+
+model Contract {
+  id           String         @id @default(cuid())
+  code         String         @unique
+  title        String
+  description  String
+  amount       Decimal        @db.Decimal(15, 2)
+  currency     Currency       @default(USD)
+  status       ContractStatus @default(DRAFT)
+  startDate    DateTime
+  endDate      DateTime
+  terms        String
+  conditions   String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  signedAt     DateTime?
+  requestId    String?
+  quotationId  String?
+  companyId    String
+  createdById  String
+  assignedToId String?
+  assignedTo   Profile?       @relation("ContractAssignedTo", fields: [assignedToId], references: [id])
+  company      Company        @relation(fields: [companyId], references: [id])
+  createdBy    Profile        @relation("ContractCreatedBy", fields: [createdById], references: [id])
+  quotation    Quotation?     @relation(fields: [quotationId], references: [id])
+  request      Request?       @relation(fields: [requestId], references: [id])
+  documents    Document[]
+  payments     Payment[]
+
+  @@index([code])
+  @@index([status])
+  @@index([companyId])
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  code          String        @unique
+  amount        Decimal       @db.Decimal(15, 2)
+  currency      Currency      @default(USDT)
+  type          PaymentType
+  status        PaymentStatus @default(PENDING)
+  description   String
+  reference     String?
+  transactionId String?
+  fromAccount   String?
+  toAccount     String?
+  dueDate       DateTime?
+  paidAt        DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  requestId     String?
+  contractId    String?
+  companyId     String
+  documents     Document[]
+  company       Company       @relation(fields: [companyId], references: [id])
+  contract      Contract?     @relation(fields: [contractId], references: [id])
+  request       Request?      @relation(fields: [requestId], references: [id])
+
+  @@index([code])
+  @@index([status])
+  @@index([companyId])
+  @@index([dueDate])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  title     String
+  message   String
+  type      NotificationType @default(INFO)
+  read      Boolean          @default(false)
+  metadata  Json?
+  createdAt DateTime         @default(now())
+  readAt    DateTime?
+  profileId String
+  profile   Profile          @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, read])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  entity    String
+  entityId  String
+  oldValues Json?
+  newValues Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  profileId String
+  profile   Profile  @relation(fields: [profileId], references: [id])
+
+  @@index([profileId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+model Configuration {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  description String?
+  category    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
 
 enum UserRole {
   IMPORTADOR
@@ -125,418 +413,4 @@ enum ActivityType {
   COMERCIO_MAYORISTA
   COMERCIO_MINORISTA
   OTROS
-}
-
-// ================================
-// CORE MODELS
-// ================================
-
-model Profile {
-  id            String               @id @default(cuid())
-  userId        String               @unique
-  avatarUrl     String?
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
-  active        Boolean              @default(true)
-  firstName     String?
-  lastName      String?
-  role          UserRole             @default(IMPORTADOR)
-  
-  // Additional fields from users table (email/password handled by Supabase Auth)
-  status        UserStatus           @default(ACTIVE)
-  phone         String?
-  lastLogin     DateTime?
-  
-  // Company association (optional - superadmins don't belong to companies)
-  companyId     String?
-  company       Company?             @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  
-  // Relations
-  createdRequests           Request[]               @relation("RequestCreatedBy")
-  assignedRequests          Request[]               @relation("RequestAssignedTo")
-  createdQuotations         Quotation[]             @relation("QuotationCreatedBy")
-  assignedQuotations        Quotation[]             @relation("QuotationAssignedTo")
-  createdContracts          Contract[]              @relation("ContractCreatedBy")
-  assignedContracts         Contract[]              @relation("ContractAssignedTo")
-  notifications             Notification[]
-  auditLogs                 AuditLog[]
-
-  @@index([userId])
-  @@index([role])
-  @@index([status])
-  @@index([companyId])
-}
-
-model Company {
-  id              String           @id @default(cuid())
-  name            String
-  ruc             String           @unique
-  country         String
-  activity        ActivityType
-  
-  // Contact information
-  contactName     String
-  contactPosition String
-  email           String
-  phone           String
-  
-  // Banking information (from registration request)
-  bankingDetails  String?
-  
-  // Status and timestamps
-  status          UserStatus       @default(ACTIVE)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  
-  // Relations - now a company can have multiple users
-  users                   Profile[]
-  registrationRequest     RegistrationRequest?
-  requests                Request[]
-  documents              Document[]
-  quotations             Quotation[]
-  contracts              Contract[]
-  payments               Payment[]
-
-  @@index([ruc])
-  @@index([status])
-}
-
-model RegistrationRequest {
-  id              String               @id @default(cuid())
-  
-  // Company information
-  companyName     String
-  ruc             String
-  country         String
-  activity        ActivityType
-  
-  // Contact information
-  contactName     String
-  contactPosition String
-  email           String
-  phone           String
-  
-  // Banking information
-  bankingDetails  String
-  
-  // Status and review
-  status          RegistrationStatus   @default(PENDING)
-  reviewedAt      DateTime?
-  reviewedBy      String?
-  reviewNotes     String?
-  rejectionReason String?
-  
-  // Generated credentials
-  generatedPassword String?
-  
-  // Timestamps
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
-  
-  // Relations
-  companyId       String?              @unique
-  company         Company?             @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  documents       Document[]
-}
-
-model Provider {
-  id              String           @id @default(cuid())
-  name            String
-  country         String
-  
-  // Banking information
-  bankingDetails  String
-  
-  // Contact information
-  email           String?
-  phone           String?
-  
-  // Timestamps
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  
-  // Relations
-  requests        Request[]
-}
-
-model Request {
-  id            String             @id @default(cuid())
-  code          String             @unique
-  amount        Decimal            @db.Decimal(15,2)
-  currency      Currency           @default(USDT)
-  description   String
-  status        RequestStatus      @default(PENDING)
-  
-  // Review information
-  reviewNotes   String?
-  reviewedAt    DateTime?
-  
-  // Timestamps
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
-  
-  // Relations
-  providerId    String
-  provider      Provider           @relation(fields: [providerId], references: [id])
-  
-  companyId     String
-  company       Company            @relation(fields: [companyId], references: [id])
-  
-  createdById   String
-  createdBy     Profile            @relation("RequestCreatedBy", fields: [createdById], references: [id])
-  
-  assignedToId  String?
-  assignedTo    Profile?           @relation("RequestAssignedTo", fields: [assignedToId], references: [id])
-  
-  documents     Document[]
-  quotations    Quotation[]
-  contracts     Contract[]
-  payments      Payment[]
-
-  @@index([code])
-  @@index([status])
-  @@index([companyId])
-  @@index([createdById])
-  @@index([createdAt])
-}
-
-model Document {
-  id          String            @id @default(cuid())
-  filename    String
-  fileUrl     String
-  fileSize    Int
-  mimeType    String
-  type        DocumentType
-  status      DocumentStatus    @default(PENDING)
-  
-  // Review information
-  reviewNotes String?
-  reviewedAt  DateTime?
-  reviewedBy  String?
-  
-  // Timestamps
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  
-  // Relations (nullable - document can belong to different entities)
-  companyId             String?
-  company               Company?       @relation(fields: [companyId], references: [id])
-  
-  requestId             String?
-  request               Request?       @relation(fields: [requestId], references: [id])
-  
-  registrationRequestId String?
-  registrationRequest   RegistrationRequest? @relation(fields: [registrationRequestId], references: [id])
-  
-  quotationId           String?
-  quotation             Quotation?     @relation(fields: [quotationId], references: [id])
-  
-  contractId            String?
-  contract              Contract?      @relation(fields: [contractId], references: [id])
-  
-  paymentId             String?
-  payment               Payment?       @relation(fields: [paymentId], references: [id])
-
-  @@index([type])
-  @@index([status])
-  @@index([companyId])
-  @@index([requestId])
-}
-
-model Quotation {
-  id            String              @id @default(cuid())
-  code          String              @unique
-  amount        Decimal             @db.Decimal(15,2)
-  currency      Currency            @default(USD)
-  description   String
-  validUntil    DateTime
-  status        QuotationStatus     @default(DRAFT)
-  
-  // Pricing breakdown
-  baseAmount    Decimal             @default(0) @db.Decimal(15,2)
-  fees          Decimal             @default(0) @db.Decimal(15,2)
-  taxes         Decimal             @default(0) @db.Decimal(15,2)
-  totalAmount   Decimal             @db.Decimal(15,2)
-  
-  // Terms and conditions
-  terms         String?
-  notes         String?
-  
-  // Timestamps
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
-  sentAt        DateTime?
-  respondedAt   DateTime?
-  
-  // Relations
-  requestId     String
-  request       Request             @relation(fields: [requestId], references: [id])
-  
-  companyId     String
-  company       Company             @relation(fields: [companyId], references: [id])
-  
-  createdById   String
-  createdBy     Profile             @relation("QuotationCreatedBy", fields: [createdById], references: [id])
-  
-  assignedToId  String?
-  assignedTo    Profile?            @relation("QuotationAssignedTo", fields: [assignedToId], references: [id])
-  
-  documents     Document[]
-  contracts     Contract[]
-
-  @@index([code])
-  @@index([status])
-  @@index([requestId])
-  @@index([validUntil])
-}
-
-model Contract {
-  id            String           @id @default(cuid())
-  code          String           @unique
-  title         String
-  description   String
-  amount        Decimal          @db.Decimal(15,2)
-  currency      Currency         @default(USD)
-  status        ContractStatus   @default(DRAFT)
-  
-  // Contract dates
-  startDate     DateTime
-  endDate       DateTime
-  
-  // Terms
-  terms         String
-  conditions    String?
-  
-  // Timestamps
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-  signedAt      DateTime?
-  
-  // Relations
-  requestId     String?
-  request       Request?         @relation(fields: [requestId], references: [id])
-  
-  quotationId   String?
-  quotation     Quotation?       @relation(fields: [quotationId], references: [id])
-  
-  companyId     String
-  company       Company          @relation(fields: [companyId], references: [id])
-  
-  createdById   String
-  createdBy     Profile          @relation("ContractCreatedBy", fields: [createdById], references: [id])
-  
-  assignedToId  String?
-  assignedTo    Profile?         @relation("ContractAssignedTo", fields: [assignedToId], references: [id])
-  
-  documents     Document[]
-  payments      Payment[]
-
-  @@index([code])
-  @@index([status])
-  @@index([companyId])
-}
-
-model Payment {
-  id            String         @id @default(cuid())
-  code          String         @unique
-  amount        Decimal        @db.Decimal(15,2)
-  currency      Currency       @default(USDT)
-  type          PaymentType
-  status        PaymentStatus  @default(PENDING)
-  
-  // Payment details
-  description   String
-  reference     String?
-  transactionId String?
-  
-  // Banking information
-  fromAccount   String?
-  toAccount     String?
-  
-  // Dates
-  dueDate       DateTime?
-  paidAt        DateTime?
-  
-  // Timestamps
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  
-  // Relations
-  requestId     String?
-  request       Request?       @relation(fields: [requestId], references: [id])
-  
-  contractId    String?
-  contract      Contract?      @relation(fields: [contractId], references: [id])
-  
-  companyId     String
-  company       Company        @relation(fields: [companyId], references: [id])
-  
-  documents     Document[]
-
-  @@index([code])
-  @@index([status])
-  @@index([companyId])
-  @@index([dueDate])
-}
-
-model Notification {
-  id        String             @id @default(cuid())
-  title     String
-  message   String
-  type      NotificationType   @default(INFO)
-  read      Boolean            @default(false)
-  
-  // Metadata
-  metadata  Json?
-  
-  // Timestamps
-  createdAt DateTime           @default(now())
-  readAt    DateTime?
-  
-  // Relations
-  profileId String
-  profile   Profile            @relation(fields: [profileId], references: [id], onDelete: Cascade)
-
-  @@index([profileId, read])
-  @@index([createdAt])
-}
-
-model AuditLog {
-  id        String     @id @default(cuid())
-  action    String
-  entity    String
-  entityId  String
-  
-  // Change details
-  oldValues Json?
-  newValues Json?
-  
-  // Context
-  ipAddress String?
-  userAgent String?
-  
-  // Timestamps
-  createdAt DateTime   @default(now())
-  
-  // Relations
-  profileId String
-  profile   Profile    @relation(fields: [profileId], references: [id])
-
-  @@index([profileId])
-  @@index([entity, entityId])
-  @@index([createdAt])
-}
-
-model Configuration {
-  id          String     @id @default(cuid())
-  key         String     @unique
-  value       String
-  
-  // Metadata
-  description String?
-  category    String?
-  
-  // Timestamps
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
 }

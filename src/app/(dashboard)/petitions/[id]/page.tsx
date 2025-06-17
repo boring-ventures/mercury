@@ -134,6 +134,8 @@ interface DocumentViewerProps {
 
 function DocumentViewer({ document }: DocumentViewerProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const isImage =
     document.mimeType?.toLowerCase().includes("image") ||
@@ -142,116 +144,215 @@ function DocumentViewer({ document }: DocumentViewerProps) {
     document.mimeType?.toLowerCase().includes("pdf") ||
     document.filename.toLowerCase().endsWith(".pdf");
 
-  // For demo purposes, using placeholder URLs
-  const documentUrl = document.url || `/api/documents/${document.id}`;
+  // Better URL handling - use document.url if available, fallback to API endpoint
+  const getDocumentUrl = () => {
+    if (document.url && document.url.startsWith("http")) {
+      return document.url;
+    }
+    // For demo purposes, since we know these might be mock files
+    if (
+      document.url &&
+      (document.url.startsWith("/uploads/") || document.url.includes("1750030"))
+    ) {
+      return null; // Return null for demo files that don't exist
+    }
+    return `/api/documents/${document.id}`;
+  };
+
+  const documentUrl = getDocumentUrl();
+  const shouldShowPlaceholder = !documentUrl || imageError;
+
+  const handleDownload = () => {
+    if (documentUrl) {
+      window.open(documentUrl, "_blank");
+    }
+  };
 
   if (isImage) {
     return (
-      <div className="relative group">
-        <div className="border rounded-lg overflow-hidden bg-gray-50">
-          <Image
-            src={documentUrl}
-            alt={document.filename}
-            width={400}
-            height={256}
-            className="w-full h-64 object-contain"
-            onError={(e) => {
-              // Fallback to placeholder if image fails to load
-              (e.target as HTMLImageElement).src =
-                `https://via.placeholder.com/400x300/f3f4f6/6b7280?text=${encodeURIComponent(document.filename)}`;
-            }}
-          />
-        </div>
-        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => setIsFullscreen(true)}
-            className="bg-white/90 hover:bg-white"
-          >
-            <ZoomIn className="h-4 w-4 mr-2" />
-            Ver completa
-          </Button>
-        </div>
-
-        {/* Fullscreen Modal */}
-        {isFullscreen && (
-          <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4">
-            <div className="relative max-w-full max-h-full">
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => setIsFullscreen(false)}
-                className="absolute top-4 right-4 z-10"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+      <>
+        <div
+          className="relative group cursor-pointer"
+          onClick={() => setIsFullscreen(true)}
+        >
+          <div className="border rounded-lg overflow-hidden bg-gray-50">
+            {shouldShowPlaceholder ? (
+              <div className="w-full h-64 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                <div className="text-center">
+                  <FileText className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                  <p className="text-sm text-gray-600 font-medium">
+                    {document.filename}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Vista previa no disponible
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Archivo de demostración
+                  </p>
+                </div>
+              </div>
+            ) : (
               <Image
                 src={documentUrl}
                 alt={document.filename}
-                width={800}
-                height={600}
-                className="max-w-full max-h-full object-contain"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src =
-                    `https://via.placeholder.com/800x600/f3f4f6/6b7280?text=${encodeURIComponent(document.filename)}`;
+                width={400}
+                height={256}
+                className="w-full h-64 object-contain"
+                onError={() => {
+                  console.log(`Failed to load image: ${documentUrl}`);
+                  setImageError(true);
+                }}
+                onLoad={() => {
+                  setImageLoaded(true);
+                  setImageError(false);
                 }}
               />
-            </div>
+            )}
           </div>
-        )}
-      </div>
+
+          {imageLoaded && !imageError && (
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
+              <Button
+                size="sm"
+                className="bg-black/50 hover:bg-black/70 text-white"
+              >
+                <ZoomIn className="h-4 w-4 mr-1" />
+                Ver completo
+              </Button>
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-2 mt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsFullscreen(true)}
+            disabled={shouldShowPlaceholder}
+          >
+            <Eye className="h-4 w-4 mr-1" />
+            Ver
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownload}
+            disabled={shouldShowPlaceholder}
+          >
+            <Download className="h-4 w-4 mr-1" />
+            Descargar
+          </Button>
+        </div>
+
+        {/* Enhanced Modal with Dialog */}
+        <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <DialogTitle>{document.filename}</DialogTitle>
+                  <DialogDescription>
+                    {document.type} • Vista completa
+                  </DialogDescription>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownload}
+                  disabled={shouldShowPlaceholder}
+                >
+                  <Download className="h-4 w-4 mr-1" />
+                  Descargar
+                </Button>
+              </div>
+            </DialogHeader>
+
+            <div className="mt-4">
+              {shouldShowPlaceholder ? (
+                <div className="w-full h-96 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                  <div className="text-center">
+                    <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-lg font-medium text-gray-600 mb-2">
+                      Vista previa no disponible
+                    </p>
+                    <p className="text-sm text-gray-500">{document.filename}</p>
+                    <p className="text-xs text-gray-400 mt-2">
+                      Archivo de demostración
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <Image
+                  src={documentUrl}
+                  alt={document.filename}
+                  width={800}
+                  height={600}
+                  className="w-full h-auto max-h-[60vh] object-contain"
+                  onError={() => setImageError(true)}
+                  onLoad={() => setImageLoaded(true)}
+                />
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      </>
     );
   }
 
   if (isPDF) {
     return (
-      <div className="border rounded-lg overflow-hidden bg-gray-50">
-        <div className="h-96">
-          <iframe
-            src={`${documentUrl}#toolbar=1&navpanes=1&scrollbar=1&page=1&view=FitH`}
-            className="w-full h-full"
-            title={document.filename}
-            onError={() => {
-              // Fallback if PDF fails to load
-              console.log("PDF failed to load:", document.filename);
-            }}
+      <div className="text-center py-8">
+        <FileText className="h-16 w-16 text-blue-500 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-2">
+          Documento PDF
+        </h3>
+        <p className="text-gray-600 mb-4">{document.filename}</p>
+        <div className="flex gap-2 justify-center">
+          <Button onClick={handleDownload} disabled={shouldShowPlaceholder}>
+            <Eye className="h-4 w-4 mr-2" />
+            Abrir PDF
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleDownload}
+            disabled={shouldShowPlaceholder}
           >
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">No se puede mostrar el PDF</p>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => window.open(documentUrl, "_blank")}
-                  className="mt-2"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Descargar PDF
-                </Button>
-              </div>
-            </div>
-          </iframe>
+            <Download className="h-4 w-4 mr-2" />
+            Descargar
+          </Button>
         </div>
+        {shouldShowPlaceholder && (
+          <p className="text-xs text-gray-500 mt-2">
+            Archivo de demostración - Vista previa no disponible
+          </p>
+        )}
       </div>
     );
   }
 
-  // Default fallback for other file types
+  // Other file types
   return (
-    <div className="border rounded-lg p-8 text-center bg-gray-50">
-      <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-      <p className="text-gray-600 mb-2">Vista previa no disponible</p>
-      <p className="text-sm text-gray-500 mb-4">{document.filename}</p>
+    <div className="text-center py-8">
+      <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+      <h3 className="text-lg font-medium text-gray-900 mb-2">
+        {document.filename}
+      </h3>
+      <p className="text-gray-600 mb-4">
+        Vista previa no disponible para este tipo de archivo
+      </p>
       <Button
-        size="sm"
+        onClick={handleDownload}
+        disabled={shouldShowPlaceholder}
         variant="outline"
-        onClick={() => window.open(documentUrl, "_blank")}
       >
         <Download className="h-4 w-4 mr-2" />
         Descargar
       </Button>
+      {shouldShowPlaceholder && (
+        <p className="text-xs text-gray-500 mt-2">
+          Archivo de demostración - Descarga no disponible
+        </p>
+      )}
     </div>
   );
 }

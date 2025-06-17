@@ -10,55 +10,39 @@ import {
 import { NavGroup } from "./nav-group";
 import { NavUser } from "./nav-user";
 import { TeamSwitcher } from "./team-switcher";
-import { sidebarData } from "./data/sidebar-data";
+import { NotificationDropdown } from "@/components/notifications";
+import { getSidebarDataByRole } from "./data/sidebar-data";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { FileText } from "lucide-react";
 import type { NavGroupProps } from "./types";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { profile, isLoading } = useCurrentUser();
 
-  // Create dynamic navigation groups based on user role
-  const getDynamicNavGroups = (): NavGroupProps[] => {
-    const baseNavGroups = [...sidebarData.navGroups];
-
-    // Add admin section if user is super admin
-    if (!isLoading && profile && profile.role === "SUPERADMIN") {
-      const adminGroupIndex = baseNavGroups.findIndex(
-        (group) => group.title === "Administración"
-      );
-
-      const adminGroup: NavGroupProps = {
-        title: "Administración",
-        items: [
-          {
-            title: "Solicitudes de Registro",
-            url: "/petitions",
-            icon: FileText,
-          },
-        ],
-      };
-
-      if (adminGroupIndex === -1) {
-        // Add admin group if it doesn't exist
-        baseNavGroups.splice(1, 0, adminGroup); // Insert after "General" group
-      } else {
-        // Update existing admin group
-        baseNavGroups[adminGroupIndex] = adminGroup;
-      }
+  // Get sidebar data based on user role
+  const getSidebarData = () => {
+    if (isLoading || !profile) {
+      // Return basic sidebar data while loading
+      return getSidebarDataByRole("DEFAULT");
     }
 
-    return baseNavGroups;
+    return getSidebarDataByRole(profile.role);
   };
+
+  const sidebarData = getSidebarData();
 
   return (
     <Sidebar collapsible="icon" variant="floating" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={sidebarData.teams} />
+        <div className="flex items-center justify-between gap-2 px-2">
+          <div className="flex-1">
+            <TeamSwitcher teams={sidebarData.teams} />
+          </div>
+          <NotificationDropdown className="flex-shrink-0" />
+        </div>
       </SidebarHeader>
       <SidebarContent>
-        {getDynamicNavGroups().map((props: NavGroupProps) => (
-          <NavGroup key={props.title} {...props} />
+        {sidebarData.navGroups.map((group: NavGroupProps) => (
+          <NavGroup key={group.title} {...group} />
         ))}
       </SidebarContent>
       <SidebarFooter>
