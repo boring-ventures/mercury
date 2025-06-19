@@ -6,8 +6,7 @@ import prisma from "@/lib/prisma";
 // GET: Fetch profile for the current authenticated user
 export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = createRouteHandlerClient({ cookies });
 
     // Use getUser() instead of getSession() for better security
     const {

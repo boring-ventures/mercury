@@ -9,16 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Package,
-  FileText,
-  Building2,
-  TrendingUp,
-  CheckCircle,
-  Clock,
-  XCircle,
-} from "lucide-react";
-import Link from "next/link";
+import { FileText, CheckCircle, Clock, XCircle } from "lucide-react";
 import { useRequests } from "@/hooks/use-requests";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
@@ -34,7 +25,7 @@ interface RequestItem {
 }
 
 export default function AdminDashboard() {
-  const { data: requestsData, isLoading } = useRequests({ limit: 5 });
+  const { data: requestsData } = useRequests({ limit: 5 });
 
   // Mock data for other metrics (would come from actual APIs)
   const metrics = {

@@ -134,15 +134,23 @@ interface DocumentViewerProps {
   onCloseModal: () => void;
 }
 
+// Add interface for document mapping
+interface DocumentResponse {
+  id: string;
+  filename: string;
+  mimeType: string;
+  type: string;
+  status: string;
+  url?: string;
+  fileUrl?: string;
+}
+
 function DocumentViewer({
   document,
   isModalOpen,
   onOpenModal,
   onCloseModal,
 }: DocumentViewerProps) {
-  const [imageError, setImageError] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [documentData, setDocumentData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
   const isImage =
@@ -201,8 +209,8 @@ function DocumentViewer({
           }
           return { url: response.url, type: "redirect" };
         })
-        .then((data) => {
-          setDocumentData(data);
+        .then(() => {
+          // Set document data
         })
         .catch((error) => {
           console.error("Error fetching document:", error);
@@ -244,12 +252,8 @@ function DocumentViewer({
                 className="w-full h-64 object-contain"
                 onError={() => {
                   console.log(`Failed to load image: ${documentUrl}`);
-                  setImageError(true);
                 }}
-                onLoad={() => {
-                  setImageLoaded(true);
-                  setImageError(false);
-                }}
+                onLoad={() => {}}
               />
             )}
           </div>
@@ -317,7 +321,6 @@ function DocumentViewer({
                   width={800}
                   height={600}
                   className="max-w-full max-h-full object-contain rounded-lg"
-                  onError={() => setImageError(true)}
                 />
               )}
             </div>
@@ -475,7 +478,7 @@ function PetitionDetailPageContent() {
       const mappedPetition = {
         ...data.petition,
         documents:
-          data.petition.documents?.map((doc: any) => ({
+          data.petition.documents?.map((doc: DocumentResponse) => ({
             ...doc,
             url: doc.fileUrl || doc.url, // Map fileUrl to url for compatibility
           })) || [],
@@ -702,7 +705,7 @@ function PetitionDetailPageContent() {
   };
 
   // Function to handle document download
-  const handleDocumentDownload = (doc: any) => {
+  const handleDocumentDownload = (doc: DocumentResponse) => {
     const documentUrl = doc.url || `/api/documents/${doc.id}`;
     const link = globalThis.document.createElement("a");
     link.href = documentUrl;
