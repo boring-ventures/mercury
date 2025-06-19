@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import * as z from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { useUser, useUpdateUser } from "@/hooks/use-users";
 import {
@@ -17,11 +17,11 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,6 @@ import { Switch } from "@/components/ui/switch";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import type { UpdateUserRequest, UserCompany } from "@/types/users";
-import type { UserRole, UserStatus } from "@prisma/client";
 
 const editUserSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),

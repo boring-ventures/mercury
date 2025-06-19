@@ -28,7 +28,6 @@ import {
   Calendar,
   Clock,
   FileText,
-  Bell,
   Activity,
 } from "lucide-react";
 
@@ -109,9 +108,12 @@ export function UserDetailDialog({
               <CardContent className="space-y-4">
                 <div className="flex items-start space-x-4">
                   <Avatar className="h-16 w-16">
-                    <AvatarImage src={user.avatarUrl} />
+                    <AvatarImage src={user.avatarUrl || undefined} />
                     <AvatarFallback className="text-lg">
-                      {getUserInitials(user.firstName, user.lastName)}
+                      {getUserInitials(
+                        user.firstName || undefined,
+                        user.lastName || undefined
+                      )}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 space-y-2">

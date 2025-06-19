@@ -35,7 +35,7 @@ export async function GET(
     // Build where clause based on user role
     // Check if the parameter is an ID (CUID format) or a code (human-readable format)
     const isId = requestIdOrCode.length > 20 && !requestIdOrCode.includes("-");
-    let whereClause: any = isId
+    const whereClause: Record<string, unknown> = isId
       ? { id: requestIdOrCode }
       : { code: requestIdOrCode };
 
@@ -191,7 +191,7 @@ export async function PUT(
 
     // Check if the parameter is an ID (CUID format) or a code (human-readable format)
     const isId = requestIdOrCode.length > 20 && !requestIdOrCode.includes("-");
-    let whereClause: any = isId
+    const whereClause: Record<string, unknown> = isId
       ? { id: requestIdOrCode }
       : { code: requestIdOrCode };
 
@@ -218,7 +218,7 @@ export async function PUT(
     }
 
     // Prepare update data based on user role
-    let updateData: any = {};
+    const updateData: Record<string, unknown> = {};
 
     if (profile.role === "SUPERADMIN") {
       // Superadmin can update status, notes, and assignment
@@ -330,7 +330,7 @@ export async function DELETE(
 
     // Check if the parameter is an ID (CUID format) or a code (human-readable format)
     const isId = requestIdOrCode.length > 20 && !requestIdOrCode.includes("-");
-    let whereClause: any = isId
+    const whereClause: Record<string, unknown> = isId
       ? { id: requestIdOrCode }
       : { code: requestIdOrCode };
 

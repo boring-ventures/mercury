@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,12 +26,9 @@ import {
 } from "@/components/ui/dialog";
 import {
   ArrowLeft,
-  Building2,
   Calendar,
   DollarSign,
   FileText,
-  MapPin,
-  User,
   Eye,
   Download,
   CheckCircle,
@@ -40,13 +37,9 @@ import {
   AlertCircle,
   Loader2,
   RefreshCw,
-  MessageSquare,
   Plus,
   ZoomIn,
-  X,
   Banknote,
-  Send,
-  Receipt,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -54,7 +47,6 @@ import {
   useRequest,
   useUpdateRequest,
   useRequestStatusConfig,
-  useRequestWorkflow,
 } from "@/hooks/use-requests";
 import {
   useUpdateDocumentStatus,
@@ -66,6 +58,53 @@ import {
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/components/ui/use-toast";
+
+interface DocumentItem {
+  id: string;
+  filename: string;
+  mimeType: string;
+  type?: string;
+  fileUrl?: string;
+  status?: string;
+  reviewNotes?: string;
+  createdAt?: Date;
+}
+
+interface HistoryEvent {
+  date: string;
+  description: string;
+  user: string;
+  type: string;
+}
+
+interface InternalNote {
+  id?: string;
+  content: string;
+  createdAt: Date;
+  createdBy: {
+    firstName?: string;
+    lastName?: string;
+  };
+}
+
+interface ToastInstance {
+  (options: {
+    title: string;
+    description?: string;
+    variant?: "default" | "destructive" | null | undefined;
+  }): void;
+}
+
+interface QuotationItem {
+  id: string;
+  code: string;
+  status: string;
+  totalAmount: number;
+  currency: string;
+  validUntil: Date;
+  createdAt: Date;
+  notes?: string;
+}
 
 const STATUS_OPTIONS = [
   { value: "PENDING", label: "Cotización" },
@@ -344,11 +383,11 @@ function DocumentCard({
   document,
   requestId,
 }: {
-  document: any;
+  document: DocumentItem;
   requestId: string;
 }) {
   const { toast } = useToast();
-  const { mutate: updateDocumentStatus, isLoading: isUpdating } =
+  const { mutate: updateDocumentStatus, isPending: isUpdating } =
     useUpdateDocumentStatus();
 
   const handleStatusChange = (newStatus: string) => {
@@ -416,12 +455,12 @@ function DocumentCard({
             <div>
               <p className="font-medium">{document.filename}</p>
               <p className="text-xs text-gray-500">
-                {getDocumentTypeLabel(document.type)}
+                {getDocumentTypeLabel(document.type || "")}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {getStatusBadge(document.status)}
+            {getStatusBadge(document.status || "PENDING")}
             <Select
               value={document.status}
               onValueChange={handleStatusChange}
@@ -518,7 +557,7 @@ function QuotationGenerator({
         notes: "",
       });
       onSuccess();
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "No se pudo generar la cotización",
@@ -665,7 +704,7 @@ function QuotationGenerator({
   );
 }
 
-function HistoryTimeline({ events }: { events: any[] }) {
+function HistoryTimeline({ events }: { events: HistoryEvent[] }) {
   return (
     <div className="space-y-4">
       {events.length === 0 ? (
@@ -685,9 +724,7 @@ function HistoryTimeline({ events }: { events: any[] }) {
               <div className="text-sm text-muted-foreground">
                 {event.description}
               </div>
-              {event.user && (
-                <div className="text-xs text-gray-500">por {event.user}</div>
-              )}
+              <div className="text-xs text-gray-500">por {event.user}</div>
             </div>
           </div>
         ))
@@ -703,7 +740,7 @@ function InternalNotesCard({ requestId }: { requestId: string }) {
 
   const { data: notesData, isLoading: isLoadingNotes } =
     useInternalNotes(requestId);
-  const { mutate: addNote, isLoading: isAddingNote } = useAddInternalNote();
+  const { mutate: addNote, isPending: isAddingNote } = useAddInternalNote();
 
   const notes = notesData?.notes || [];
 
@@ -791,10 +828,12 @@ function InternalNotesCard({ requestId }: { requestId: string }) {
                 No hay notas internas aún
               </p>
             ) : (
-              notes.map((note: any, index: number) => (
+              notes.map((note: InternalNote, index: number) => (
                 <div key={note.id || index} className="p-3 border rounded-md">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium">{note.author}</span>
+                    <span className="font-medium">
+                      {note.createdBy.firstName} {note.createdBy.lastName}
+                    </span>
                     <span className="text-sm text-muted-foreground">
                       {format(new Date(note.createdAt), "dd/MM/yyyy HH:mm", {
                         locale: es,
@@ -812,7 +851,7 @@ function InternalNotesCard({ requestId }: { requestId: string }) {
   );
 }
 
-function handleDownloadDocuments(requestId: string, toast: any) {
+function handleDownloadDocuments(requestId: string, toast: ToastInstance) {
   return async () => {
     try {
       const response = await fetch(
@@ -833,16 +872,18 @@ function handleDownloadDocuments(requestId: string, toast: any) {
       link.download = `Documentos_Solicitud_${requestId}.zip`;
       document.body.appendChild(link);
       link.click();
+
+      // Cleanup
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
       toast({
-        title: "Descarga iniciada",
-        description: "Descargando documentos de la solicitud...",
+        title: "Éxito",
+        description: "Documentos descargados correctamente",
       });
-    } catch (error) {
+    } catch {
       toast({
-        title: "Error al descargar",
+        title: "Error",
         description: "No se pudieron descargar los documentos",
         variant: "destructive",
       });
@@ -860,10 +901,9 @@ export default function AdminSolicitudDetail() {
   const [forceStatus, setForceStatus] = useState("");
   const [forceReason, setForceReason] = useState("");
 
-  const { data, isLoading, error, refetch } = useRequest(requestId);
-  const { mutate: updateRequest, isLoading: isUpdating } = useUpdateRequest();
-  const { getStatusConfig } = useRequestStatusConfig();
-  const { mutate: downloadPDF, isLoading: isDownloading } = useDownloadPDF();
+  const { data, isLoading, refetch } = useRequest(requestId);
+  const { updateRequest, isLoading: isUpdating } = useUpdateRequest();
+  const { mutate: downloadPDF, isPending: isDownloading } = useDownloadPDF();
   const { data: historyData, isLoading: isLoadingHistory } =
     useRequestHistory(requestId);
 
@@ -927,24 +967,6 @@ export default function AdminSolicitudDetail() {
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
           <span className="ml-2 text-gray-600">Cargando solicitud...</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col items-center justify-center py-12">
-          <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Error al cargar la solicitud
-          </h3>
-          <p className="text-gray-600 text-center">{error.message}</p>
-          <Button className="mt-4" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Volver
-          </Button>
         </div>
       </div>
     );
@@ -1179,7 +1201,7 @@ export default function AdminSolicitudDetail() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {request.quotations.map((quotation: any) => (
+                {request.quotations.map((quotation: QuotationItem) => (
                   <div
                     key={quotation.id}
                     className="border rounded-lg p-4 bg-gray-50"
@@ -1260,7 +1282,7 @@ export default function AdminSolicitudDetail() {
           <div>
             <h3 className="text-lg font-medium mb-4">DOCUMENTOS</h3>
             {request.documents && request.documents.length > 0 ? (
-              request.documents.map((document: any) => (
+              request.documents.map((document: DocumentItem) => (
                 <DocumentCard
                   key={document.id}
                   document={document}

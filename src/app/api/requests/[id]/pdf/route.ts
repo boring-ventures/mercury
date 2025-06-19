@@ -3,6 +3,19 @@ import { cookies } from "next/headers";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import prisma from "@/lib/prisma";
 
+// Interface for PDF request data
+interface PDFRequestData {
+  id: string;
+  code: string;
+  amount: number;
+  currency: string;
+  status: string;
+  createdAt: string;
+  company?: {
+    name: string;
+  } | null;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -65,7 +78,11 @@ export async function GET(
     // - react-pdf
 
     // For now, we'll return a mock PDF URL or generate basic PDF content
-    const pdfContent = generatePDFContent(requestData);
+    const pdfContent = generatePDFContent({
+      ...requestData,
+      amount: Number(requestData.amount),
+      createdAt: requestData.createdAt.toISOString(),
+    });
 
     // Create audit log
     await prisma.auditLog.create({
@@ -93,7 +110,7 @@ export async function GET(
   }
 }
 
-function generatePDFContent(requestData: any): string {
+function generatePDFContent(requestData: PDFRequestData): string {
   // Mock PDF content - in real implementation, use proper PDF generation
   return `%PDF-1.4
 1 0 obj

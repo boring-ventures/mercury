@@ -17,7 +17,7 @@ import {
   useMarkNotificationsRead,
   useUnreadNotificationCount,
 } from "@/hooks/use-notifications";
-import { NotificationFilters } from "@/types/notifications";
+import { NotificationFilters, Notification } from "@/types/notifications";
 
 interface NotificationDropdownProps {
   className?: string;
@@ -111,18 +111,20 @@ export const NotificationDropdown = ({
           ) : (
             <ScrollArea className="h-full">
               <div className="p-2 space-y-2">
-                {notifications.map((notification, index) => (
-                  <div key={notification.id}>
-                    <NotificationItem
-                      notification={notification}
-                      showActions={false}
-                      onMarkAsRead={handleMarkAsRead}
-                    />
-                    {index < notifications.length - 1 && (
-                      <Separator className="my-2" />
-                    )}
-                  </div>
-                ))}
+                {notifications.map(
+                  (notification: Notification, index: number) => (
+                    <div key={notification.id}>
+                      <NotificationItem
+                        notification={notification}
+                        showActions={false}
+                        onMarkAsRead={handleMarkAsRead}
+                      />
+                      {index < notifications.length - 1 && (
+                        <Separator className="my-2" />
+                      )}
+                    </div>
+                  )
+                )}
               </div>
             </ScrollArea>
           )}

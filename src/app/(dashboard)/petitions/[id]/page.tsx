@@ -23,24 +23,23 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/use-toast";
 import { useParams, useRouter } from "next/navigation";
 import {
-  Download,
-  ArrowLeft,
   Calendar,
-  Clock,
   FileText,
-  MessageSquare,
+  Download,
+  Eye,
+  CheckCircle,
+  Clock,
+  XCircle,
+  Loader2,
   User,
+  Building2,
+  MapPin,
   Mail,
   Phone,
-  MapPin,
-  Briefcase,
+  MessageSquare,
+  ArrowLeft,
   ZoomIn,
-  X,
-  CheckCircle,
-  Loader2,
-  XCircle,
-  Eye,
-  Building2,
+  Briefcase,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";

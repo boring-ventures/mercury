@@ -60,7 +60,10 @@ export function DeleteUserDialog({
     onOpenChange(false);
   };
 
-  const getUserInitials = (firstName?: string, lastName?: string) => {
+  const getUserInitials = (
+    firstName?: string | null,
+    lastName?: string | null
+  ) => {
     const first = firstName?.charAt(0) || "";
     const last = lastName?.charAt(0) || "";
     return (first + last).toUpperCase() || "U";
@@ -88,8 +91,9 @@ export function DeleteUserDialog({
             <DialogTitle>Delete User</DialogTitle>
           </div>
           <DialogDescription>
-            This action will suspend the user account. The user will no longer
-            be able to log in.
+            ¿Estás seguro de que quieres eliminar este usuario? Esta acción no
+            se puede deshacer y eliminará permanentemente toda la información
+            del usuario.
           </DialogDescription>
         </DialogHeader>
 
@@ -104,7 +108,7 @@ export function DeleteUserDialog({
             <div className="rounded-lg border p-4 space-y-3">
               <div className="flex items-center space-x-3">
                 <Avatar className="h-12 w-12">
-                  <AvatarImage src={user.avatarUrl} />
+                  <AvatarImage src={user.avatarUrl || undefined} />
                   <AvatarFallback>
                     {getUserInitials(user.firstName, user.lastName)}
                   </AvatarFallback>
@@ -175,9 +179,10 @@ export function DeleteUserDialog({
                 <div className="text-sm">
                   <p className="font-medium text-destructive">Warning</p>
                   <p className="text-muted-foreground mt-1">
-                    This will set the user's status to "SUSPENDED" and active to
-                    false. The user will not be deleted from the database but
-                    will no longer be able to access the system.
+                    This will set the user&apos;s status to
+                    &quot;SUSPENDED&quot; and active to false. The user will not
+                    be deleted from the database but will no longer be able to
+                    access the system.
                   </p>
                 </div>
               </div>

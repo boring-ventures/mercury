@@ -8,14 +8,21 @@ import {
   FileText,
   Building2,
   TrendingUp,
-  Users,
-  AlertCircle,
   CheckCircle,
   Clock,
-  DollarSign,
 } from "lucide-react";
 import Link from "next/link";
 import { useRequests } from "@/hooks/use-requests";
+
+interface RequestItem {
+  id: string;
+  code: string;
+  status: string;
+  amount: number;
+  company?: {
+    name: string;
+  };
+}
 
 export default function AdminDashboard() {
   const { data: requestsData, isLoading } = useRequests({ limit: 5 });
@@ -32,10 +39,10 @@ export default function AdminDashboard() {
 
   if (requestsData?.requests) {
     metrics.pendingRequests = requestsData.requests.filter(
-      (r: any) => r.status === "PENDING"
+      (r: RequestItem) => r.status === "PENDING"
     ).length;
     metrics.completedRequests = requestsData.requests.filter(
-      (r: any) => r.status === "COMPLETED"
+      (r: RequestItem) => r.status === "COMPLETED"
     ).length;
   }
 
@@ -131,35 +138,37 @@ export default function AdminDashboard() {
               </div>
             ) : requestsData?.requests && requestsData.requests.length > 0 ? (
               <>
-                {requestsData.requests.slice(0, 3).map((request: any) => (
-                  <div
-                    key={request.id}
-                    className="flex items-center justify-between p-3 border rounded-lg"
-                  >
-                    <div>
-                      <p className="font-medium">{request.code}</p>
-                      <p className="text-sm text-gray-600">
-                        {request.company?.name || "N/A"}
-                      </p>
+                {requestsData.requests
+                  .slice(0, 3)
+                  .map((request: RequestItem) => (
+                    <div
+                      key={request.id}
+                      className="flex items-center justify-between p-3 border rounded-lg"
+                    >
+                      <div>
+                        <p className="font-medium">{request.code}</p>
+                        <p className="text-sm text-gray-600">
+                          {request.company?.name || "N/A"}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <Badge
+                          variant={
+                            request.status === "PENDING"
+                              ? "secondary"
+                              : request.status === "COMPLETED"
+                                ? "default"
+                                : "outline"
+                          }
+                        >
+                          {request.status}
+                        </Badge>
+                        <p className="text-sm text-gray-600 mt-1">
+                          ${request.amount?.toLocaleString()}
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <Badge
-                        variant={
-                          request.status === "PENDING"
-                            ? "secondary"
-                            : request.status === "COMPLETED"
-                              ? "default"
-                              : "outline"
-                        }
-                      >
-                        {request.status}
-                      </Badge>
-                      <p className="text-sm text-gray-600 mt-1">
-                        ${request.amount?.toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                  ))}
                 <Button asChild variant="outline" className="w-full">
                   <Link href="/admin/solicitudes">
                     Ver todas las solicitudes
@@ -199,12 +208,6 @@ export default function AdminDashboard() {
               <Link href="/admin/empresas">
                 <Building2 className="h-4 w-4 mr-2" />
                 Gestionar Empresas
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="w-full justify-start">
-              <Link href="/admin/reportes">
-                <TrendingUp className="h-4 w-4 mr-2" />
-                Ver Reportes
               </Link>
             </Button>
           </CardContent>

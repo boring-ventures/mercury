@@ -1,21 +1,19 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import type { UserStats } from "@/types/users";
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 
 // GET: Fetch user statistics for dashboard
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
-    // Check authentication
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = createServerComponentClient({ cookies });
     const {
       data: { session },
-      error: sessionError,
     } = await supabase.auth.getSession();
 
-    if (sessionError || !session) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    if (!session) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
     // Check if user is super admin

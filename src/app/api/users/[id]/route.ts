@@ -9,7 +9,10 @@ interface Params {
 }
 
 // GET: Fetch a specific user by ID
-export async function GET(req: NextRequest, { params }: { params: Params }) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<Params> }
+) {
   try {
     // Check authentication
     const supabase = createRouteHandlerClient({ cookies });
@@ -32,8 +35,9 @@ export async function GET(req: NextRequest, { params }: { params: Params }) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
+    const { id } = await params;
     const user = await prisma.profile.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         company: {
           select: {
@@ -77,7 +81,10 @@ export async function GET(req: NextRequest, { params }: { params: Params }) {
 }
 
 // PUT: Update a user
-export async function PUT(req: NextRequest, { params }: { params: Params }) {
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<Params> }
+) {
   try {
     // Check authentication
     const supabase = createRouteHandlerClient({ cookies });
@@ -100,13 +107,14 @@ export async function PUT(req: NextRequest, { params }: { params: Params }) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
+    const { id } = await params;
     const body: UpdateUserRequest = await req.json();
     const { firstName, lastName, phone, role, status, companyId, active } =
       body;
 
     // Check if user exists
     const existingUser = await prisma.profile.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!existingUser) {
@@ -115,7 +123,7 @@ export async function PUT(req: NextRequest, { params }: { params: Params }) {
 
     // Update user profile
     const updatedUser = await prisma.profile.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(firstName && { firstName }),
         ...(lastName && { lastName }),
@@ -163,7 +171,10 @@ export async function PUT(req: NextRequest, { params }: { params: Params }) {
 }
 
 // DELETE: Delete a user (soft delete by setting active to false)
-export async function DELETE(req: NextRequest, { params }: { params: Params }) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<Params> }
+) {
   try {
     // Check authentication
     const supabase = createRouteHandlerClient({ cookies });
@@ -186,9 +197,10 @@ export async function DELETE(req: NextRequest, { params }: { params: Params }) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
+    const { id } = await params;
     // Check if user exists
     const existingUser = await prisma.profile.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!existingUser) {
@@ -204,8 +216,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Params }) {
     }
 
     // Soft delete by setting active to false and status to SUSPENDED
-    const deletedUser = await prisma.profile.update({
-      where: { id: params.id },
+    await prisma.profile.update({
+      where: { id },
       data: {
         active: false,
         status: "SUSPENDED",

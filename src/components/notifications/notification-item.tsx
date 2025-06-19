@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
-import { Bell, Check, Info, AlertTriangle, X, Trash2 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Info, AlertTriangle, XCircle, CheckCircle } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Notification, NotificationType } from "@/types/notifications";
 import {
@@ -28,7 +28,7 @@ const typeConfig = {
     badgeVariant: "default" as const,
   },
   [NotificationType.SUCCESS]: {
-    icon: Check,
+    icon: CheckCircle,
     color: "bg-green-500",
     badgeVariant: "default" as const,
   },
@@ -38,7 +38,7 @@ const typeConfig = {
     badgeVariant: "secondary" as const,
   },
   [NotificationType.ERROR]: {
-    icon: X,
+    icon: XCircle,
     color: "bg-red-500",
     badgeVariant: "destructive" as const,
   },
@@ -144,7 +144,7 @@ export const NotificationItem = ({
                       className="h-8 w-8 p-0"
                       title="Marcar como leído"
                     >
-                      <Check className="h-4 w-4" />
+                      <CheckCircle className="h-4 w-4" />
                     </Button>
                   )}
                   <Button
@@ -155,7 +155,7 @@ export const NotificationItem = ({
                     className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
                     title="Eliminar notificación"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <XCircle className="h-4 w-4" />
                   </Button>
                 </div>
               )}

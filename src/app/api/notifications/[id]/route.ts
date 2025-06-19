@@ -4,9 +4,9 @@ import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
@@ -29,7 +29,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const { read } = body;
 
@@ -91,7 +91,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     // Verify notification belongs to the user or user is admin
     const notification = await prisma.notification.findFirst({

@@ -11,38 +11,52 @@ import {
   TrendingUp,
   Clock,
   CheckCircle,
-  AlertCircle,
   DollarSign,
 } from "lucide-react";
 import Link from "next/link";
 import { useRequests, useRequestWorkflow } from "@/hooks/use-requests";
 
+interface DashboardMetrics {
+  totalRequests: number;
+  pendingRequests: number;
+  completedRequests: number;
+  totalRevenue: number;
+  activeCompanies: number;
+  pendingQuotations: number;
+}
+
+interface RequestItem {
+  id: string;
+  code: string;
+  status: string;
+  amount: number;
+  currency?: string;
+  company?: {
+    name: string;
+  };
+}
+
 export default function ImportadorDashboard() {
   const { data: requestsData, isLoading } = useRequests({ limit: 5 });
 
-  // Calculate metrics from requests data
-  const metrics = {
+  // Mock data for other metrics (would come from actual APIs)
+  const metrics: DashboardMetrics = {
     totalRequests: requestsData?.pagination?.total || 0,
     pendingRequests: 0,
     completedRequests: 0,
-    inProgressRequests: 0,
-    totalAmount: 0,
+    totalRevenue: 0,
+    activeCompanies: 0,
+    pendingQuotations: 0,
   };
 
   if (requestsData?.requests) {
-    metrics.pendingRequests = requestsData.requests.filter(
-      (r: any) => r.status === "PENDING"
+    const requests = requestsData.requests as RequestItem[];
+    metrics.pendingRequests = requests.filter(
+      (r: RequestItem) => r.status === "PENDING"
     ).length;
-    metrics.completedRequests = requestsData.requests.filter(
-      (r: any) => r.status === "COMPLETED"
+    metrics.completedRequests = requests.filter(
+      (r: RequestItem) => r.status === "COMPLETED"
     ).length;
-    metrics.inProgressRequests = requestsData.requests.filter((r: any) =>
-      ["IN_REVIEW", "APPROVED"].includes(r.status)
-    ).length;
-    metrics.totalAmount = requestsData.requests.reduce(
-      (sum: number, r: any) => sum + (r.amount || 0),
-      0
-    );
   }
 
   const { getWorkflowStep, getProgress } = useRequestWorkflow();
@@ -90,7 +104,7 @@ export default function ImportadorDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-blue-600">
-                {metrics.inProgressRequests}
+                {metrics.pendingRequests}
               </div>
               <p className="text-xs text-muted-foreground">
                 Actualmente activas
@@ -120,7 +134,7 @@ export default function ImportadorDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-purple-600">
-                ${metrics.totalAmount.toLocaleString()}
+                ${metrics.totalRevenue.toLocaleString()}
               </div>
               <p className="text-xs text-muted-foreground">
                 En todas las solicitudes
@@ -149,9 +163,9 @@ export default function ImportadorDashboard() {
               ) : requestsData?.requests && requestsData.requests.length > 0 ? (
                 <>
                   {requestsData.requests
-                    .filter((r: any) => r.status !== "COMPLETED")
+                    .filter((r: RequestItem) => r.status !== "COMPLETED")
                     .slice(0, 3)
-                    .map((request: any) => {
+                    .map((request: RequestItem) => {
                       const currentStep = getWorkflowStep(request);
                       const progress = getProgress(request);
 
@@ -164,8 +178,8 @@ export default function ImportadorDashboard() {
                             <div>
                               <p className="font-medium">{request.code}</p>
                               <p className="text-sm text-gray-600">
-                                ${request.amount?.toLocaleString()}{" "}
-                                {request.currency}
+                                ${request.amount?.toLocaleString()}
+                                {request.currency && ` ${request.currency}`}
                               </p>
                             </div>
                             <Badge

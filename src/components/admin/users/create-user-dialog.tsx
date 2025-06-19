@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import * as z from "zod";
 import { useQuery } from "@tanstack/react-query";
-import { useCreateUser } from "@/hooks/use-users";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -17,14 +17,13 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -32,10 +31,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { useCreateUser } from "@/hooks/use-users";
 import { useToast } from "@/components/ui/use-toast";
+import { Loader2 } from "lucide-react";
 import type { CreateUserRequest, UserCompany } from "@/types/users";
-import type { UserRole } from "@prisma/client";
 
 const createUserSchema = z
   .object({
@@ -83,7 +82,7 @@ export function CreateUserDialog({
   });
 
   // Fetch companies for company selection
-  const { data: companies, isLoading: companiesLoading } = useQuery({
+  const { data: companies } = useQuery({
     queryKey: ["companies"],
     queryFn: async (): Promise<UserCompany[]> => {
       const response = await fetch("/api/companies");

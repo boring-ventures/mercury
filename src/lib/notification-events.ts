@@ -1,5 +1,4 @@
 import { createSystemNotification, notifyAllAdmins } from "@/lib/notifications";
-import { SystemNotificationTemplates } from "@/types/notifications";
 
 // Helper to notify when a new request is created
 export async function notifyRequestCreated(requestData: {
@@ -76,7 +75,7 @@ export async function notifyQuotationReceived(quotationData: {
 }) {
   try {
     // Get the company's users to notify
-    const { prisma } = await import("@/lib/prisma");
+    const prisma = (await import("@/lib/prisma")).default;
     const companyUsers = await prisma.profile.findMany({
       where: {
         companyId: quotationData.companyId,
@@ -112,7 +111,7 @@ export async function notifyContractSigned(contractData: {
 }) {
   try {
     // Get the company's users to notify
-    const { prisma } = await import("@/lib/prisma");
+    const prisma = (await import("@/lib/prisma")).default;
     const companyUsers = await prisma.profile.findMany({
       where: {
         companyId: contractData.companyId,
@@ -155,7 +154,7 @@ export async function notifyPaymentReceived(paymentData: {
 }) {
   try {
     // Get the company's users to notify
-    const { prisma } = await import("@/lib/prisma");
+    const prisma = (await import("@/lib/prisma")).default;
     const companyUsers = await prisma.profile.findMany({
       where: {
         companyId: paymentData.companyId,
@@ -201,7 +200,7 @@ export async function notifyDocumentApproved(documentData: {
   try {
     if (documentData.companyId) {
       // Get the company's users to notify
-      const { prisma } = await import("@/lib/prisma");
+      const prisma = (await import("@/lib/prisma")).default;
       const companyUsers = await prisma.profile.findMany({
         where: {
           companyId: documentData.companyId,
@@ -241,7 +240,7 @@ export async function notifyDocumentRejected(documentData: {
   try {
     if (documentData.companyId) {
       // Get the company's users to notify
-      const { prisma } = await import("@/lib/prisma");
+      const prisma = (await import("@/lib/prisma")).default;
       const companyUsers = await prisma.profile.findMany({
         where: {
           companyId: documentData.companyId,
@@ -280,7 +279,7 @@ export async function notifyRegistrationApproved(registrationData: {
   try {
     if (registrationData.companyId) {
       // Get the company's users to notify
-      const { prisma } = await import("@/lib/prisma");
+      const prisma = (await import("@/lib/prisma")).default;
       const companyUsers = await prisma.profile.findMany({
         where: {
           companyId: registrationData.companyId,

@@ -37,7 +37,11 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Build where clause
-    const where: any = {
+    const where: {
+      profileId: string;
+      read?: boolean;
+      type?: NotificationType;
+    } = {
       profileId: profile.id,
     };
 
@@ -49,7 +53,7 @@ export async function GET(request: NextRequest) {
       type &&
       Object.values(NotificationType).includes(type as NotificationType)
     ) {
-      where.type = type;
+      where.type = type as NotificationType;
     }
 
     // Get notifications with pagination

@@ -4,7 +4,7 @@ export interface Notification {
   message: string;
   type: NotificationType;
   read: boolean;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   createdAt: Date;
   readAt?: Date;
   profileId: string;
@@ -14,7 +14,7 @@ export interface CreateNotificationData {
   title: string;
   message: string;
   type?: NotificationType;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   profileId?: string; // Optional for admin notifications
   profileIds?: string[]; // For bulk notifications
 }
@@ -48,7 +48,7 @@ export interface NotificationTemplate {
   title: string;
   message: string;
   type: NotificationType;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 export interface SystemNotificationTemplates {

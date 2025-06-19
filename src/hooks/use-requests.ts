@@ -301,9 +301,32 @@ export function useRequestStatusConfig() {
   return { statusConfig, getStatusConfig };
 }
 
+// Interfaces for workflow functions
+interface WorkflowRequest {
+  id?: string;
+  code?: string;
+  status: string;
+  quotations?: WorkflowQuotation[];
+  contracts?: WorkflowContract[];
+  payments?: WorkflowPayment[];
+}
+
+interface WorkflowQuotation {
+  status: string;
+}
+
+interface WorkflowContract {
+  status: string;
+}
+
+interface WorkflowPayment {
+  type: string;
+  status: string;
+}
+
 // Hook for determining workflow steps
 export function useRequestWorkflow() {
-  const getWorkflowStep = (request: any): number => {
+  const getWorkflowStep = (request: WorkflowRequest | null): number => {
     // Based on request status and related entities
     if (!request) return 1;
 
@@ -311,21 +334,22 @@ export function useRequestWorkflow() {
     const hasQuotation = request.quotations && request.quotations.length > 0;
     const hasActiveQuotation =
       hasQuotation &&
-      request.quotations.some(
-        (q: any) => q.status === "SENT" || q.status === "ACCEPTED"
+      request.quotations?.some(
+        (q: WorkflowQuotation) => q.status === "SENT" || q.status === "ACCEPTED"
       );
 
     // Check if has contracts
     const hasContract = request.contracts && request.contracts.length > 0;
     const hasActiveContract =
-      hasContract && request.contracts.some((c: any) => c.status === "ACTIVE");
+      hasContract &&
+      request.contracts?.some((c: WorkflowContract) => c.status === "ACTIVE");
 
     // Check if has payments to provider
     const hasProviderPayment = request.payments && request.payments.length > 0;
     const hasProviderPaymentCompleted =
       hasProviderPayment &&
-      request.payments.some(
-        (p: any) => p.type === "DEPOSIT" && p.status === "COMPLETED"
+      request.payments?.some(
+        (p: WorkflowPayment) => p.type === "DEPOSIT" && p.status === "COMPLETED"
       );
 
     // Check if process is completed
@@ -338,7 +362,7 @@ export function useRequestWorkflow() {
     return 1; // Nueva Solicitud
   };
 
-  const getNextAction = (request: any) => {
+  const getNextAction = (request: WorkflowRequest | null) => {
     const step = getWorkflowStep(request);
     const actions = {
       1: {
@@ -365,7 +389,7 @@ export function useRequestWorkflow() {
     return actions[step as keyof typeof actions] || actions[1];
   };
 
-  const getProgress = (request: any): number => {
+  const getProgress = (request: WorkflowRequest | null): number => {
     const step = getWorkflowStep(request);
     return (step / 5) * 100;
   };

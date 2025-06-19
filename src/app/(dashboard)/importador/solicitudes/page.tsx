@@ -89,6 +89,27 @@ const SORT_OPTIONS = [
   { value: "monto-bajo", label: "Monto menor" },
 ];
 
+// Interface for importador solicitud items
+interface ImportadorSolicitudItem {
+  id: string;
+  code: string;
+  status: string;
+  amount: number;
+  currency: string;
+  createdAt: string;
+  description: string;
+  quotations?: Array<{
+    status: string;
+  }>;
+  contracts?: Array<{
+    status: string;
+  }>;
+  payments?: Array<{
+    type: string;
+    status: string;
+  }>;
+}
+
 function WorkflowSteps({
   currentStep,
   solicitudId,
@@ -101,7 +122,6 @@ function WorkflowSteps({
       {WORKFLOW_STEPS.map((step, index) => {
         const isCompleted = currentStep > step.id;
         const isCurrent = currentStep === step.id;
-        const isUpcoming = currentStep < step.id;
 
         // Determine if step is clickable
         const isClickable =
@@ -162,7 +182,7 @@ function WorkflowSteps({
   );
 }
 
-function SolicitudCard({ solicitud }: { solicitud: any }) {
+function SolicitudCard({ solicitud }: { solicitud: ImportadorSolicitudItem }) {
   const { getStatusConfig } = useRequestStatusConfig();
   const { getWorkflowStep, getNextAction, getProgress } = useRequestWorkflow();
 
@@ -360,7 +380,7 @@ export default function ImportadorSolicitudes() {
         {/* Solicitudes List */}
         {!isLoading && data?.requests && data.requests.length > 0 && (
           <div className="space-y-4">
-            {data.requests.map((solicitud: any) => (
+            {data.requests.map((solicitud: ImportadorSolicitudItem) => (
               <SolicitudCard key={solicitud.id} solicitud={solicitud} />
             ))}
           </div>

@@ -3,18 +3,18 @@ import type { UserRole, UserStatus, ActivityType } from "@prisma/client";
 export interface UserProfile {
   id: string;
   userId: string;
-  avatarUrl?: string;
-  firstName?: string;
-  lastName?: string;
+  avatarUrl?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
   role: UserRole;
   status: UserStatus;
-  phone?: string;
-  lastLogin?: Date;
+  phone?: string | null;
+  lastLogin?: Date | null;
   createdAt: Date;
   updatedAt: Date;
   active: boolean;
-  companyId?: string;
-  company?: UserCompany;
+  companyId?: string | null;
+  company?: UserCompany | null;
 }
 
 export interface UserCompany {
@@ -33,12 +33,22 @@ export interface UserCompany {
 }
 
 export interface UserWithDetails extends UserProfile {
-  company?: UserCompany;
+  company?: UserCompany | null;
   _count?: {
     createdRequests: number;
     assignedRequests: number;
     notifications: number;
   };
+}
+
+// Alias for UserWithDetails for backwards compatibility
+export type UserData = UserWithDetails;
+
+export interface PaginationInfo {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
 export interface UserListFilters {
@@ -52,12 +62,7 @@ export interface UserListFilters {
 
 export interface UserListResponse {
   users: UserWithDetails[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
+  pagination: PaginationInfo;
 }
 
 export interface CreateUserRequest {

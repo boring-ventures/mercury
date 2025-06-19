@@ -53,6 +53,22 @@ const COUNTRY_FILTERS = [
   { value: "germany", label: "Alemania" },
 ];
 
+// Interface for admin request list items
+interface AdminRequestItem {
+  id: string;
+  code: string;
+  status: string;
+  amount: number;
+  currency: string;
+  createdAt: string;
+  company?: {
+    name: string;
+  };
+  provider?: {
+    country: string;
+  };
+}
+
 function StatusBadge({ status }: { status: string }) {
   const { getStatusConfig } = useRequestStatusConfig();
   const config = getStatusConfig(status);
@@ -256,7 +272,7 @@ export default function AdminSolicitudes() {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.requests.map((request: any) => (
+                  {data.requests.map((request: AdminRequestItem) => (
                     <tr key={request.id} className="border-b hover:bg-gray-50">
                       <td className="py-3 px-4 font-medium">{request.code}</td>
                       <td className="py-3 px-4">

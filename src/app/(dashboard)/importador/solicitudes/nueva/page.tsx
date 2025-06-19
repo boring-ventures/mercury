@@ -151,7 +151,7 @@ export default function NuevaSolicitud() {
         fileSize: file.size,
         mimeType: file.type,
         type: type === "proforma" ? "PROFORMA_INVOICE" : "FACTURA_COMERCIAL",
-        fileUrl,
+        fileUrl: fileUrl || undefined,
         previewUrl,
       };
 
@@ -261,8 +261,12 @@ export default function NuevaSolicitud() {
 
       // Navigate back to requests list on success
       router.push("/importador/solicitudes");
-    } catch (error) {
-      // Error is handled by the hook
+    } catch {
+      toast({
+        title: "Error",
+        description: "No se pudo crear la solicitud. Intenta nuevamente.",
+        variant: "destructive",
+      });
     }
   };
 

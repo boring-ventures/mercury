@@ -19,7 +19,6 @@ import {
   ArrowLeft,
   Building2,
   Calendar,
-  DollarSign,
   FileText,
   MapPin,
   User,
@@ -30,11 +29,10 @@ import {
   XCircle,
   AlertCircle,
   Loader2,
-  Send,
-  Receipt,
-  ArrowRight,
-  X,
+  MessageSquare,
   ZoomIn,
+  ArrowRight,
+  DollarSign,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -68,13 +66,13 @@ const WORKFLOW_STEPS = [
   {
     id: 4,
     name: "Pago a Proveedor",
-    icon: Send,
+    icon: MessageSquare,
     description: "Admin realiza pago al proveedor",
   },
   {
     id: 5,
     name: "Factura Final",
-    icon: Receipt,
+    icon: MessageSquare,
     description: "Recibir factura de servicio",
   },
 ];
@@ -124,7 +122,6 @@ function WorkflowSteps({
       {WORKFLOW_STEPS.map((step, index) => {
         const isCompleted = currentStep > step.id;
         const isCurrent = currentStep === step.id;
-        const isUpcoming = currentStep < step.id;
 
         // Determine if step is clickable
         const isClickable =
@@ -197,12 +194,30 @@ function getDocumentTypeLabel(type: string) {
   return types[type] || type;
 }
 
+interface DocumentType {
+  id: string;
+  filename: string;
+  mimeType: string;
+  type: string;
+  fileUrl: string;
+  fileSize: number;
+}
+
+interface QuotationType {
+  id: string;
+  status: string;
+  totalAmount: number;
+  currency: string;
+  createdAt: string;
+  notes?: string;
+}
+
 function DocumentViewerModal({
   document,
   isOpen,
   onClose,
 }: {
-  document: any;
+  document: DocumentType;
   isOpen: boolean;
   onClose: () => void;
 }) {
@@ -316,7 +331,7 @@ function DocumentViewerModal({
   );
 }
 
-function DocumentCard({ document }: { document: any }) {
+function DocumentCard({ document }: { document: DocumentType }) {
   const [showModal, setShowModal] = useState(false);
 
   const handleDownload = () => {
@@ -368,6 +383,8 @@ export default function ImportadorSolicitudDetail() {
   const { getWorkflowStep, getNextAction, getProgress } = useRequestWorkflow();
 
   const request = data?.request;
+  const progress = getProgress(request);
+  const statusConfig = getStatusConfig(request.status);
 
   if (isLoading) {
     return (
@@ -426,8 +443,6 @@ export default function ImportadorSolicitudDetail() {
 
   const currentStep = getWorkflowStep(request);
   const nextAction = getNextAction(request);
-  const progress = getProgress(request);
-  const statusConfig = getStatusConfig(request.status);
 
   return (
     <ImportadorLayout>
@@ -574,7 +589,7 @@ export default function ImportadorSolicitudDetail() {
                     <CardTitle>Documentos Subidos</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {request.documents.map((document: any) => (
+                    {request.documents.map((document: DocumentType) => (
                       <DocumentCard key={document.id} document={document} />
                     ))}
                   </CardContent>
@@ -588,7 +603,7 @@ export default function ImportadorSolicitudDetail() {
                     <CardTitle>Cotizaciones Recibidas</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {request.quotations.map((quotation: any) => (
+                    {request.quotations.map((quotation: QuotationType) => (
                       <div key={quotation.id} className="border rounded-lg p-4">
                         <div className="flex items-center justify-between mb-2">
                           <h4 className="font-medium">

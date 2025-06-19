@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import { getNotificationStats } from "@/lib/notifications";
 
-export async function GET(request: NextRequest) {
+// Mock notification stats for demo
+export async function GET() {
   try {
     const supabase = createServerComponentClient({ cookies });
     const {
@@ -12,7 +13,7 @@ export async function GET(request: NextRequest) {
     } = await supabase.auth.getSession();
 
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
     // Get current user profile

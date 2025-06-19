@@ -33,34 +33,26 @@ import {
   Phone,
   Mail,
 } from "lucide-react";
-import type {
-  UserListResponse,
-  UserWithDetails,
-  UserListFilters,
-} from "@/types/users";
+import type { UserData, PaginationInfo } from "@/types/users";
 import { UserDetailDialog } from "./user-detail-dialog";
 import { EditUserDialog } from "./edit-user-dialog";
 import { DeleteUserDialog } from "./delete-user-dialog";
 
 interface UserDataTableProps {
-  data: UserListResponse;
-  filters: UserListFilters;
-  onPageChange: (page: number) => void;
-  isLoading?: boolean;
+  users: UserData[];
+  pagination?: PaginationInfo;
+  onPageChange?: (page: number) => void;
 }
 
 export function UserDataTable({
-  data,
-  filters,
+  users,
+  pagination,
   onPageChange,
-  isLoading,
 }: UserDataTableProps) {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [detailUserId, setDetailUserId] = useState<string | null>(null);
   const [editUserId, setEditUserId] = useState<string | null>(null);
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
-
-  const { users, pagination } = data;
 
   const handleSelectAll = (checked: boolean) => {
     setSelectedUsers(checked ? users.map((user) => user.id) : []);
@@ -96,7 +88,10 @@ export function UserDataTable({
     }
   };
 
-  const getUserInitials = (firstName?: string, lastName?: string) => {
+  const getUserInitials = (
+    firstName?: string | null,
+    lastName?: string | null
+  ) => {
     const first = firstName?.charAt(0) || "";
     const last = lastName?.charAt(0) || "";
     return (first + last).toUpperCase() || "U";
@@ -152,7 +147,7 @@ export function UserDataTable({
                   <TableCell>
                     <div className="flex items-center space-x-3">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.avatarUrl} />
+                        <AvatarImage src={user.avatarUrl || undefined} />
                         <AvatarFallback className="text-xs">
                           {getUserInitials(user.firstName, user.lastName)}
                         </AvatarFallback>
@@ -263,7 +258,7 @@ export function UserDataTable({
       </div>
 
       {/* Pagination */}
-      {pagination.totalPages > 1 && (
+      {pagination && pagination.totalPages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
             Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
@@ -274,7 +269,7 @@ export function UserDataTable({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onPageChange(pagination.page - 1)}
+              onClick={() => onPageChange?.(pagination.page - 1)}
               disabled={pagination.page <= 1}
             >
               <ChevronLeft className="h-4 w-4 mr-1" />
@@ -286,7 +281,7 @@ export function UserDataTable({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onPageChange(pagination.page + 1)}
+              onClick={() => onPageChange?.(pagination.page + 1)}
               disabled={pagination.page >= pagination.totalPages}
             >
               Next

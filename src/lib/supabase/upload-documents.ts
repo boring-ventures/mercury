@@ -34,16 +34,17 @@ export async function uploadDocument(
   try {
     const supabase = createClientComponentClient();
 
-    // Create unique filename
+    // Generate unique filename with timestamp
     const timestamp = Date.now();
-    const fileExtension = file.name.split(".").pop() || "";
-    const cleanFilename = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-    const filename = `${folderPath}/${timestamp}-${cleanFilename}`;
+    const fileName = `${timestamp}-${file.name}`;
+    const filePath = `${folderPath}/${fileName}`;
+
+    console.log(`Uploading file: ${fileName} to path: ${filePath}`);
 
     // Upload file to Supabase storage
     const { data, error } = await supabase.storage
       .from(STORAGE_BUCKET)
-      .upload(filename, file, {
+      .upload(filePath, file, {
         cacheControl: "3600",
         upsert: false,
       });
@@ -56,12 +57,12 @@ export async function uploadDocument(
     // Get the public URL
     const {
       data: { publicUrl },
-    } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(filename);
+    } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(filePath);
 
     return {
       path: data.path,
       publicUrl: publicUrl,
-      filename: filename,
+      filename: filePath,
     };
   } catch (error) {
     console.error("Error uploading document:", error);

@@ -190,21 +190,22 @@ export interface UploadResponse {
 }
 
 // API Response types
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success?: boolean;
   message?: string;
   error?: string;
   data?: T;
 }
 
-export interface CreateRequestResponse extends ApiResponse {
+export interface CreateRequestResponse extends ApiResponse<RequestData> {
   request?: RequestData;
 }
 
-export interface UpdateRequestResponse extends ApiResponse {
+export interface UpdateRequestResponse extends ApiResponse<RequestData> {
   request?: RequestData;
 }
 
-export interface DeleteRequestResponse extends ApiResponse {
-  // No additional data needed for delete response
+export interface DeleteRequestResponse extends ApiResponse<never> {
+  success: boolean;
+  message?: string;
 }

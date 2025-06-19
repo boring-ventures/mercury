@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, Filter, CheckCheck, Trash2, Plus } from "lucide-react";
+import { Bell, Filter, CheckCheck, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -12,7 +12,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { NotificationItem } from "./notification-item";
 import { CreateNotificationDialog } from "./create-notification-dialog";
 import {
@@ -21,7 +20,11 @@ import {
   useNotificationStats,
 } from "@/hooks/use-notifications";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { NotificationFilters, NotificationType } from "@/types/notifications";
+import {
+  NotificationFilters,
+  NotificationType,
+  Notification,
+} from "@/types/notifications";
 
 export const NotificationsPage = () => {
   const [filters, setFilters] = useState<NotificationFilters>({
@@ -33,16 +36,19 @@ export const NotificationsPage = () => {
   );
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
-  const { data: user } = useCurrentUser();
+  const { profile } = useCurrentUser();
   const { data: notificationsData, isLoading } = useNotifications(filters);
   const { data: stats } = useNotificationStats();
   const { markAsRead, isLoading: isMarkingRead } = useMarkNotificationsRead();
 
   const notifications = notificationsData?.notifications || [];
   const pagination = notificationsData?.pagination;
-  const isAdmin = user?.role === "SUPERADMIN";
+  const isAdmin = profile?.role === "SUPERADMIN";
 
-  const handleFilterChange = (key: keyof NotificationFilters, value: any) => {
+  const handleFilterChange = (
+    key: keyof NotificationFilters,
+    value: string | boolean | number | undefined
+  ) => {
     setFilters((prev) => ({
       ...prev,
       [key]: value,
@@ -80,12 +86,14 @@ export const NotificationsPage = () => {
 
   const handleSelectAll = () => {
     const unreadNotifications = notifications
-      .filter((n) => !n.read)
-      .map((n) => n.id);
+      .filter((n: Notification) => !n.read)
+      .map((n: Notification) => n.id);
     setSelectedNotifications(unreadNotifications);
   };
 
-  const unreadNotifications = notifications.filter((n) => !n.read);
+  const unreadNotifications = notifications.filter(
+    (n: Notification) => !n.read
+  );
   const hasUnread = unreadNotifications.length > 0;
 
   return (
@@ -297,7 +305,7 @@ export const NotificationsPage = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              {notifications.map((notification, index) => (
+              {notifications.map((notification: Notification) => (
                 <div key={notification.id} className="flex items-start gap-3">
                   <input
                     type="checkbox"

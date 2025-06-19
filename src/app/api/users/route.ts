@@ -3,7 +3,7 @@ import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import type { UserRole, UserStatus, Prisma } from "@prisma/client";
-import type { UserListFilters, UserListResponse } from "@/types/users";
+import type { UserListResponse } from "@/types/users";
 
 // GET: Fetch all users with filtering, pagination, and search
 export async function GET(req: NextRequest) {

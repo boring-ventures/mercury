@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
+import { DocumentType } from "@prisma/client";
 
 // Helper function to generate request code
 function generateRequestCode(): string {
@@ -10,6 +11,14 @@ function generateRequestCode(): string {
     .toString()
     .padStart(3, "0");
   return `SH-${timestamp}${random}`;
+}
+
+interface DocumentUpload {
+  filename: string;
+  fileUrl: string;
+  fileSize: number;
+  mimeType: string;
+  type?: string;
 }
 
 export async function GET(request: NextRequest) {
@@ -48,8 +57,8 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
 
-    // Build where clause based on user role
-    let whereClause: any = {};
+    // Build where clause based on filters and user role
+    const whereClause: Record<string, unknown> = {};
 
     if (profile.role === "IMPORTADOR") {
       // Importador can only see their company's requests
@@ -83,13 +92,14 @@ export async function GET(request: NextRequest) {
     }
 
     if (dateFrom || dateTo) {
-      whereClause.createdAt = {};
+      const dateFilter: { gte?: Date; lte?: Date } = {};
       if (dateFrom) {
-        whereClause.createdAt.gte = new Date(dateFrom);
+        dateFilter.gte = new Date(dateFrom);
       }
       if (dateTo) {
-        whereClause.createdAt.lte = new Date(dateTo + "T23:59:59.999Z");
+        dateFilter.lte = new Date(dateTo + "T23:59:59.999Z");
       }
+      whereClause.createdAt = dateFilter;
     }
 
     // Get requests with pagination
@@ -302,14 +312,14 @@ export async function POST(request: NextRequest) {
 
     // If documents were uploaded, create document records
     if (documents && Array.isArray(documents)) {
-      const documentPromises = documents.map((doc: any) => {
+      const documentPromises = documents.map((doc: DocumentUpload) => {
         return prisma.document.create({
           data: {
             filename: doc.filename,
             fileUrl: doc.fileUrl,
             fileSize: doc.fileSize,
             mimeType: doc.mimeType,
-            type: doc.type || "PROFORMA_INVOICE",
+            type: (doc.type || "PROFORMA_INVOICE") as DocumentType,
             requestId: newRequest.id,
             companyId: profile.companyId,
           },

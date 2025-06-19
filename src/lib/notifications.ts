@@ -70,7 +70,9 @@ export async function createNotification(
         title: data.title,
         message: data.message,
         type: data.type || NotificationType.INFO,
-        metadata: data.metadata,
+        metadata: data.metadata
+          ? JSON.parse(JSON.stringify(data.metadata))
+          : null,
         profileId: data.profileId,
       },
       include: {
@@ -102,7 +104,9 @@ export async function createBulkNotifications(
         title: data.title,
         message: data.message,
         type: data.type || NotificationType.INFO,
-        metadata: data.metadata,
+        metadata: data.metadata
+          ? JSON.parse(JSON.stringify(data.metadata))
+          : null,
         profileId,
       })),
     });
@@ -118,7 +122,7 @@ export async function createBulkNotifications(
 export async function createSystemNotification(
   templateKey: keyof SystemNotificationTemplates,
   profileId: string,
-  metadata?: any
+  metadata?: Record<string, unknown>
 ) {
   const template = NOTIFICATION_TEMPLATES[templateKey];
 
@@ -132,7 +136,7 @@ export async function createSystemNotification(
 // Create notification for all admins
 export async function notifyAllAdmins(
   templateKey: keyof SystemNotificationTemplates,
-  metadata?: any
+  metadata?: Record<string, unknown>
 ) {
   try {
     // Get all admin profiles

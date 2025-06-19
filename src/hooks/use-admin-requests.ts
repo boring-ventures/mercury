@@ -142,8 +142,48 @@ export function useRequestHistory(requestId: string) {
   });
 }
 
+// Interfaces for history generation
+interface HistoryRequest {
+  createdAt: string;
+  status: string;
+  reviewedAt?: string;
+  createdBy?: {
+    firstName?: string;
+    lastName?: string;
+  };
+  documents?: HistoryDocument[];
+  quotations?: HistoryQuotation[];
+  contracts?: HistoryContract[];
+  payments?: HistoryPayment[];
+}
+
+interface HistoryDocument {
+  createdAt: string;
+  filename: string;
+  status: string;
+  reviewedAt?: string;
+}
+
+interface HistoryQuotation {
+  createdAt: string;
+  code: string;
+  sentAt?: string;
+}
+
+interface HistoryContract {
+  createdAt: string;
+  code: string;
+  signedAt?: string;
+}
+
+interface HistoryPayment {
+  createdAt: string;
+  code: string;
+  paidAt?: string;
+}
+
 // Helper function to generate history from request data
-function generateHistoryFromRequest(request: any) {
+function generateHistoryFromRequest(request: HistoryRequest) {
   if (!request) return [];
 
   const events = [];
@@ -160,7 +200,7 @@ function generateHistoryFromRequest(request: any) {
 
   // Documents uploaded
   if (request.documents && request.documents.length > 0) {
-    request.documents.forEach((document: any) => {
+    request.documents.forEach((document: HistoryDocument) => {
       events.push({
         date: document.createdAt,
         description: `Documento cargado: ${document.filename}`,
@@ -191,7 +231,7 @@ function generateHistoryFromRequest(request: any) {
 
   // Quotations
   if (request.quotations && request.quotations.length > 0) {
-    request.quotations.forEach((quotation: any) => {
+    request.quotations.forEach((quotation: HistoryQuotation) => {
       events.push({
         date: quotation.createdAt,
         description: `Cotización generada: ${quotation.code}`,
@@ -212,7 +252,7 @@ function generateHistoryFromRequest(request: any) {
 
   // Contracts
   if (request.contracts && request.contracts.length > 0) {
-    request.contracts.forEach((contract: any) => {
+    request.contracts.forEach((contract: HistoryContract) => {
       events.push({
         date: contract.createdAt,
         description: `Contrato creado: ${contract.code}`,
@@ -233,7 +273,7 @@ function generateHistoryFromRequest(request: any) {
 
   // Payments
   if (request.payments && request.payments.length > 0) {
-    request.payments.forEach((payment: any) => {
+    request.payments.forEach((payment: HistoryPayment) => {
       events.push({
         date: payment.createdAt,
         description: `Pago registrado: ${payment.code}`,

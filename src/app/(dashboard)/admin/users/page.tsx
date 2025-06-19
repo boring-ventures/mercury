@@ -1,175 +1,232 @@
 "use client";
 
 import { useState } from "react";
-import { useUsers, useUserStats } from "@/hooks/use-users";
-import { useCurrentUser } from "@/hooks/use-current-user";
-import type { UserListFilters } from "@/types/users";
-import { UserDataTable } from "@/components/admin/users/user-data-table";
-import { UserFilters } from "@/components/admin/users/user-filters";
-import { UserStatsCards } from "@/components/admin/users/user-stats-cards";
-import { CreateUserDialog } from "@/components/admin/users/create-user-dialog";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { UserStatus, UserRole } from "@prisma/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Plus, Users } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Users,
+  UserCheck,
+  UserX,
+  Search,
+  Plus,
+  Filter,
+  Download,
+  Loader2,
+} from "lucide-react";
+import { useUsers, useUserStats } from "@/hooks/use-users";
+import { UserDataTable } from "@/components/admin/users/user-data-table";
+import { CreateUserDialog } from "@/components/admin/users/create-user-dialog";
 
 export default function UsersPage() {
-  const { profile } = useCurrentUser();
-  const [filters, setFilters] = useState<UserListFilters>({
-    page: 1,
-    limit: 10,
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
+  // Fetch users and stats
+  const { data: usersData } = useUsers({
+    search: searchTerm,
+    status: statusFilter === "all" ? undefined : (statusFilter as UserStatus),
+    role: roleFilter === "all" ? undefined : (roleFilter as UserRole),
   });
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
-  const {
-    data: usersData,
-    isLoading: usersLoading,
-    error: usersError,
-  } = useUsers(filters);
+  const { data: statsData, isLoading: isLoadingStats } = useUserStats();
 
-  const {
-    data: stats,
-    isLoading: statsLoading,
-    error: statsError,
-  } = useUserStats();
-
-  // Check if user is super admin
-  if (profile && profile.role !== "SUPERADMIN") {
-    return (
-      <div className="container mx-auto py-8">
-        <Alert variant="destructive">
-          <AlertDescription>
-            You don't have permission to access this page. Super admin access
-            required.
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
-  const handleFiltersChange = (newFilters: Partial<UserListFilters>) => {
-    setFilters((prev) => ({
-      ...prev,
-      ...newFilters,
-      page: newFilters.page || 1, // Reset to page 1 when filters change
-    }));
+  const users = usersData?.users || [];
+  const totalUsers = usersData?.pagination?.total || 0;
+  const stats = statsData || {
+    totalUsers: 0,
+    activeUsers: 0,
+    inactiveUsers: 0,
+    suspendedUsers: 0,
+    importadorUsers: 0,
+    superAdminUsers: 0,
+    usersWithoutCompany: 0,
   };
-
-  const handlePageChange = (page: number) => {
-    setFilters((prev) => ({ ...prev, page }));
-  };
-
-  if (usersLoading && !usersData) {
-    return (
-      <div className="container mx-auto py-8">
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <span className="ml-2">Loading users...</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (usersError) {
-    return (
-      <div className="container mx-auto py-8">
-        <Alert variant="destructive">
-          <AlertDescription>
-            Error loading users: {usersError.message}
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
+    <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
-          <p className="text-muted-foreground">
-            Manage users, assign roles, and monitor user activity across the
-            platform.
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Gestión de Usuarios
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Administra los usuarios y sus permisos en la plataforma
           </p>
         </div>
-        <Button onClick={() => setCreateDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Create User
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            className="flex items-center gap-2"
+            disabled
+          >
+            <Download className="h-4 w-4" />
+            Exportar
+          </Button>
+          <Button
+            onClick={() => setIsCreateDialogOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Nuevo Usuario
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
-      {stats && <UserStatsCards stats={stats} isLoading={statsLoading} />}
-
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Filters Sidebar */}
-        <div className="lg:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Filters</CardTitle>
-              <CardDescription>
-                Filter users by role, status, and company
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <UserFilters
-                filters={filters}
-                onFiltersChange={handleFiltersChange}
-              />
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Users Table */}
-        <div className="lg:col-span-3">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Users className="h-5 w-5" />
-                  <CardTitle>Users</CardTitle>
-                </div>
-                {usersData && (
-                  <div className="text-sm text-muted-foreground">
-                    {usersData.pagination.total} total users
-                  </div>
-                )}
-              </div>
-              <CardDescription>
-                View and manage all system users
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {usersData ? (
-                <UserDataTable
-                  data={usersData}
-                  filters={filters}
-                  onPageChange={handlePageChange}
-                  isLoading={usersLoading}
-                />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Total Usuarios
+            </CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isLoadingStats ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
-                <div className="text-center py-8">
-                  <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">No users found</p>
-                </div>
+                stats.totalUsers
               )}
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Usuarios registrados
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Activos</CardTitle>
+            <UserCheck className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              {isLoadingStats ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                stats.activeUsers
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">Usuarios activos</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Inactivos</CardTitle>
+            <UserX className="h-4 w-4 text-red-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">
+              {isLoadingStats ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                stats.inactiveUsers + stats.suspendedUsers
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Usuarios inactivos/suspendidos
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Administradores
+            </CardTitle>
+            <Users className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">
+              {isLoadingStats ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                stats.superAdminUsers
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Super administradores
+            </p>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Filters */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filtros
+            </CardTitle>
+            <Badge variant="outline">{totalUsers} usuarios encontrados</Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Buscar usuarios..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filtrar por estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los estados</SelectItem>
+                <SelectItem value="ACTIVE">Activos</SelectItem>
+                <SelectItem value="INACTIVE">Inactivos</SelectItem>
+                <SelectItem value="SUSPENDED">Suspendidos</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={roleFilter} onValueChange={setRoleFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filtrar por rol" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los roles</SelectItem>
+                <SelectItem value="IMPORTADOR">Importador</SelectItem>
+                <SelectItem value="SUPERADMIN">Super Admin</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Users Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Lista de Usuarios</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <UserDataTable users={users} pagination={usersData?.pagination} />
+        </CardContent>
+      </Card>
 
       {/* Create User Dialog */}
       <CreateUserDialog
-        open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
       />
     </div>
   );
