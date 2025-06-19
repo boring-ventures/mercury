@@ -6,19 +6,20 @@ import prisma from "@/lib/prisma";
 // GET: Fetch profile for the current authenticated user
 export async function GET() {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
+    const cookieStore = await cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
-    // Get the current user's session
+    // Use getUser() instead of getSession() for better security
     const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-    if (sessionError || !session) {
+    if (authError || !user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const userId = session.user.id;
+    const userId = user.id;
 
     // Fetch profile from the database
     const profile = await prisma.profile.findUnique({

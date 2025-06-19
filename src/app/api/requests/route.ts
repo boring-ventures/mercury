@@ -23,18 +23,24 @@ interface DocumentUpload {
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createServerComponentClient({ cookies });
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const cookieStore = await cookies();
+    const supabase = createServerComponentClient({
+      cookies: () => cookieStore,
+    });
 
-    if (!session) {
+    // Use getUser() instead of getSession() for better security
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
     // Get user profile
     const profile = await prisma.profile.findUnique({
-      where: { userId: session.user.id },
+      where: { userId: user.id },
       include: { company: true },
     });
 
@@ -63,10 +69,16 @@ export async function GET(request: NextRequest) {
     if (profile.role === "IMPORTADOR") {
       // Importador can only see their company's requests
       if (!profile.companyId) {
-        return NextResponse.json(
-          { error: "No se encontró la empresa asociada" },
-          { status: 400 }
-        );
+        // If user doesn't have a company yet, return empty results instead of error
+        return NextResponse.json({
+          requests: [],
+          pagination: {
+            page,
+            limit,
+            total: 0,
+            pages: 0,
+          },
+        });
       }
       whereClause.companyId = profile.companyId;
     }
@@ -187,18 +199,24 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createServerComponentClient({ cookies });
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const cookieStore = await cookies();
+    const supabase = createServerComponentClient({
+      cookies: () => cookieStore,
+    });
 
-    if (!session) {
+    // Use getUser() instead of getSession() for better security
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
     // Get user profile
     const profile = await prisma.profile.findUnique({
-      where: { userId: session.user.id },
+      where: { userId: user.id },
       include: { company: true },
     });
 
@@ -211,7 +229,11 @@ export async function POST(request: NextRequest) {
 
     if (!profile.companyId) {
       return NextResponse.json(
-        { error: "No se encontró la empresa asociada" },
+        {
+          error: "Perfil incompleto",
+          message:
+            "Necesitas tener una empresa asociada a tu perfil para crear solicitudes. Contacta al administrador para completar tu configuración.",
+        },
         { status: 400 }
       );
     }

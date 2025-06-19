@@ -129,12 +129,21 @@ interface DocumentViewerProps {
     type?: string;
     url?: string;
   };
+  isModalOpen: boolean;
+  onOpenModal: () => void;
+  onCloseModal: () => void;
 }
 
-function DocumentViewer({ document }: DocumentViewerProps) {
-  const [isFullscreen, setIsFullscreen] = useState(false);
+function DocumentViewer({
+  document,
+  isModalOpen,
+  onOpenModal,
+  onCloseModal,
+}: DocumentViewerProps) {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [documentData, setDocumentData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
   const isImage =
     document.mimeType?.toLowerCase().includes("image") ||
@@ -143,37 +152,71 @@ function DocumentViewer({ document }: DocumentViewerProps) {
     document.mimeType?.toLowerCase().includes("pdf") ||
     document.filename.toLowerCase().endsWith(".pdf");
 
-  // Better URL handling - use document.url if available, fallback to API endpoint
+  // Check if it's a demo file that doesn't exist
+  const isDemoFile =
+    document.url &&
+    (document.url.includes("1750030") ||
+      document.url.includes("IMG_9355") ||
+      document.url.startsWith("/uploads/demo/") ||
+      document.url.includes("breach-report"));
+
+  // Get the document URL - let the API handle real vs demo files
   const getDocumentUrl = () => {
-    if (document.url && document.url.startsWith("http")) {
-      return document.url;
-    }
-    // For demo purposes, since we know these might be mock files
-    if (
-      document.url &&
-      (document.url.startsWith("/uploads/") || document.url.includes("1750030"))
-    ) {
-      return null; // Return null for demo files that don't exist
-    }
+    // Always use the API endpoint - it will handle demo vs real files appropriately
     return `/api/documents/${document.id}`;
   };
 
   const documentUrl = getDocumentUrl();
-  const shouldShowPlaceholder = !documentUrl || imageError;
+  const shouldShowPlaceholder = isDemoFile;
 
   const handleDownload = () => {
+    if (isDemoFile) {
+      toast({
+        title: "Archivo de demostración",
+        description:
+          "Este es un archivo de demostración y no se puede descargar.",
+        variant: "default",
+      });
+      return;
+    }
+
     if (documentUrl) {
-      window.open(documentUrl, "_blank");
+      const link = globalThis.document.createElement("a");
+      link.href = documentUrl;
+      link.download = document.filename;
+      link.click();
     }
   };
+
+  // Fetch document data when modal opens for non-demo files
+  useEffect(() => {
+    if (isModalOpen && !isDemoFile && isPDF) {
+      setLoading(true);
+      fetch(`/api/documents/${document.id}`)
+        .then((response) => {
+          if (
+            response.headers.get("content-type")?.includes("application/json")
+          ) {
+            return response.json();
+          }
+          return { url: response.url, type: "redirect" };
+        })
+        .then((data) => {
+          setDocumentData(data);
+        })
+        .catch((error) => {
+          console.error("Error fetching document:", error);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }
+  }, [isModalOpen, document.id, isDemoFile, isPDF]);
 
   if (isImage) {
     return (
       <>
-        <div
-          className="relative group cursor-pointer"
-          onClick={() => setIsFullscreen(true)}
-        >
+        <div className="relative group cursor-pointer" onClick={onOpenModal}>
           <div className="border rounded-lg overflow-hidden bg-gray-50">
             {shouldShowPlaceholder ? (
               <div className="w-full h-64 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
@@ -185,9 +228,11 @@ function DocumentViewer({ document }: DocumentViewerProps) {
                   <p className="text-xs text-gray-500 mt-1">
                     Vista previa no disponible
                   </p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Archivo de demostración
-                  </p>
+                  {isDemoFile && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      Archivo de demostración
+                    </p>
+                  )}
                 </div>
               </div>
             ) : (
@@ -209,7 +254,7 @@ function DocumentViewer({ document }: DocumentViewerProps) {
             )}
           </div>
 
-          {imageLoaded && !imageError && (
+          {!shouldShowPlaceholder && (
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
               <Button
                 size="sm"
@@ -223,61 +268,46 @@ function DocumentViewer({ document }: DocumentViewerProps) {
         </div>
 
         <div className="flex gap-2 mt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsFullscreen(true)}
-            disabled={shouldShowPlaceholder}
-          >
+          <Button variant="outline" size="sm" onClick={onOpenModal}>
             <Eye className="h-4 w-4 mr-1" />
             Ver
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDownload}
-            disabled={shouldShowPlaceholder}
-          >
+          <Button variant="outline" size="sm" onClick={handleDownload}>
             <Download className="h-4 w-4 mr-1" />
             Descargar
           </Button>
         </div>
 
         {/* Enhanced Modal with Dialog */}
-        <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <Dialog open={isModalOpen} onOpenChange={onCloseModal}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
             <DialogHeader>
               <div className="flex items-center justify-between">
-                <div>
-                  <DialogTitle>{document.filename}</DialogTitle>
-                  <DialogDescription>
-                    {document.type} • Vista completa
-                  </DialogDescription>
+                <DialogTitle className="text-lg font-semibold">
+                  {document.filename}
+                </DialogTitle>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={handleDownload}>
+                    <Download className="h-4 w-4 mr-1" />
+                    {isDemoFile ? "Demo" : "Descargar"}
+                  </Button>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleDownload}
-                  disabled={shouldShowPlaceholder}
-                >
-                  <Download className="h-4 w-4 mr-1" />
-                  Descargar
-                </Button>
               </div>
             </DialogHeader>
-
-            <div className="mt-4">
+            <div className="flex justify-center p-4 max-h-[70vh] overflow-auto">
               {shouldShowPlaceholder ? (
-                <div className="w-full h-96 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                <div className="w-full h-96 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center rounded-lg">
                   <div className="text-center">
                     <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <p className="text-lg font-medium text-gray-600 mb-2">
-                      Vista previa no disponible
+                    <p className="text-lg text-gray-600 font-medium mb-2">
+                      {document.filename}
                     </p>
-                    <p className="text-sm text-gray-500">{document.filename}</p>
-                    <p className="text-xs text-gray-400 mt-2">
-                      Archivo de demostración
-                    </p>
+                    <p className="text-gray-500">Vista previa no disponible</p>
+                    {isDemoFile && (
+                      <p className="text-gray-400 text-sm mt-1">
+                        Archivo de demostración
+                      </p>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -286,9 +316,8 @@ function DocumentViewer({ document }: DocumentViewerProps) {
                   alt={document.filename}
                   width={800}
                   height={600}
-                  className="w-full h-auto max-h-[60vh] object-contain"
+                  className="max-w-full max-h-full object-contain rounded-lg"
                   onError={() => setImageError(true)}
-                  onLoad={() => setImageLoaded(true)}
                 />
               )}
             </div>
@@ -300,59 +329,105 @@ function DocumentViewer({ document }: DocumentViewerProps) {
 
   if (isPDF) {
     return (
-      <div className="text-center py-8">
-        <FileText className="h-16 w-16 text-blue-500 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">
-          Documento PDF
-        </h3>
-        <p className="text-gray-600 mb-4">{document.filename}</p>
-        <div className="flex gap-2 justify-center">
-          <Button onClick={handleDownload} disabled={shouldShowPlaceholder}>
-            <Eye className="h-4 w-4 mr-2" />
-            Abrir PDF
+      <>
+        <div className="border rounded-lg p-6 bg-gray-50">
+          <div className="flex items-center justify-center mb-4">
+            <FileText className="h-16 w-16 text-red-500" />
+          </div>
+          <p className="text-center text-gray-700 font-medium mb-2">
+            {document.filename}
+          </p>
+          <p className="text-center text-sm text-gray-500 mb-4">
+            Documento PDF
+          </p>
+        </div>
+
+        <div className="flex gap-2 mt-2">
+          <Button variant="outline" size="sm" onClick={onOpenModal}>
+            <Eye className="h-4 w-4 mr-1" />
+            Ver
           </Button>
-          <Button
-            variant="outline"
-            onClick={handleDownload}
-            disabled={shouldShowPlaceholder}
-          >
-            <Download className="h-4 w-4 mr-2" />
+          <Button variant="outline" size="sm" onClick={handleDownload}>
+            <Download className="h-4 w-4 mr-1" />
             Descargar
           </Button>
         </div>
-        {shouldShowPlaceholder && (
-          <p className="text-xs text-gray-500 mt-2">
-            Archivo de demostración - Vista previa no disponible
-          </p>
-        )}
-      </div>
+
+        {/* PDF Modal */}
+        <Dialog open={isModalOpen} onOpenChange={onCloseModal}>
+          <DialogContent className="max-w-4xl max-h-[90vh]">
+            <DialogHeader>
+              <div className="flex items-center justify-between">
+                <DialogTitle className="text-lg font-semibold">
+                  {document.filename}
+                </DialogTitle>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={handleDownload}>
+                    <Download className="h-4 w-4 mr-1" />
+                    {isDemoFile ? "Demo" : "Descargar"}
+                  </Button>
+                </div>
+              </div>
+            </DialogHeader>
+            <div className="h-[70vh]">
+              {loading ? (
+                <div className="w-full h-full bg-gray-50 flex items-center justify-center rounded-lg">
+                  <div className="text-center">
+                    <Loader2 className="h-8 w-8 text-gray-400 mx-auto mb-2 animate-spin" />
+                    <p className="text-gray-600">Cargando documento...</p>
+                  </div>
+                </div>
+              ) : shouldShowPlaceholder ? (
+                <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center rounded-lg">
+                  <div className="text-center">
+                    <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-lg text-gray-600 font-medium mb-2">
+                      {document.filename}
+                    </p>
+                    <p className="text-gray-500">Vista previa no disponible</p>
+                    {isDemoFile && (
+                      <p className="text-gray-400 text-sm mt-1">
+                        Archivo de demostración - contenido de ejemplo
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <iframe
+                  src={documentUrl}
+                  className="w-full h-full border rounded-lg"
+                  title={document.filename}
+                />
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      </>
     );
   }
 
-  // Other file types
+  // For other file types
   return (
-    <div className="text-center py-8">
-      <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-      <h3 className="text-lg font-medium text-gray-900 mb-2">
-        {document.filename}
-      </h3>
-      <p className="text-gray-600 mb-4">
-        Vista previa no disponible para este tipo de archivo
-      </p>
-      <Button
-        onClick={handleDownload}
-        disabled={shouldShowPlaceholder}
-        variant="outline"
-      >
-        <Download className="h-4 w-4 mr-2" />
-        Descargar
-      </Button>
-      {shouldShowPlaceholder && (
-        <p className="text-xs text-gray-500 mt-2">
-          Archivo de demostración - Descarga no disponible
+    <>
+      <div className="border rounded-lg p-6 bg-gray-50">
+        <div className="flex items-center justify-center mb-4">
+          <FileText className="h-16 w-16 text-blue-500" />
+        </div>
+        <p className="text-center text-gray-700 font-medium mb-2">
+          {document.filename}
         </p>
-      )}
-    </div>
+        <p className="text-center text-sm text-gray-500 mb-4">
+          {document.mimeType}
+        </p>
+      </div>
+
+      <div className="flex gap-2 mt-2">
+        <Button variant="outline" size="sm" onClick={handleDownload}>
+          <Download className="h-4 w-4 mr-1" />
+          {isDemoFile ? "Demo" : "Descargar"}
+        </Button>
+      </div>
+    </>
   );
 }
 
@@ -373,6 +448,11 @@ function PetitionDetailPageContent() {
   const [downloadingDocuments, setDownloadingDocuments] = useState(false);
   const [showAddNoteDialog, setShowAddNoteDialog] = useState(false);
 
+  // State for document modals
+  const [openDocumentModal, setOpenDocumentModal] = useState<string | null>(
+    null
+  );
+
   const fetchPetition = useCallback(async () => {
     try {
       const response = await fetch(
@@ -391,7 +471,16 @@ function PetitionDetailPageContent() {
         throw new Error("Failed to fetch petition");
       }
       const data = await response.json();
-      setPetition(data.petition);
+      // Fix document URL mapping - API returns fileUrl but component expects url
+      const mappedPetition = {
+        ...data.petition,
+        documents:
+          data.petition.documents?.map((doc: any) => ({
+            ...doc,
+            url: doc.fileUrl || doc.url, // Map fileUrl to url for compatibility
+          })) || [],
+      };
+      setPetition(mappedPetition);
     } catch (error) {
       console.error("Error fetching petition:", error);
       toast({
@@ -495,7 +584,7 @@ function PetitionDetailPageContent() {
 
       // Create download link
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
+      const link = globalThis.document.createElement("a");
       link.href = url;
 
       // Get filename from response headers or create default
@@ -510,10 +599,9 @@ function PetitionDetailPageContent() {
       }
 
       link.download = filename;
-      document.body.appendChild(link);
+      globalThis.document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      globalThis.document.body.removeChild(link);
 
       toast({
         title: "Descarga iniciada",
@@ -599,6 +687,27 @@ function PetitionDetailPageContent() {
     } finally {
       setProcessingAction(null);
     }
+  };
+
+  // Function to handle document modal opening
+  const handleOpenDocumentModal = (documentId: string) => {
+    console.log("Opening modal for document:", documentId);
+    setOpenDocumentModal(documentId);
+  };
+
+  // Function to handle document modal closing
+  const handleCloseDocumentModal = () => {
+    console.log("Closing document modal");
+    setOpenDocumentModal(null);
+  };
+
+  // Function to handle document download
+  const handleDocumentDownload = (doc: any) => {
+    const documentUrl = doc.url || `/api/documents/${doc.id}`;
+    const link = globalThis.document.createElement("a");
+    link.href = documentUrl;
+    link.download = doc.filename;
+    link.click();
   };
 
   if (loading) {
@@ -1095,9 +1204,7 @@ function PetitionDetailPageContent() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() =>
-                          window.open(`/api/documents/${doc.id}`, "_blank")
-                        }
+                        onClick={() => handleOpenDocumentModal(doc.id)}
                       >
                         <Eye className="h-4 w-4 mr-1" />
                         Abrir
@@ -1105,12 +1212,7 @@ function PetitionDetailPageContent() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => {
-                          const link = document.createElement("a");
-                          link.href = `/api/documents/${doc.id}`;
-                          link.download = doc.filename;
-                          link.click();
-                        }}
+                        onClick={() => handleDocumentDownload(doc)}
                       >
                         <Download className="h-4 w-4 mr-1" />
                         Descargar
@@ -1119,7 +1221,12 @@ function PetitionDetailPageContent() {
                   </div>
 
                   {/* Document Viewer */}
-                  <DocumentViewer document={doc} />
+                  <DocumentViewer
+                    document={doc}
+                    isModalOpen={openDocumentModal === doc.id}
+                    onOpenModal={() => handleOpenDocumentModal(doc.id)}
+                    onCloseModal={handleCloseDocumentModal}
+                  />
                 </div>
               ))}
             </div>

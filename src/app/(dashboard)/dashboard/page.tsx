@@ -13,12 +13,12 @@ export default function DashboardPage() {
     if (!isLoading && profile) {
       // Redirect based on user role
       if (profile.role === "SUPERADMIN") {
-        router.replace("/admin/solicitudes");
+        router.replace("/admin/dashboard");
         return;
       }
 
       if (profile.role === "IMPORTADOR") {
-        router.replace("/importador/solicitudes");
+        router.replace("/importador/dashboard");
         return;
       }
     }

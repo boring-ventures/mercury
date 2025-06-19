@@ -10,18 +10,24 @@ import { NotificationType } from "@/types/notifications";
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createServerComponentClient({ cookies });
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const cookieStore = await cookies();
+    const supabase = createServerComponentClient({
+      cookies: () => cookieStore,
+    });
 
-    if (!session) {
+    // Use getUser() instead of getSession() for better security
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Get current user profile
     const profile = await prisma.profile.findUnique({
-      where: { userId: session.user.id },
+      where: { userId: user.id },
     });
 
     if (!profile) {
@@ -57,43 +63,24 @@ export async function GET(request: NextRequest) {
     }
 
     // Get notifications with pagination
-    const [notifications, total] = await Promise.all([
+    const [notifications, totalCount] = await Promise.all([
       prisma.notification.findMany({
         where,
         orderBy: { createdAt: "desc" },
         skip,
         take: limit,
-        include: {
-          profile: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              role: true,
-            },
-          },
-        },
       }),
       prisma.notification.count({ where }),
     ]);
-
-    // Get unread count
-    const unreadCount = await prisma.notification.count({
-      where: {
-        profileId: profile.id,
-        read: false,
-      },
-    });
 
     return NextResponse.json({
       notifications,
       pagination: {
         page,
         limit,
-        total,
-        pages: Math.ceil(total / limit),
+        total: totalCount,
+        pages: Math.ceil(totalCount / limit),
       },
-      unreadCount,
     });
   } catch (error) {
     console.error("Error fetching notifications:", error);
@@ -106,31 +93,32 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createServerComponentClient({ cookies });
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const cookieStore = await cookies();
+    const supabase = createServerComponentClient({
+      cookies: () => cookieStore,
+    });
 
-    if (!session) {
+    // Use getUser() instead of getSession() for better security
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Get current user profile
     const profile = await prisma.profile.findUnique({
-      where: { userId: session.user.id },
+      where: { userId: user.id },
     });
 
     if (!profile) {
       return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
 
-    // Only admins can create notifications
-    if (profile.role !== "SUPERADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
     const body = await request.json();
-    const { title, message, type, metadata, profileId, profileIds } = body;
+    const { title, message, type, profileIds, metadata } = body;
 
     // Validate required fields
     if (!title || !message) {
@@ -143,34 +131,29 @@ export async function POST(request: NextRequest) {
     let result;
 
     if (profileIds && Array.isArray(profileIds)) {
-      // Create bulk notifications
+      // Create notifications for multiple users
       result = await createBulkNotifications({
         title,
         message,
         type: type || NotificationType.INFO,
-        metadata,
         profileIds,
+        metadata,
       });
-    } else if (profileId) {
-      // Create single notification
+    } else {
+      // Create notification for current user
       result = await createNotification({
         title,
         message,
         type: type || NotificationType.INFO,
+        profileId: profile.id,
         metadata,
-        profileId,
       });
-    } else {
-      return NextResponse.json(
-        { error: "Either profileId or profileIds is required" },
-        { status: 400 }
-      );
     }
 
     return NextResponse.json({
       success: true,
       data: result,
-      message: "Notification(s) created successfully",
+      message: "Notification created successfully",
     });
   } catch (error) {
     console.error("Error creating notification:", error);

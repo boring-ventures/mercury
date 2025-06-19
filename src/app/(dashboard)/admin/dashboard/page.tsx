@@ -1,6 +1,12 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,9 +16,12 @@ import {
   TrendingUp,
   CheckCircle,
   Clock,
+  XCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { useRequests } from "@/hooks/use-requests";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 
 interface RequestItem {
   id: string;
@@ -47,169 +56,278 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-8 p-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">
-          Dashboard de Administración
-        </h1>
-        <p className="text-gray-600 mt-2">
-          Vista general de la plataforma Mercury
-        </p>
-      </div>
-
-      {/* Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Solicitudes
-            </CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.totalRequests}</div>
-            <p className="text-xs text-muted-foreground">
-              {isLoading ? "Cargando..." : "Todas las solicitudes"}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pendientes</CardTitle>
-            <Clock className="h-4 w-4 text-yellow-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
-              {metrics.pendingRequests}
+          <CardContent className="p-6">
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-medium text-muted-foreground">
+                Solicitudes Totales
+              </span>
+              <div className="text-3xl font-bold">{metrics.totalRequests}</div>
+              <span className="text-xs text-green-600">+12% este mes</span>
             </div>
-            <p className="text-xs text-muted-foreground">Requieren atención</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completadas</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {metrics.completedRequests}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Procesos finalizados
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Empresas Activas
-            </CardTitle>
-            <Building2 className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {metrics.activeCompanies}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Clientes registrados
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              Solicitudes Recientes
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                <span className="ml-2 text-sm text-gray-600">Cargando...</span>
+          <CardContent className="p-6">
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-medium text-muted-foreground">
+                En Revisión
+              </span>
+              <div className="text-3xl font-bold">
+                {metrics.pendingRequests}
               </div>
-            ) : requestsData?.requests && requestsData.requests.length > 0 ? (
-              <>
-                {requestsData.requests
-                  .slice(0, 3)
-                  .map((request: RequestItem) => (
-                    <div
-                      key={request.id}
-                      className="flex items-center justify-between p-3 border rounded-lg"
-                    >
-                      <div>
-                        <p className="font-medium">{request.code}</p>
-                        <p className="text-sm text-gray-600">
-                          {request.company?.name || "N/A"}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <Badge
-                          variant={
-                            request.status === "PENDING"
-                              ? "secondary"
-                              : request.status === "COMPLETED"
-                                ? "default"
-                                : "outline"
-                          }
-                        >
-                          {request.status}
-                        </Badge>
-                        <p className="text-sm text-gray-600 mt-1">
-                          ${request.amount?.toLocaleString()}
-                        </p>
+              <span className="text-xs text-amber-600">8 pendientes hoy</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-medium text-muted-foreground">
+                Completadas
+              </span>
+              <div className="text-3xl font-bold">
+                {metrics.completedRequests}
+              </div>
+              <span className="text-xs text-green-600">
+                +5% vs mes anterior
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-medium text-muted-foreground">
+                Rechazadas
+              </span>
+              <div className="text-3xl font-bold">15</div>
+              <span className="text-xs text-red-600">-2% vs mes anterior</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-2">
+          <CardHeader className="pb-3">
+            <CardTitle>Actividad Reciente</CardTitle>
+            <CardDescription>
+              Últimas acciones realizadas en el sistema
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="all">
+              <TabsList className="mb-4">
+                <TabsTrigger value="all">Todas</TabsTrigger>
+                <TabsTrigger value="documents">Documentos</TabsTrigger>
+                <TabsTrigger value="quotes">Cotizaciones</TabsTrigger>
+                <TabsTrigger value="contracts">Contratos</TabsTrigger>
+              </TabsList>
+              <TabsContent value="all" className="space-y-4">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 border rounded-md">
+                    <div>
+                      <div className="font-medium">Juan Salinas</div>
+                      <div className="text-sm text-muted-foreground">
+                        Subió documento
                       </div>
                     </div>
-                  ))}
-                <Button asChild variant="outline" className="w-full">
-                  <Link href="/admin/solicitudes">
-                    Ver todas las solicitudes
-                  </Link>
+                    <div className="text-sm text-muted-foreground">
+                      22/05/2025
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 border rounded-md">
+                    <div>
+                      <div className="font-medium">Ana Cortez</div>
+                      <div className="text-sm text-muted-foreground">
+                        Aprobó cotización SH-005
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      22/05/2025
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 border rounded-md">
+                    <div>
+                      <div className="font-medium">Sistema</div>
+                      <div className="text-sm text-muted-foreground">
+                        Generó contrato SH-003
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      22/05/2025
+                    </div>
+                  </div>
+                </div>
+                <Button variant="outline" className="w-full">
+                  Ver informe completo
                 </Button>
-              </>
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>No hay solicitudes recientes</p>
-              </div>
-            )}
+              </TabsContent>
+              <TabsContent value="documents" className="space-y-4">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 border rounded-md">
+                    <div>
+                      <div className="font-medium">Juan Salinas</div>
+                      <div className="text-sm text-muted-foreground">
+                        Subió documento
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      22/05/2025
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+              <TabsContent value="quotes" className="space-y-4">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 border rounded-md">
+                    <div>
+                      <div className="font-medium">Ana Cortez</div>
+                      <div className="text-sm text-muted-foreground">
+                        Aprobó cotización SH-005
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      22/05/2025
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+              <TabsContent value="contracts" className="space-y-4">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 border rounded-md">
+                    <div>
+                      <div className="font-medium">Sistema</div>
+                      <div className="text-sm text-muted-foreground">
+                        Generó contrato SH-003
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      22/05/2025
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Acciones Rápidas
-            </CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle>Acciones Rápidas</CardTitle>
+            <CardDescription>
+              Accesos directos a funciones comunes
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button asChild className="w-full justify-start">
-              <Link href="/admin/solicitudes">
-                <Package className="h-4 w-4 mr-2" />
-                Gestionar Solicitudes
-              </Link>
+            <Button className="w-full justify-start gap-2" variant="default">
+              <FileText className="h-4 w-4" /> Validar Documentos
             </Button>
-            <Button asChild variant="outline" className="w-full justify-start">
-              <Link href="/admin/cotizaciones">
-                <FileText className="h-4 w-4 mr-2" />
-                Crear Cotización
-              </Link>
+            <Button className="w-full justify-start gap-2" variant="outline">
+              <Clock className="h-4 w-4" /> Revisar Solicitudes Pendientes
             </Button>
-            <Button asChild variant="outline" className="w-full justify-start">
-              <Link href="/admin/empresas">
-                <Building2 className="h-4 w-4 mr-2" />
-                Gestionar Empresas
-              </Link>
+            <Button className="w-full justify-start gap-2" variant="outline">
+              <CheckCircle className="h-4 w-4" /> Aprobar Cotizaciones
             </Button>
+            <Button className="w-full justify-start gap-2" variant="outline">
+              <XCircle className="h-4 w-4" /> Gestionar Rechazos
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle>Solicitudes Pendientes</CardTitle>
+            <CardDescription>
+              Solicitudes que requieren atención
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-3 border rounded-lg">
+                <div>
+                  <p className="font-medium">SH-001 - ABC Importaciones</p>
+                  <p className="text-sm text-muted-foreground">
+                    1,000 USDT - 22/05/2025
+                  </p>
+                </div>
+                <Badge
+                  variant="outline"
+                  className="bg-yellow-100 text-yellow-800"
+                >
+                  <Clock className="h-3 w-3 mr-1" />
+                  Pendiente
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between p-3 border rounded-lg">
+                <div>
+                  <p className="font-medium">SH-005 - XYZ Trading</p>
+                  <p className="text-sm text-muted-foreground">
+                    2,500 USDT - 21/05/2025
+                  </p>
+                </div>
+                <Badge
+                  variant="outline"
+                  className="bg-yellow-100 text-yellow-800"
+                >
+                  <Clock className="h-3 w-3 mr-1" />
+                  Pendiente
+                </Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle>Progreso del Mes</CardTitle>
+            <CardDescription>Métricas de rendimiento mensual</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">
+                    Solicitudes Procesadas
+                  </span>
+                  <span className="text-sm font-medium">75%</span>
+                </div>
+                <Progress value={75} className="h-2" />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">
+                    Documentos Validados
+                  </span>
+                  <span className="text-sm font-medium">82%</span>
+                </div>
+                <Progress value={82} className="h-2" />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">
+                    Contratos Firmados
+                  </span>
+                  <span className="text-sm font-medium">60%</span>
+                </div>
+                <Progress value={60} className="h-2" />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Meta de Ingresos</span>
+                  <span className="text-sm font-medium">45%</span>
+                </div>
+                <Progress value={45} className="h-2" />
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

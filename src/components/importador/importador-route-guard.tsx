@@ -6,23 +6,23 @@ import { AlertCircle, Shield } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
-interface AdminRouteGuardProps {
+interface ImportadorRouteGuardProps {
   children: React.ReactNode;
   fallbackPath?: string;
 }
 
-export function AdminRouteGuard({
+export function ImportadorRouteGuard({
   children,
   fallbackPath,
-}: AdminRouteGuardProps) {
+}: ImportadorRouteGuardProps) {
   const { profile, isLoading } = useCurrentUser();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && profile && profile.role !== "SUPERADMIN") {
+    if (!isLoading && profile && profile.role !== "IMPORTADOR") {
       // Redirect based on user role
-      if (profile.role === "IMPORTADOR") {
-        router.push("/importador/dashboard");
+      if (profile.role === "SUPERADMIN") {
+        router.push("/admin/dashboard");
       } else {
         router.push(fallbackPath || "/dashboard");
       }
@@ -41,8 +41,8 @@ export function AdminRouteGuard({
     );
   }
 
-  // Show unauthorized message if user doesn't have admin role
-  if (profile && profile.role !== "SUPERADMIN") {
+  // Show unauthorized message if user doesn't have importador role
+  if (profile && profile.role !== "IMPORTADOR") {
     return (
       <div className="flex items-center justify-center min-h-96 p-6">
         <Card className="max-w-md w-full">
@@ -58,8 +58,8 @@ export function AdminRouteGuard({
                   Acceso Restringido
                 </h3>
                 <p className="text-gray-600 mt-2">
-                  No tienes permisos para acceder a esta sección. Solo los super
-                  administradores pueden ver este contenido.
+                  No tienes permisos para acceder a esta sección. Solo los
+                  importadores pueden ver este contenido.
                 </p>
               </div>
               <div className="flex items-center justify-center text-sm text-amber-600 bg-amber-50 p-3 rounded-md">
@@ -74,6 +74,6 @@ export function AdminRouteGuard({
     );
   }
 
-  // If user is authenticated and has admin role, render children
+  // If user is authenticated and has importador role, render children
   return <>{children}</>;
 }
