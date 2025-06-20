@@ -8,8 +8,9 @@ import {
 // Notification templates for different system events
 export const NOTIFICATION_TEMPLATES: SystemNotificationTemplates = {
   REQUEST_CREATED: {
-    title: "Nueva Solicitud Creada",
-    message: "Se ha creado una nueva solicitud que requiere revisión",
+    title: "🆕 Nueva Solicitud de Importación",
+    message:
+      "Se ha creado una nueva solicitud que requiere cotización y revisión",
     type: NotificationType.INFO,
   },
   REQUEST_APPROVED: {
@@ -24,9 +25,10 @@ export const NOTIFICATION_TEMPLATES: SystemNotificationTemplates = {
     type: NotificationType.WARNING,
   },
   QUOTATION_RECEIVED: {
-    title: "Nueva Cotización Recibida",
-    message: "Ha recibido una nueva cotización para su solicitud",
-    type: NotificationType.INFO,
+    title: "💰 Nueva Cotización Disponible",
+    message:
+      "Ha recibido una nueva cotización para su solicitud. Revise los detalles y proceda con la siguiente etapa.",
+    type: NotificationType.SUCCESS,
   },
   CONTRACT_SIGNED: {
     title: "Contrato Firmado",

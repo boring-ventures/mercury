@@ -9,6 +9,7 @@ import { Header } from "@/components/sidebar/header";
 import { Search } from "@/components/sidebar/search";
 import { ThemeSwitch } from "@/components/sidebar/theme-switch";
 import { ProfileDropdown } from "@/components/sidebar/profile-dropdown";
+import { NotificationDropdown } from "@/components/notifications/notification-dropdown";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -35,6 +36,7 @@ export function DashboardLayoutClient({ children }: DashboardLayoutProps) {
           <Header>
             <div className="ml-auto flex items-center space-x-4">
               <Search />
+              <NotificationDropdown />
               <ThemeSwitch />
               <ProfileDropdown />
             </div>
@@ -44,4 +46,4 @@ export function DashboardLayoutClient({ children }: DashboardLayoutProps) {
       </SidebarProvider>
     </SearchProvider>
   );
-} 
+}

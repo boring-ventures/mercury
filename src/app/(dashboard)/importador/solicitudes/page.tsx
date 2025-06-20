@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -14,6 +16,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Calendar,
   DollarSign,
@@ -29,16 +49,21 @@ import {
   Clock,
   Loader2,
   AlertCircle,
+  Check,
+  X,
+  AlertTriangle,
 } from "lucide-react";
 import { useState } from "react";
 import {
   useRequests,
   useRequestStatusConfig,
   useRequestWorkflow,
+  useUpdateQuotation,
   type RequestFilters,
 } from "@/hooks/use-requests";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { useToast } from "@/components/ui/use-toast";
 
 // Updated workflow steps (removed Pago Inicial)
 const WORKFLOW_STEPS = [
@@ -98,8 +123,21 @@ interface ImportadorSolicitudItem {
   currency: string;
   createdAt: string;
   description: string;
+  rejectionCount?: number;
   quotations?: Array<{
+    id: string;
+    code: string;
     status: string;
+    totalAmount: number;
+    baseAmount: number;
+    fees: number;
+    taxes: number;
+    currency: string;
+    validUntil: string;
+    createdAt: string;
+    notes?: string;
+    terms?: string;
+    rejectionReason?: string;
   }>;
   contracts?: Array<{
     status: string;
@@ -182,6 +220,460 @@ function WorkflowSteps({
   );
 }
 
+// QuotationReviewModal component
+function QuotationReviewModal({
+  solicitud,
+  onUpdate,
+}: {
+  solicitud: ImportadorSolicitudItem;
+  onUpdate: () => void;
+}) {
+  const { toast } = useToast();
+  const { updateQuotation, isLoading } = useUpdateQuotation();
+  const [notes, setNotes] = useState("");
+  const [showApproveDialog, setShowApproveDialog] = useState(false);
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Get the first quotation (assuming one quotation per request for now)
+  const quotation = solicitud.quotations?.[0];
+
+  if (!quotation) {
+    return null;
+  }
+
+  const isExpired = new Date() > new Date(quotation.validUntil || Date.now());
+  const canRespond =
+    (quotation.status === "SENT" || quotation.status === "DRAFT") && !isExpired;
+
+  const handleApprove = async () => {
+    try {
+      await updateQuotation({
+        quotationId: quotation.id,
+        action: "ACCEPTED",
+        notes: notes || undefined,
+      });
+      setShowApproveDialog(false);
+      setNotes("");
+      setIsOpen(false);
+      onUpdate();
+    } catch {
+      // Error handling is done in the hook
+    }
+  };
+
+  const handleReject = async () => {
+    if (!notes.trim() || notes.trim().length < 10) {
+      toast({
+        title: "Motivo requerido",
+        description:
+          "Debe proporcionar una razón detallada de al menos 10 caracteres para rechazar la cotización",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await updateQuotation({
+        quotationId: quotation.id,
+        action: "REJECTED",
+        notes,
+      });
+      setShowRejectDialog(false);
+      setNotes("");
+      setIsOpen(false);
+      onUpdate();
+    } catch {
+      // Error handling is done in the hook
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "DRAFT":
+        return "bg-orange-100 text-orange-800";
+      case "SENT":
+        return "bg-blue-100 text-blue-800";
+      case "ACCEPTED":
+        return "bg-green-100 text-green-800";
+      case "REJECTED":
+        return "bg-red-100 text-red-800";
+      case "EXPIRED":
+        return "bg-gray-100 text-gray-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "DRAFT":
+        return "Borrador";
+      case "SENT":
+        return "Pendiente";
+      case "ACCEPTED":
+        return "Aprobada";
+      case "REJECTED":
+        return "Rechazada";
+      case "EXPIRED":
+        return "Expirada";
+      default:
+        return status;
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button
+          className="flex-1"
+          style={{
+            backgroundColor: "#f97316", // Orange for quotation review
+          }}
+        >
+          <ArrowRight className="h-4 w-4 mr-2" />
+          Revisar Cotización
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <DollarSign className="h-5 w-5" />
+            Revisar Cotización {quotation.code}
+          </DialogTitle>
+          <DialogDescription>
+            Revise los detalles de la cotización y decida si aprobarla o
+            rechazarla.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-6 py-4">
+          {/* Rejection Count Warning */}
+          {solicitud.rejectionCount !== undefined &&
+            solicitud.rejectionCount > 0 && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-amber-900">
+                      Advertencia de Propuestas
+                    </h4>
+                    <p className="text-sm text-amber-800 mt-1">
+                      Esta solicitud ha rechazado{" "}
+                      <strong>{solicitud.rejectionCount}</strong> de 3
+                      propuestas permitidas.
+                      {solicitud.rejectionCount >= 2 && (
+                        <span className="block mt-1 font-medium">
+                          ⚠️ Si rechaza esta propuesta, la solicitud será
+                          cancelada automáticamente.
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+          {/* Status and Date */}
+          <div className="flex items-center justify-between">
+            <Badge className={getStatusColor(quotation.status)}>
+              {getStatusLabel(quotation.status)}
+            </Badge>
+            <div className="text-sm text-gray-600">
+              <Calendar className="h-4 w-4 inline mr-1" />
+              {format(new Date(quotation.createdAt), "dd/MM/yyyy", {
+                locale: es,
+              })}
+            </div>
+          </div>
+
+          {/* Amount Breakdown */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-gray-50 p-3 rounded-lg">
+              <p className="text-xs text-gray-600 mb-1">Monto Base</p>
+              <p className="font-semibold">
+                ${quotation.baseAmount?.toLocaleString()} {quotation.currency}
+              </p>
+            </div>
+            <div className="bg-gray-50 p-3 rounded-lg">
+              <p className="text-xs text-gray-600 mb-1">Comisiones</p>
+              <p className="font-semibold">
+                ${quotation.fees?.toLocaleString()} {quotation.currency}
+              </p>
+            </div>
+            <div className="bg-gray-50 p-3 rounded-lg">
+              <p className="text-xs text-gray-600 mb-1">Impuestos</p>
+              <p className="font-semibold">
+                ${quotation.taxes?.toLocaleString()} {quotation.currency}
+              </p>
+            </div>
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <p className="text-xs text-blue-600 mb-1">Total</p>
+              <p className="font-bold text-lg text-blue-900">
+                ${quotation.totalAmount?.toLocaleString()} {quotation.currency}
+              </p>
+            </div>
+          </div>
+
+          {/* Valid Until */}
+          <div className="bg-yellow-50 p-3 rounded-lg">
+            <div className="text-sm text-yellow-800 flex items-center gap-2">
+              <Clock className="h-4 w-4 inline" />
+              <span>
+                Válida hasta:{" "}
+                {format(
+                  new Date(quotation.validUntil),
+                  "dd/MM/yyyy 'a las' HH:mm",
+                  { locale: es }
+                )}
+              </span>
+              {isExpired && (
+                <Badge variant="destructive" className="ml-2">
+                  <AlertTriangle className="h-3 w-3 mr-1" />
+                  Expirada
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          {/* Terms and Notes */}
+          {quotation.terms && (
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-2">
+                Términos y Condiciones:
+              </p>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                  {quotation.terms}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {quotation.notes && (
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-2">Notas:</p>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                  {quotation.notes}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          {canRespond && (
+            <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+              <div className="flex-1 flex gap-3">
+                {/* Approve Button */}
+                <Button
+                  onClick={() => setShowApproveDialog(true)}
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  disabled={isLoading}
+                >
+                  <Check className="h-4 w-4 mr-2" />
+                  Aprobar Cotización
+                </Button>
+
+                {/* Reject Button */}
+                <Button
+                  onClick={() => setShowRejectDialog(true)}
+                  variant="destructive"
+                  className="flex-1"
+                  disabled={isLoading}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Rechazar Cotización
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {quotation.status === "ACCEPTED" && (
+            <div className="flex items-center gap-2 pt-4 border-t text-green-700">
+              <CheckCircle className="h-4 w-4" />
+              <span className="text-sm font-medium">
+                Cotización aprobada - Procediendo al siguiente paso
+              </span>
+            </div>
+          )}
+
+          {quotation.status === "REJECTED" && (
+            <div className="flex items-center gap-2 pt-4 border-t text-red-700">
+              <X className="h-4 w-4" />
+              <span className="text-sm font-medium">Cotización rechazada</span>
+            </div>
+          )}
+        </div>
+
+        {/* Nested Dialogs for Approve/Reject */}
+        <Dialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Aprobar Cotización</DialogTitle>
+              <DialogDescription>
+                ¿Está seguro que desea aprobar esta cotización? Esta acción
+                moverá la solicitud al siguiente paso del proceso.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <Label htmlFor="approve-notes">
+                  Notas adicionales (opcional)
+                </Label>
+                <Textarea
+                  id="approve-notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Comentarios adicionales sobre la aprobación..."
+                  className="mt-2"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowApproveDialog(false);
+                  setNotes("");
+                }}
+                disabled={isLoading}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleApprove}
+                disabled={isLoading}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Aprobando...
+                  </>
+                ) : (
+                  <>
+                    <Check className="h-4 w-4 mr-2" />
+                    Confirmar Aprobación
+                  </>
+                )}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <AlertDialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <X className="h-5 w-5 text-red-600" />
+                Rechazar Cotización
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {solicitud.rejectionCount !== undefined &&
+                solicitud.rejectionCount >= 2 ? (
+                  <div className="space-y-2">
+                    <p className="text-red-600 font-medium">
+                      ⚠️ ADVERTENCIA: Esta es la última oportunidad.
+                    </p>
+                    <p>
+                      Si rechaza esta cotización, la solicitud será{" "}
+                      <strong>cancelada automáticamente</strong>
+                      ya que habrá alcanzado el límite de 3 propuestas
+                      rechazadas.
+                    </p>
+                    <p className="text-sm">
+                      Asegúrese de proporcionar una explicación detallada del
+                      rechazo.
+                    </p>
+                  </div>
+                ) : (
+                  <p>
+                    ¿Está seguro que desea rechazar esta cotización? Debe
+                    proporcionar una razón detallada para el rechazo.
+                  </p>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-4 py-4">
+              {solicitud.rejectionCount !== undefined &&
+                solicitud.rejectionCount > 0 && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    <p className="text-sm text-amber-800">
+                      <strong>Rechazos anteriores:</strong>{" "}
+                      {solicitud.rejectionCount} de 3 permitidos
+                    </p>
+                  </div>
+                )}
+              <div>
+                <Label htmlFor="reject-notes" className="font-medium">
+                  Motivo del rechazo *
+                  {solicitud.rejectionCount !== undefined &&
+                    solicitud.rejectionCount >= 2 && (
+                      <span className="text-red-600 text-xs ml-2">
+                        (OBLIGATORIO - Último rechazo)
+                      </span>
+                    )}
+                </Label>
+                <Textarea
+                  id="reject-notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder={
+                    solicitud.rejectionCount !== undefined &&
+                    solicitud.rejectionCount >= 2
+                      ? "Explique detalladamente por qué está rechazando esta cotización (esto cancelará la solicitud)..."
+                      : "Explique por qué está rechazando esta cotización..."
+                  }
+                  className="mt-2"
+                  rows={4}
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Mínimo 10 caracteres requeridos
+                </p>
+              </div>
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel
+                onClick={() => {
+                  setShowRejectDialog(false);
+                  setNotes("");
+                }}
+                disabled={isLoading}
+              >
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleReject}
+                disabled={
+                  isLoading || !notes.trim() || notes.trim().length < 10
+                }
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Rechazando...
+                  </>
+                ) : (
+                  <>
+                    <X className="h-4 w-4 mr-2" />
+                    {solicitud.rejectionCount !== undefined &&
+                    solicitud.rejectionCount >= 2
+                      ? "Rechazar y Cancelar Solicitud"
+                      : "Confirmar Rechazo"}
+                  </>
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function SolicitudCard({ solicitud }: { solicitud: ImportadorSolicitudItem }) {
   const { getStatusConfig } = useRequestStatusConfig();
   const { getWorkflowStep, getNextAction, getProgress } = useRequestWorkflow();
@@ -190,6 +682,12 @@ function SolicitudCard({ solicitud }: { solicitud: ImportadorSolicitudItem }) {
   const nextAction = getNextAction(solicitud);
   const progress = getProgress(solicitud);
   const statusConfig = getStatusConfig(solicitud.status);
+
+  // Check if this is a quotation review step
+  const isQuotationReviewStep =
+    currentStep === 2 &&
+    solicitud.quotations &&
+    solicitud.quotations.length > 0;
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -252,12 +750,30 @@ function SolicitudCard({ solicitud }: { solicitud: ImportadorSolicitudItem }) {
               Ver Detalles
             </Link>
           </Button>
-          <Button className="flex-1" asChild>
-            <Link href={nextAction.href}>
-              <ArrowRight className="h-4 w-4 mr-2" />
-              {nextAction.text}
-            </Link>
-          </Button>
+
+          {/* Conditional rendering for second button */}
+          {isQuotationReviewStep ? (
+            <QuotationReviewModal
+              solicitud={solicitud}
+              onUpdate={() => {
+                // This will trigger a refetch when quotation is updated
+                window.location.reload(); // Simple approach for now
+              }}
+            />
+          ) : (
+            <Button
+              className="flex-1"
+              asChild
+              style={{
+                backgroundColor: currentStep === 2 ? "#f97316" : undefined,
+              }}
+            >
+              <Link href={nextAction.href}>
+                <ArrowRight className="h-4 w-4 mr-2" />
+                {nextAction.text}
+              </Link>
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

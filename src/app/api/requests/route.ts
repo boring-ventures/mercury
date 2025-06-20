@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { DocumentType } from "@prisma/client";
+import { notifyAllAdmins } from "@/lib/notifications";
 
 // Helper function to generate request code
 function generateRequestCode(): string {
@@ -117,7 +118,15 @@ export async function GET(request: NextRequest) {
     const [requests, totalCount] = await Promise.all([
       prisma.request.findMany({
         where: whereClause,
-        include: {
+        select: {
+          id: true,
+          code: true,
+          amount: true,
+          currency: true,
+          status: true,
+          description: true,
+          rejectionCount: true,
+          createdAt: true,
           company: {
             select: {
               id: true,
@@ -149,7 +158,18 @@ export async function GET(request: NextRequest) {
           quotations: {
             select: {
               id: true,
+              code: true,
               status: true,
+              totalAmount: true,
+              baseAmount: true,
+              fees: true,
+              taxes: true,
+              currency: true,
+              validUntil: true,
+              createdAt: true,
+              notes: true,
+              terms: true,
+              rejectionReason: true,
             },
           },
           contracts: {
@@ -347,6 +367,21 @@ export async function POST(request: NextRequest) {
       });
 
       await Promise.all(documentPromises);
+    }
+
+    // Step 1: Notify all admins about the new solicitud
+    try {
+      await notifyAllAdmins("REQUEST_CREATED", {
+        requestId: newRequest.id,
+        requestCode: newRequest.code,
+        companyName: newRequest.company?.name,
+        amount: newRequest.amount,
+        currency: newRequest.currency,
+        createdBy: `${profile.firstName} ${profile.lastName}`,
+      });
+    } catch (notificationError) {
+      console.error("Error sending notification to admins:", notificationError);
+      // Don't fail the request creation if notification fails
     }
 
     return NextResponse.json({

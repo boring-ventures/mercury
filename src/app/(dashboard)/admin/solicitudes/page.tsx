@@ -22,6 +22,7 @@ import {
   FileText,
   AlertCircle,
   Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -61,12 +62,18 @@ interface AdminRequestItem {
   amount: number;
   currency: string;
   createdAt: string;
+  rejectionCount?: number;
   company?: {
     name: string;
   };
   provider?: {
     country: string;
   };
+  quotations?: Array<{
+    id: string;
+    status: string;
+    validUntil: string;
+  }>;
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -100,6 +107,34 @@ function StatusBadge({ status }: { status: string }) {
       {config.label}
     </Badge>
   );
+}
+
+// Utility function to check if a request has expired quotations
+function hasExpiredQuotations(
+  quotations?: Array<{ status: string; validUntil: string }>
+): boolean {
+  if (!quotations || quotations.length === 0) return false;
+
+  const now = new Date();
+  return quotations.some(
+    (q) =>
+      (q.status === "SENT" || q.status === "DRAFT") &&
+      new Date(q.validUntil) < now
+  );
+}
+
+// Utility function to get active (non-expired) quotations count
+function getActiveQuotationsCount(
+  quotations?: Array<{ status: string; validUntil: string }>
+): number {
+  if (!quotations || quotations.length === 0) return 0;
+
+  const now = new Date();
+  return quotations.filter(
+    (q) =>
+      (q.status === "SENT" || q.status === "DRAFT") &&
+      new Date(q.validUntil) >= now
+  ).length;
 }
 
 export default function AdminSolicitudes() {
@@ -266,48 +301,122 @@ export default function AdminSolicitudes() {
                     <th className="text-left py-3 px-4">EMPRESA</th>
                     <th className="text-left py-3 px-4">DESTINO</th>
                     <th className="text-left py-3 px-4">MONTO</th>
+                    <th className="text-left py-3 px-4">RECHAZOS</th>
+                    <th className="text-left py-3 px-4">COTIZACIONES</th>
                     <th className="text-left py-3 px-4">ESTADO</th>
                     <th className="text-left py-3 px-4">FECHA</th>
                     <th className="text-left py-3 px-4">ACCIONES</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {data.requests.map((request: AdminRequestItem) => (
-                    <tr key={request.id} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4 font-medium">{request.code}</td>
-                      <td className="py-3 px-4">
-                        {request.company?.name || "N/A"}
-                      </td>
-                      <td className="py-3 px-4">
-                        {request.provider?.country || "N/A"}
-                      </td>
-                      <td className="py-3 px-4">
-                        ${request.amount?.toLocaleString()} {request.currency}
-                      </td>
-                      <td className="py-3 px-4">
-                        <StatusBadge status={request.status} />
-                      </td>
-                      <td className="py-3 px-4">
-                        {format(new Date(request.createdAt), "dd/MM/yy", {
-                          locale: es,
-                        })}
-                      </td>
-                      <td className="py-3 px-4">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-8 px-2"
-                          asChild
-                        >
-                          <Link
-                            href={`/admin/solicitudes/${request.code || request.id}`}
+                  {data.requests.map((request: AdminRequestItem) => {
+                    const hasExpired = hasExpiredQuotations(request.quotations);
+                    const activeCount = getActiveQuotationsCount(
+                      request.quotations
+                    );
+                    const totalQuotations = request.quotations?.length || 0;
+
+                    return (
+                      <tr
+                        key={request.id}
+                        className="border-b hover:bg-gray-50"
+                      >
+                        <td className="py-3 px-4 font-medium">
+                          {request.code}
+                        </td>
+                        <td className="py-3 px-4">
+                          {request.company?.name || "N/A"}
+                        </td>
+                        <td className="py-3 px-4">
+                          {request.provider?.country || "N/A"}
+                        </td>
+                        <td className="py-3 px-4">
+                          ${request.amount?.toLocaleString()} {request.currency}
+                        </td>
+                        <td className="py-3 px-4">
+                          {request.rejectionCount ? (
+                            <div className="flex items-center gap-1">
+                              <span
+                                className={`font-medium ${
+                                  request.rejectionCount >= 2
+                                    ? "text-red-600"
+                                    : request.rejectionCount >= 1
+                                      ? "text-orange-600"
+                                      : "text-gray-600"
+                                }`}
+                              >
+                                {request.rejectionCount}
+                              </span>
+                              <span className="text-gray-400">/3</span>
+                              {request.rejectionCount >= 2 && (
+                                <XCircle className="h-4 w-4 text-red-500" />
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">0/3</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4">
+                          {totalQuotations === 0 ? (
+                            <span className="text-gray-400">-</span>
+                          ) : (
+                            <div className="flex items-center gap-1">
+                              <span
+                                className={`font-medium ${
+                                  hasExpired && activeCount === 0
+                                    ? "text-red-600"
+                                    : hasExpired
+                                      ? "text-orange-600"
+                                      : "text-green-600"
+                                }`}
+                              >
+                                {activeCount}
+                              </span>
+                              <span className="text-gray-400">
+                                /{totalQuotations}
+                              </span>
+                              {hasExpired && (
+                                <AlertTriangle
+                                  className={`h-4 w-4 ${
+                                    activeCount === 0
+                                      ? "text-red-500"
+                                      : "text-orange-500"
+                                  }`}
+                                  aria-label={
+                                    activeCount === 0
+                                      ? "Todas las cotizaciones han expirado"
+                                      : "Algunas cotizaciones han expirado"
+                                  }
+                                />
+                              )}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3 px-4">
+                          <StatusBadge status={request.status} />
+                        </td>
+                        <td className="py-3 px-4">
+                          {format(new Date(request.createdAt), "dd/MM/yy", {
+                            locale: es,
+                          })}
+                        </td>
+                        <td className="py-3 px-4">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 px-2"
+                            asChild
                           >
-                            <Eye className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
+                            <Link
+                              href={`/admin/solicitudes/${request.code || request.id}`}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +40,7 @@ import {
   Plus,
   ZoomIn,
   Banknote,
+  AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -55,6 +56,13 @@ import {
   useDownloadPDF,
   useRequestHistory,
 } from "@/hooks/use-admin-requests";
+import {
+  useQuotationExpiry,
+  isQuotationExpired,
+  getQuotationStatusWithExpiry,
+  getQuotationStatusColor,
+  getQuotationStatusLabel,
+} from "@/hooks/use-quotation-expiry";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/components/ui/use-toast";
@@ -104,6 +112,7 @@ interface QuotationItem {
   validUntil: Date;
   createdAt: Date;
   notes?: string;
+  rejectionReason?: string;
 }
 
 const STATUS_OPTIONS = [
@@ -907,8 +916,18 @@ export default function AdminSolicitudDetail() {
   const { data: historyData, isLoading: isLoadingHistory } =
     useRequestHistory(requestId);
 
+  // Add expiration checking
+  const { checkExpiredQuotations, isChecking } = useQuotationExpiry();
+
   const request = data?.request;
   const history = historyData || [];
+
+  // Check for expired quotations when the component loads or request data changes
+  useEffect(() => {
+    if (request?.id && request?.quotations && request?.quotations.length > 0) {
+      checkExpiredQuotations(request.id);
+    }
+  }, [request?.id, request?.quotations, checkExpiredQuotations]);
 
   const handleDownloadPDF = () => {
     downloadPDF(requestId, {
@@ -961,6 +980,14 @@ export default function AdminSolicitudDetail() {
     );
   };
 
+  // Enhanced quotation refresh that includes expiration check
+  const handleQuotationRefresh = async () => {
+    if (request?.id) {
+      await checkExpiredQuotations(request.id);
+    }
+    refetch();
+  };
+
   if (isLoading) {
     return (
       <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -992,6 +1019,19 @@ export default function AdminSolicitudDetail() {
     );
   }
 
+  // Check if we have any expired quotations
+  const expiredQuotations =
+    request.quotations?.filter((q: QuotationItem) =>
+      isQuotationExpired(q.validUntil)
+    ) || [];
+
+  const activeQuotations =
+    request.quotations?.filter(
+      (q: QuotationItem) =>
+        !isQuotationExpired(q.validUntil) &&
+        (q.status === "SENT" || q.status === "DRAFT")
+    ) || [];
+
   return (
     <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="space-y-6">
@@ -1021,6 +1061,38 @@ export default function AdminSolicitudDetail() {
             </Button>
           </div>
         </div>
+
+        {/* Expiration Alert */}
+        {expiredQuotations.length > 0 && (
+          <Card className="border-amber-200 bg-amber-50">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+                <div className="flex-1">
+                  <h4 className="font-medium text-amber-900">
+                    Cotizaciones Expiradas Detectadas
+                  </h4>
+                  <p className="text-sm text-amber-800 mt-1">
+                    {expiredQuotations.length} cotización(es) han expirado.
+                    {activeQuotations.length === 0 && (
+                      <span className="font-medium">
+                        {" "}
+                        Se recomienda generar una nueva cotización para
+                        continuar con el proceso.
+                      </span>
+                    )}
+                  </p>
+                </div>
+                {activeQuotations.length === 0 && (
+                  <QuotationGenerator
+                    requestId={requestId}
+                    onSuccess={handleQuotationRefresh}
+                  />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
@@ -1113,7 +1185,10 @@ export default function AdminSolicitudDetail() {
                   Descargar Documentos
                 </Button>
 
-                <QuotationGenerator requestId={requestId} onSuccess={refetch} />
+                <QuotationGenerator
+                  requestId={requestId}
+                  onSuccess={handleQuotationRefresh}
+                />
 
                 <Dialog
                   open={isForceStatusOpen}
@@ -1193,67 +1268,158 @@ export default function AdminSolicitudDetail() {
           </Card>
         </div>
 
-        {/* Quotations */}
+        {/* Enhanced Quotations Section */}
         {request.quotations && request.quotations.length > 0 && (
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle>COTIZACIONES</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>COTIZACIONES</CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleQuotationRefresh}
+                  disabled={isChecking}
+                >
+                  {isChecking ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                  )}
+                  Verificar Estado
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {request.quotations.map((quotation: QuotationItem) => (
-                  <div
-                    key={quotation.id}
-                    className="border rounded-lg p-4 bg-gray-50"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium">
-                        Cotización {quotation.code}
-                      </h4>
-                      <Badge
-                        variant={
-                          quotation.status === "SENT" ? "default" : "secondary"
-                        }
-                      >
-                        {quotation.status}
-                      </Badge>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <p className="text-gray-600">Monto Total</p>
-                        <p className="font-semibold">
-                          ${quotation.totalAmount?.toLocaleString()}{" "}
-                          {quotation.currency}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-gray-600">Válida hasta</p>
-                        <p>
-                          {format(
-                            new Date(quotation.validUntil),
-                            "dd/MM/yyyy",
-                            { locale: es }
+                {request.quotations.map((quotation: QuotationItem) => {
+                  const actualStatus = getQuotationStatusWithExpiry(
+                    quotation.status,
+                    quotation.validUntil
+                  );
+                  const isExpired = actualStatus === "EXPIRED";
+
+                  return (
+                    <div
+                      key={quotation.id}
+                      className={`border rounded-lg p-4 ${
+                        isExpired ? "bg-red-50 border-red-200" : "bg-gray-50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium">
+                          Cotización {quotation.code}
+                        </h4>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            className={getQuotationStatusColor(actualStatus)}
+                          >
+                            {getQuotationStatusLabel(actualStatus)}
+                          </Badge>
+                          {isExpired && (
+                            <AlertTriangle className="h-4 w-4 text-red-500" />
                           )}
-                        </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-gray-600">Fecha de Creación</p>
-                        <p>
-                          {format(new Date(quotation.createdAt), "dd/MM/yyyy", {
-                            locale: es,
-                          })}
-                        </p>
+
+                      {isExpired && (
+                        <div className="mb-3 p-2 bg-red-100 border border-red-200 rounded text-sm text-red-800">
+                          <div className="flex items-center gap-2">
+                            <AlertTriangle className="h-4 w-4" />
+                            <span className="font-medium">
+                              Cotización Expirada
+                            </span>
+                          </div>
+                          <p className="mt-1">
+                            Esta cotización expiró el{" "}
+                            {format(
+                              new Date(quotation.validUntil),
+                              "dd/MM/yyyy 'a las' HH:mm",
+                              { locale: es }
+                            )}
+                            . Se recomienda generar una nueva cotización.
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <p className="text-gray-600">Monto Total</p>
+                          <p className="font-semibold">
+                            ${quotation.totalAmount?.toLocaleString()}{" "}
+                            {quotation.currency}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-gray-600">Válida hasta</p>
+                          <p
+                            className={
+                              isExpired ? "text-red-600 font-medium" : ""
+                            }
+                          >
+                            {format(
+                              new Date(quotation.validUntil),
+                              "dd/MM/yyyy HH:mm",
+                              { locale: es }
+                            )}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-gray-600">Fecha de Creación</p>
+                          <p>
+                            {format(
+                              new Date(quotation.createdAt),
+                              "dd/MM/yyyy",
+                              {
+                                locale: es,
+                              }
+                            )}
+                          </p>
+                        </div>
                       </div>
+
+                      {quotation.rejectionReason && (
+                        <div className="mt-3 p-2 bg-red-100 border border-red-200 rounded">
+                          <p className="text-sm font-medium text-red-800">
+                            Motivo de rechazo:
+                          </p>
+                          <p className="text-sm text-red-700">
+                            {quotation.rejectionReason}
+                          </p>
+                        </div>
+                      )}
+
+                      {quotation.notes && (
+                        <div className="mt-2">
+                          <p className="text-gray-600 text-sm">Notas:</p>
+                          <p className="text-sm">{quotation.notes}</p>
+                        </div>
+                      )}
                     </div>
-                    {quotation.notes && (
-                      <div className="mt-2">
-                        <p className="text-gray-600 text-sm">Notas:</p>
-                        <p className="text-sm">{quotation.notes}</p>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
+
+              {expiredQuotations.length > 0 &&
+                activeQuotations.length === 0 && (
+                  <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <AlertTriangle className="h-5 w-5 text-amber-600" />
+                      <div className="flex-1">
+                        <h4 className="font-medium text-amber-900">
+                          Todas las cotizaciones han expirado
+                        </h4>
+                        <p className="text-sm text-amber-800 mt-1">
+                          No hay cotizaciones activas. Genere una nueva
+                          cotización para continuar con el proceso.
+                        </p>
+                      </div>
+                      <QuotationGenerator
+                        requestId={requestId}
+                        onSuccess={handleQuotationRefresh}
+                      />
+                    </div>
+                  </div>
+                )}
             </CardContent>
           </Card>
         )}

@@ -85,7 +85,10 @@ export function useRequest(requestId: string) {
 }
 
 // Hook for creating a new request
-export function useCreateRequest() {
+export function useCreateRequest(options?: {
+  onSuccess?: (data: { message?: string; request?: unknown }) => void;
+  onError?: (error: Error) => void;
+}) {
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -119,6 +122,11 @@ export function useCreateRequest() {
         description: data.message || "La solicitud ha sido creada exitosamente",
         variant: "default",
       });
+
+      // Call custom onSuccess callback if provided
+      if (options?.onSuccess) {
+        options.onSuccess(data);
+      }
     },
     onError: (error: Error) => {
       setIsLoading(false);
@@ -127,6 +135,11 @@ export function useCreateRequest() {
         description: error.message,
         variant: "destructive",
       });
+
+      // Call custom onError callback if provided
+      if (options?.onError) {
+        options.onError(error);
+      }
     },
   });
 
@@ -335,7 +348,8 @@ export function useRequestWorkflow() {
     const hasActiveQuotation =
       hasQuotation &&
       request.quotations?.some(
-        (q: WorkflowQuotation) => q.status === "SENT" || q.status === "ACCEPTED"
+        (q: WorkflowQuotation) =>
+          q.status === "SENT" || q.status === "ACCEPTED" || q.status === "DRAFT"
       );
 
     // Check if has contracts
@@ -355,11 +369,27 @@ export function useRequestWorkflow() {
     // Check if process is completed
     const isCompleted = request.status === "COMPLETED";
 
-    if (isCompleted) return 5; // Factura Final
-    if (hasProviderPaymentCompleted) return 4; // Pago a Proveedor
-    if (hasActiveContract) return 3; // Contrato
-    if (hasActiveQuotation) return 2; // Cotización
-    return 1; // Nueva Solicitud
+    let step = 1;
+    if (isCompleted)
+      step = 5; // Factura Final
+    else if (hasProviderPaymentCompleted)
+      step = 4; // Pago a Proveedor
+    else if (hasActiveContract)
+      step = 3; // Contrato
+    else if (hasActiveQuotation)
+      step = 2; // Cotización
+    else step = 1; // Nueva Solicitud
+
+    console.log("Workflow step calculation:", {
+      requestId: request.id || request.code,
+      hasQuotation,
+      hasActiveQuotation,
+      quotations: request.quotations,
+      step,
+      requestStatus: request.status,
+    });
+
+    return step;
   };
 
   const getNextAction = (request: WorkflowRequest | null) => {
@@ -371,7 +401,7 @@ export function useRequestWorkflow() {
       },
       2: {
         text: "Revisar Cotización",
-        href: `/importador/solicitudes/${request?.code || request?.id}/cotizacion`,
+        href: `/importador/solicitudes/${request?.code || request?.id}`,
       },
       3: {
         text: "Revisar Contrato",
@@ -386,7 +416,17 @@ export function useRequestWorkflow() {
         href: `/importador/solicitudes/${request?.code || request?.id}/factura-final`,
       },
     };
-    return actions[step as keyof typeof actions] || actions[1];
+
+    const action = actions[step as keyof typeof actions] || actions[1];
+
+    console.log("Next action calculation:", {
+      requestId: request?.id || request?.code,
+      step,
+      action,
+      requestCode: request?.code,
+    });
+
+    return action;
   };
 
   const getProgress = (request: WorkflowRequest | null): number => {
@@ -398,5 +438,70 @@ export function useRequestWorkflow() {
     getWorkflowStep,
     getNextAction,
     getProgress,
+  };
+}
+
+// Hook for updating quotation status (approve/reject)
+export function useUpdateQuotation() {
+  const queryClient = useQueryClient();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const mutation = useMutation({
+    mutationFn: async ({
+      quotationId,
+      action,
+      notes,
+    }: {
+      quotationId: string;
+      action: "ACCEPTED" | "REJECTED";
+      notes?: string;
+    }) => {
+      const response = await fetch(`/api/quotations/${quotationId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ action, notes }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Error updating quotation");
+      }
+
+      return response.json();
+    },
+    onMutate: () => {
+      setIsLoading(true);
+    },
+    onSuccess: (data, variables) => {
+      setIsLoading(false);
+      // Invalidate and refetch related data
+      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      queryClient.invalidateQueries({ queryKey: ["request"] }); // This will refresh individual request views
+
+      const actionText =
+        variables.action === "ACCEPTED" ? "aprobada" : "rechazada";
+      toast({
+        title: "Cotización actualizada",
+        description: `La cotización ha sido ${actionText} exitosamente`,
+        variant: "default",
+      });
+    },
+    onError: (error: Error) => {
+      setIsLoading(false);
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  return {
+    updateQuotation: mutation.mutate,
+    isLoading: isLoading || mutation.isPending,
+    error: mutation.error,
+    data: mutation.data,
   };
 }

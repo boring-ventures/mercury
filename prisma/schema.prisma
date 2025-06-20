@@ -102,28 +102,29 @@ model Provider {
 }
 
 model Request {
-  id           String        @id @default(cuid())
-  code         String        @unique
-  amount       Decimal       @db.Decimal(15, 2)
-  currency     Currency      @default(USDT)
-  description  String
-  status       RequestStatus @default(PENDING)
-  reviewNotes  String?
-  reviewedAt   DateTime?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  providerId   String
-  companyId    String
-  createdById  String
-  assignedToId String?
-  contracts    Contract[]
-  documents    Document[]
-  payments     Payment[]
-  quotations   Quotation[]
-  assignedTo   Profile?      @relation("RequestAssignedTo", fields: [assignedToId], references: [id])
-  company      Company       @relation(fields: [companyId], references: [id])
-  createdBy    Profile       @relation("RequestCreatedBy", fields: [createdById], references: [id])
-  provider     Provider      @relation(fields: [providerId], references: [id])
+  id             String        @id @default(cuid())
+  code           String        @unique
+  amount         Decimal       @db.Decimal(15, 2)
+  currency       Currency      @default(USDT)
+  description    String
+  status         RequestStatus @default(PENDING)
+  rejectionCount Int           @default(0)
+  reviewNotes    String?
+  reviewedAt     DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  providerId     String
+  companyId      String
+  createdById    String
+  assignedToId   String?
+  contracts      Contract[]
+  documents      Document[]
+  payments       Payment[]
+  quotations     Quotation[]
+  assignedTo     Profile?      @relation("RequestAssignedTo", fields: [assignedToId], references: [id])
+  company        Company       @relation(fields: [companyId], references: [id])
+  createdBy      Profile       @relation("RequestCreatedBy", fields: [createdById], references: [id])
+  provider       Provider      @relation(fields: [providerId], references: [id])
 
   @@index([code])
   @@index([status])
@@ -165,33 +166,34 @@ model Document {
 }
 
 model Quotation {
-  id           String          @id @default(cuid())
-  code         String          @unique
-  amount       Decimal         @db.Decimal(15, 2)
-  currency     Currency        @default(USD)
-  description  String
-  validUntil   DateTime
-  status       QuotationStatus @default(DRAFT)
-  baseAmount   Decimal         @default(0) @db.Decimal(15, 2)
-  fees         Decimal         @default(0) @db.Decimal(15, 2)
-  taxes        Decimal         @default(0) @db.Decimal(15, 2)
-  totalAmount  Decimal         @db.Decimal(15, 2)
-  terms        String?
-  notes        String?
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
-  sentAt       DateTime?
-  respondedAt  DateTime?
-  requestId    String
-  companyId    String
-  createdById  String
-  assignedToId String?
-  contracts    Contract[]
-  documents    Document[]
-  assignedTo   Profile?        @relation("QuotationAssignedTo", fields: [assignedToId], references: [id])
-  company      Company         @relation(fields: [companyId], references: [id])
-  createdBy    Profile         @relation("QuotationCreatedBy", fields: [createdById], references: [id])
-  request      Request         @relation(fields: [requestId], references: [id])
+  id              String          @id @default(cuid())
+  code            String          @unique
+  amount          Decimal         @db.Decimal(15, 2)
+  currency        Currency        @default(USD)
+  description     String
+  validUntil      DateTime
+  status          QuotationStatus @default(DRAFT)
+  baseAmount      Decimal         @default(0) @db.Decimal(15, 2)
+  fees            Decimal         @default(0) @db.Decimal(15, 2)
+  taxes           Decimal         @default(0) @db.Decimal(15, 2)
+  totalAmount     Decimal         @db.Decimal(15, 2)
+  terms           String?
+  notes           String?
+  rejectionReason String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  sentAt          DateTime?
+  respondedAt     DateTime?
+  requestId       String
+  companyId       String
+  createdById     String
+  assignedToId    String?
+  contracts       Contract[]
+  documents       Document[]
+  assignedTo      Profile?        @relation("QuotationAssignedTo", fields: [assignedToId], references: [id])
+  company         Company         @relation(fields: [companyId], references: [id])
+  createdBy       Profile         @relation("QuotationCreatedBy", fields: [createdById], references: [id])
+  request         Request         @relation(fields: [requestId], references: [id])
 
   @@index([code])
   @@index([status])

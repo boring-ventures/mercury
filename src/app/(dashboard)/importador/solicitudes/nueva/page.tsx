@@ -46,7 +46,14 @@ interface DocumentFile {
 
 export default function NuevaSolicitud() {
   const router = useRouter();
-  const { createRequest, isLoading } = useCreateRequest();
+
+  // Custom success handler for redirecting after successful creation
+  const { createRequest, isLoading } = useCreateRequest({
+    onSuccess: () => {
+      // Redirect to solicitudes list only after successful creation
+      router.push("/importador/solicitudes");
+    },
+  });
 
   const [formData, setFormData] = useState({
     amount: "",
@@ -248,26 +255,16 @@ export default function NuevaSolicitud() {
       type: doc.type,
     }));
 
-    try {
-      createRequest({
-        amount: parseFloat(formData.amount),
-        currency: formData.currency,
-        description: formData.description,
-        providerName: formData.providerName,
-        providerCountry: formData.providerCountry,
-        providerBankingDetails: formData.providerBankingDetails,
-        documents: documentsForSubmission,
-      });
-
-      // Navigate back to requests list on success
-      router.push("/importador/solicitudes");
-    } catch {
-      toast({
-        title: "Error",
-        description: "No se pudo crear la solicitud. Intenta nuevamente.",
-        variant: "destructive",
-      });
-    }
+    // Create request - redirect will happen in onSuccess callback
+    createRequest({
+      amount: parseFloat(formData.amount),
+      currency: formData.currency,
+      description: formData.description,
+      providerName: formData.providerName,
+      providerCountry: formData.providerCountry,
+      providerBankingDetails: formData.providerBankingDetails,
+      documents: documentsForSubmission,
+    });
   };
 
   const FileUploadSection = ({

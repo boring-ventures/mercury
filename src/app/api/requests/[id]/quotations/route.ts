@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import prisma from "@/lib/prisma";
+import { createSystemNotification } from "@/lib/notifications";
 
 // API route for creating quotations for a request
 export async function POST(
@@ -57,6 +58,7 @@ export async function POST(
       where: whereClause,
       include: {
         company: true,
+        createdBy: true,
       },
     });
 
@@ -93,7 +95,7 @@ export async function POST(
         currency: "USD",
         description: `Cotización para solicitud ${requestData.code}`,
         validUntil: new Date(validUntil),
-        status: "DRAFT",
+        status: "SENT",
         baseAmount: parseFloat(baseAmount),
         fees: parseFloat(fees) || 0,
         taxes: parseFloat(taxes) || 0,
@@ -121,14 +123,39 @@ export async function POST(
       },
     });
 
-    // Update request status to reflect quotation creation
+    // Update request status to reflect quotation creation and advance workflow
     await prisma.request.update({
       where: { id: requestData.id },
       data: {
-        status: "IN_REVIEW",
+        status: "IN_REVIEW", // This moves the workflow from step 1 to step 2
         reviewedAt: new Date(),
       },
     });
+
+    // Step 2: Notify the importador about the new quotation
+    try {
+      if (requestData.createdBy) {
+        await createSystemNotification(
+          "QUOTATION_RECEIVED",
+          requestData.createdBy.id,
+          {
+            requestId: requestData.id,
+            requestCode: requestData.code,
+            quotationId: quotation.id,
+            quotationCode: quotation.code,
+            totalAmount: quotation.totalAmount,
+            currency: quotation.currency,
+            validUntil: quotation.validUntil.toISOString(),
+          }
+        );
+      }
+    } catch (notificationError) {
+      console.error(
+        "Error sending notification to importador:",
+        notificationError
+      );
+      // Don't fail the quotation creation if notification fails
+    }
 
     return NextResponse.json({
       success: true,

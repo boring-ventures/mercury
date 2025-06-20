@@ -8,13 +8,27 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   ArrowLeft,
   Building2,
@@ -33,15 +47,20 @@ import {
   ZoomIn,
   ArrowRight,
   DollarSign,
+  Check,
+  X,
+  AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
 import {
   useRequest,
   useRequestStatusConfig,
   useRequestWorkflow,
+  useUpdateQuotation,
 } from "@/hooks/use-requests";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { useToast } from "@/components/ui/use-toast";
 
 // Updated workflow steps (removed Pago Inicial)
 const WORKFLOW_STEPS = [
@@ -205,11 +224,19 @@ interface DocumentType {
 
 interface QuotationType {
   id: string;
+  code: string;
   status: string;
   totalAmount: number;
+  baseAmount: number;
+  fees: number;
+  taxes: number;
   currency: string;
+  validUntil: string;
   createdAt: string;
   notes?: string;
+  terms?: string;
+  description?: string;
+  rejectionReason?: string;
 }
 
 function DocumentViewerModal({
@@ -373,18 +400,366 @@ function DocumentCard({ document }: { document: DocumentType }) {
   );
 }
 
+function QuotationCard({
+  quotation,
+  onUpdate,
+}: {
+  quotation: QuotationType;
+  onUpdate: () => void;
+}) {
+  const { toast } = useToast();
+  const { updateQuotation, isLoading } = useUpdateQuotation();
+  const [notes, setNotes] = useState("");
+  const [showApproveDialog, setShowApproveDialog] = useState(false);
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
+
+  const isExpired = new Date() > new Date(quotation.validUntil);
+  const canRespond =
+    (quotation.status === "SENT" || quotation.status === "DRAFT") && !isExpired;
+
+  const handleApprove = async () => {
+    try {
+      await updateQuotation({
+        quotationId: quotation.id,
+        action: "ACCEPTED",
+        notes: notes || undefined,
+      });
+      setShowApproveDialog(false);
+      setNotes("");
+      onUpdate();
+    } catch {
+      // Error handling is done in the hook
+    }
+  };
+
+  const handleReject = async () => {
+    if (!notes.trim()) {
+      toast({
+        title: "Nota requerida",
+        description: "Debe proporcionar una razón para rechazar la cotización",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await updateQuotation({
+        quotationId: quotation.id,
+        action: "REJECTED",
+        notes,
+      });
+      setShowRejectDialog(false);
+      setNotes("");
+      onUpdate();
+    } catch {
+      // Error handling is done in the hook
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "DRAFT":
+        return "bg-orange-100 text-orange-800";
+      case "SENT":
+        return "bg-blue-100 text-blue-800";
+      case "ACCEPTED":
+        return "bg-green-100 text-green-800";
+      case "REJECTED":
+        return "bg-red-100 text-red-800";
+      case "EXPIRED":
+        return "bg-gray-100 text-gray-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "DRAFT":
+        return "Borrador";
+      case "SENT":
+        return "Pendiente";
+      case "ACCEPTED":
+        return "Aprobada";
+      case "REJECTED":
+        return "Rechazada";
+      case "EXPIRED":
+        return "Expirada";
+      default:
+        return status;
+    }
+  };
+
+  return (
+    <div className="border rounded-lg p-6 bg-white shadow-sm">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <h4 className="font-semibold text-lg">Cotización {quotation.code}</h4>
+          <Badge className={getStatusColor(quotation.status)}>
+            {getStatusLabel(quotation.status)}
+          </Badge>
+          {isExpired && quotation.status === "SENT" && (
+            <Badge variant="destructive">
+              <AlertTriangle className="h-3 w-3 mr-1" />
+              Expirada
+            </Badge>
+          )}
+        </div>
+        <div className="text-sm text-gray-600">
+          <Calendar className="h-4 w-4 inline mr-1" />
+          {format(new Date(quotation.createdAt), "dd/MM/yyyy", { locale: es })}
+        </div>
+      </div>
+
+      {/* Amount Breakdown */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <div className="bg-gray-50 p-3 rounded-lg">
+          <p className="text-xs text-gray-600 mb-1">Monto Base</p>
+          <p className="font-semibold">
+            ${quotation.baseAmount?.toLocaleString()} {quotation.currency}
+          </p>
+        </div>
+        <div className="bg-gray-50 p-3 rounded-lg">
+          <p className="text-xs text-gray-600 mb-1">Comisiones</p>
+          <p className="font-semibold">
+            ${quotation.fees?.toLocaleString()} {quotation.currency}
+          </p>
+        </div>
+        <div className="bg-gray-50 p-3 rounded-lg">
+          <p className="text-xs text-gray-600 mb-1">Impuestos</p>
+          <p className="font-semibold">
+            ${quotation.taxes?.toLocaleString()} {quotation.currency}
+          </p>
+        </div>
+        <div className="bg-blue-50 p-3 rounded-lg">
+          <p className="text-xs text-blue-600 mb-1">Total</p>
+          <p className="font-bold text-lg text-blue-900">
+            ${quotation.totalAmount?.toLocaleString()} {quotation.currency}
+          </p>
+        </div>
+      </div>
+
+      {/* Valid Until */}
+      <div className="mb-4">
+        <p className="text-sm text-gray-600">
+          <Clock className="h-4 w-4 inline mr-1" />
+          Válida hasta:{" "}
+          {format(new Date(quotation.validUntil), "dd/MM/yyyy 'a las' HH:mm", {
+            locale: es,
+          })}
+        </p>
+      </div>
+
+      {/* Terms and Notes */}
+      {quotation.terms && (
+        <div className="mb-4">
+          <p className="text-sm font-medium text-gray-700 mb-2">
+            Términos y Condiciones:
+          </p>
+          <div className="bg-gray-50 p-3 rounded-lg">
+            <p className="text-sm text-gray-800 whitespace-pre-wrap">
+              {quotation.terms}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {quotation.notes && (
+        <div className="mb-4">
+          <p className="text-sm font-medium text-gray-700 mb-2">Notas:</p>
+          <div className="bg-gray-50 p-3 rounded-lg">
+            <p className="text-sm text-gray-800 whitespace-pre-wrap">
+              {quotation.notes}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Action Buttons */}
+      {canRespond && (
+        <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+          <div className="flex-1 flex gap-3">
+            {/* Approve Dialog */}
+            <Dialog
+              open={showApproveDialog}
+              onOpenChange={setShowApproveDialog}
+            >
+              <DialogTrigger asChild>
+                <Button
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  disabled={isLoading}
+                >
+                  <Check className="h-4 w-4 mr-2" />
+                  Aprobar Cotización
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Aprobar Cotización</DialogTitle>
+                  <DialogDescription>
+                    ¿Está seguro que desea aprobar esta cotización? Esta acción
+                    moverá la solicitud al siguiente paso del proceso.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div>
+                    <Label htmlFor="approve-notes">
+                      Notas adicionales (opcional)
+                    </Label>
+                    <Textarea
+                      id="approve-notes"
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Comentarios adicionales sobre la aprobación..."
+                      className="mt-2"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowApproveDialog(false);
+                      setNotes("");
+                    }}
+                    disabled={isLoading}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={handleApprove}
+                    disabled={isLoading}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Aprobando...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="h-4 w-4 mr-2" />
+                        Confirmar Aprobación
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Reject Dialog */}
+            <AlertDialog
+              open={showRejectDialog}
+              onOpenChange={setShowRejectDialog}
+            >
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  className="flex-1"
+                  disabled={isLoading}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Rechazar Cotización
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Rechazar Cotización</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    ¿Está seguro que desea rechazar esta cotización? Debe
+                    proporcionar una razón para el rechazo.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="space-y-4 py-4">
+                  <div>
+                    <Label htmlFor="reject-notes">Motivo del rechazo *</Label>
+                    <Textarea
+                      id="reject-notes"
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Explique por qué está rechazando esta cotización..."
+                      className="mt-2"
+                      required
+                    />
+                  </div>
+                </div>
+                <AlertDialogFooter>
+                  <AlertDialogCancel
+                    onClick={() => {
+                      setShowRejectDialog(false);
+                      setNotes("");
+                    }}
+                    disabled={isLoading}
+                  >
+                    Cancelar
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleReject}
+                    disabled={isLoading || !notes.trim()}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Rechazando...
+                      </>
+                    ) : (
+                      <>
+                        <X className="h-4 w-4 mr-2" />
+                        Confirmar Rechazo
+                      </>
+                    )}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </div>
+      )}
+
+      {quotation.status === "ACCEPTED" && (
+        <div className="flex items-center gap-2 pt-4 border-t text-green-700">
+          <CheckCircle className="h-4 w-4" />
+          <span className="text-sm font-medium">
+            Cotización aprobada - Procediendo al siguiente paso
+          </span>
+        </div>
+      )}
+
+      {quotation.status === "REJECTED" && (
+        <div className="flex items-start gap-2 pt-4 border-t text-red-700">
+          <XCircle className="h-4 w-4 mt-0.5" />
+          <div>
+            <span className="text-sm font-medium block">
+              Cotización rechazada
+            </span>
+            {quotation.rejectionReason && (
+              <div className="mt-2 bg-red-50 p-3 rounded-lg">
+                <p className="text-xs text-red-600 font-medium mb-1">
+                  Motivo del rechazo:
+                </p>
+                <p className="text-sm text-red-800">
+                  {quotation.rejectionReason}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ImportadorSolicitudDetail() {
   const params = useParams();
   const router = useRouter();
   const requestId = params.id as string;
 
-  const { data, isLoading, error } = useRequest(requestId);
+  const { data, isLoading, error, refetch } = useRequest(requestId);
   const { getStatusConfig } = useRequestStatusConfig();
   const { getWorkflowStep, getNextAction, getProgress } = useRequestWorkflow();
 
   const request = data?.request;
-  const progress = getProgress(request);
-  const statusConfig = getStatusConfig(request.status);
 
   if (isLoading) {
     return (
@@ -441,8 +816,15 @@ export default function ImportadorSolicitudDetail() {
     );
   }
 
+  // Now it's safe to call these functions since we know request exists
+  const progress = getProgress(request);
+  const statusConfig = getStatusConfig(request.status);
   const currentStep = getWorkflowStep(request);
   const nextAction = getNextAction(request);
+
+  const handleQuotationUpdate = () => {
+    refetch(); // Refresh the request data
+  };
 
   return (
     <ImportadorLayout>
@@ -582,6 +964,27 @@ export default function ImportadorSolicitudDetail() {
                 </CardContent>
               </Card>
 
+              {/* Enhanced Quotations Section */}
+              {request.quotations && request.quotations.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <DollarSign className="h-5 w-5" />
+                      Cotizaciones Recibidas
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {request.quotations.map((quotation: QuotationType) => (
+                      <QuotationCard
+                        key={quotation.id}
+                        quotation={quotation}
+                        onUpdate={handleQuotationUpdate}
+                      />
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Documents */}
               {request.documents && request.documents.length > 0 && (
                 <Card>
@@ -591,62 +994,6 @@ export default function ImportadorSolicitudDetail() {
                   <CardContent className="space-y-3">
                     {request.documents.map((document: DocumentType) => (
                       <DocumentCard key={document.id} document={document} />
-                    ))}
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Quotations */}
-              {request.quotations && request.quotations.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Cotizaciones Recibidas</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {request.quotations.map((quotation: QuotationType) => (
-                      <div key={quotation.id} className="border rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium">
-                            Cotización #{quotation.id}
-                          </h4>
-                          <Badge
-                            variant={
-                              quotation.status === "SENT"
-                                ? "default"
-                                : "secondary"
-                            }
-                          >
-                            {quotation.status}
-                          </Badge>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <p className="text-gray-600">Monto Total</p>
-                            <p className="font-semibold">
-                              ${quotation.totalAmount?.toLocaleString()}{" "}
-                              {quotation.currency}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-gray-600">Fecha</p>
-                            <p>
-                              {format(
-                                new Date(quotation.createdAt),
-                                "dd/MM/yyyy",
-                                {
-                                  locale: es,
-                                }
-                              )}
-                            </p>
-                          </div>
-                        </div>
-                        {quotation.notes && (
-                          <div className="mt-2">
-                            <p className="text-gray-600 text-sm">Notas:</p>
-                            <p className="text-sm">{quotation.notes}</p>
-                          </div>
-                        )}
-                      </div>
                     ))}
                   </CardContent>
                 </Card>
@@ -671,12 +1018,47 @@ export default function ImportadorSolicitudDetail() {
                     <p className="text-sm text-gray-600 mb-4">
                       Este es el siguiente paso en tu proceso de importación.
                     </p>
-                    <Button className="w-full" asChild>
-                      <Link href={nextAction.href}>
-                        <ArrowRight className="h-4 w-4 mr-2" />
-                        {nextAction.text}
-                      </Link>
-                    </Button>
+
+                    {/* Conditional rendering: Modal for quotation review, Link for other actions */}
+                    {currentStep === 2 &&
+                    request.quotations &&
+                    request.quotations.length > 0 ? (
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button className="w-full">
+                            <ArrowRight className="h-4 w-4 mr-2" />
+                            {nextAction.text}
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2">
+                              <DollarSign className="h-5 w-5" />
+                              Revisar Cotización {request.quotations[0].code}
+                            </DialogTitle>
+                            <DialogDescription>
+                              Revise los detalles de la cotización y decida si
+                              aprobarla o rechazarla.
+                            </DialogDescription>
+                          </DialogHeader>
+
+                          {/* Use the existing QuotationCard component */}
+                          <div className="py-4">
+                            <QuotationCard
+                              quotation={request.quotations[0]}
+                              onUpdate={handleQuotationUpdate}
+                            />
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    ) : (
+                      <Button className="w-full" asChild>
+                        <Link href={nextAction.href}>
+                          <ArrowRight className="h-4 w-4 mr-2" />
+                          {nextAction.text}
+                        </Link>
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
