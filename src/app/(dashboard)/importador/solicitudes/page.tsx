@@ -761,18 +761,21 @@ function SolicitudCard({ solicitud }: { solicitud: ImportadorSolicitudItem }) {
               }}
             />
           ) : (
-            <Button
-              className="flex-1"
-              asChild
-              style={{
-                backgroundColor: currentStep === 2 ? "#f97316" : undefined,
-              }}
-            >
-              <Link href={nextAction.href}>
-                <ArrowRight className="h-4 w-4 mr-2" />
-                {nextAction.text}
-              </Link>
-            </Button>
+            /* Only show action button if it's not step 1 (Esperar Cotización doesn't do anything) */
+            currentStep !== 1 && (
+              <Button
+                className="flex-1"
+                asChild
+                style={{
+                  backgroundColor: currentStep === 2 ? "#f97316" : undefined,
+                }}
+              >
+                <Link href={nextAction.href}>
+                  <ArrowRight className="h-4 w-4 mr-2" />
+                  {nextAction.text}
+                </Link>
+              </Button>
+            )
           )}
         </div>
       </CardContent>

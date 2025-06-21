@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +41,8 @@ import {
   ZoomIn,
   Banknote,
   AlertTriangle,
+  Edit,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -497,21 +499,56 @@ function DocumentCard({
 function QuotationGenerator({
   requestId,
   onSuccess,
+  variant = "default",
 }: {
   requestId: string;
   onSuccess: () => void;
+  variant?: "default" | "compact";
 }) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Get default valid until date (30 days from now)
+  const getDefaultValidUntil = () => {
+    const date = new Date();
+    date.setDate(date.getDate() + 30);
+    return date.toISOString().split("T")[0];
+  };
+
+  // Get tomorrow's date as minimum (to ensure it's always future)
+  const getMinimumDate = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const year = tomorrow.getFullYear();
+    const month = String(tomorrow.getMonth() + 1).padStart(2, "0");
+    const day = String(tomorrow.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   const [quotationData, setQuotationData] = useState({
     baseAmount: "",
     fees: "",
     taxes: "",
-    validUntil: "",
+    validUntil: getDefaultValidUntil(),
     terms: "",
     notes: "",
+    status: "DRAFT", // Add status field with default value
   });
+
+  // Validate if the selected date is valid (at least tomorrow)
+  const isValidDate = (dateString: string) => {
+    if (!dateString) return false;
+
+    const selectedDate = new Date(dateString + "T00:00:00");
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+
+    return selectedDate >= tomorrow;
+  };
+
+  const isDateValid = isValidDate(quotationData.validUntil);
 
   const handleGenerate = async () => {
     const baseAmount = parseFloat(quotationData.baseAmount);
@@ -519,10 +556,21 @@ function QuotationGenerator({
     const taxes = parseFloat(quotationData.taxes) || 0;
     const totalAmount = baseAmount + fees + taxes;
 
+    // Validate required fields
     if (!baseAmount || !quotationData.validUntil) {
       toast({
         title: "Error",
         description: "Monto base y fecha de validez son obligatorios",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate date - prevent submission if date is invalid
+    if (!isDateValid) {
+      toast({
+        title: "Error",
+        description: "La fecha de validez debe ser al menos desde mañana",
         variant: "destructive",
       });
       return;
@@ -544,6 +592,7 @@ function QuotationGenerator({
           validUntil: quotationData.validUntil,
           terms: quotationData.terms,
           notes: quotationData.notes,
+          status: quotationData.status, // Include status in request
         }),
       });
 
@@ -551,9 +600,11 @@ function QuotationGenerator({
         throw new Error("Error al generar la cotización");
       }
 
+      const statusLabel =
+        quotationData.status === "DRAFT" ? "borrador" : "publicada";
       toast({
         title: "Éxito",
-        description: "Cotización generada correctamente",
+        description: `Cotización generada como ${statusLabel} correctamente`,
       });
 
       setIsOpen(false);
@@ -561,9 +612,10 @@ function QuotationGenerator({
         baseAmount: "",
         fees: "",
         taxes: "",
-        validUntil: "",
+        validUntil: getDefaultValidUntil(),
         terms: "",
         notes: "",
+        status: "DRAFT",
       });
       onSuccess();
     } catch {
@@ -582,12 +634,23 @@ function QuotationGenerator({
     (parseFloat(quotationData.fees) || 0) +
     (parseFloat(quotationData.taxes) || 0);
 
+  const buttonProps =
+    variant === "compact"
+      ? {
+          className: "bg-amber-600 hover:bg-amber-700 text-white",
+          size: "default" as const,
+        }
+      : {
+          className: "w-full justify-start gap-2",
+          size: "default" as const,
+        };
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="w-full justify-start gap-2">
-          <Banknote className="h-4 w-4" />
-          Generar Cotización
+        <Button {...buttonProps}>
+          <Banknote className="h-4 w-4 mr-2" />
+          {variant === "compact" ? "Nueva Cotización" : "Generar Cotización"}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
@@ -655,6 +718,7 @@ function QuotationGenerator({
               <Input
                 id="validUntil"
                 type="date"
+                min={getMinimumDate()}
                 value={quotationData.validUntil}
                 onChange={(e) =>
                   setQuotationData((prev) => ({
@@ -662,8 +726,65 @@ function QuotationGenerator({
                     validUntil: e.target.value,
                   }))
                 }
+                className={
+                  !isDateValid ? "border-red-500 focus:border-red-500" : ""
+                }
               />
+              <div className="mt-1">
+                {!isDateValid ? (
+                  <p className="text-xs text-red-600 font-medium">
+                    ⚠️ La fecha debe ser al menos desde mañana (
+                    {format(
+                      new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
+                      "dd/MM/yyyy",
+                      { locale: es }
+                    )}
+                    )
+                  </p>
+                ) : (
+                  <p className="text-xs text-gray-500">
+                    La fecha debe ser al menos desde mañana (
+                    {format(
+                      new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
+                      "dd/MM/yyyy",
+                      { locale: es }
+                    )}
+                    )
+                  </p>
+                )}
+              </div>
             </div>
+          </div>
+          <div>
+            <Label htmlFor="status">Estado de la Cotización*</Label>
+            <Select
+              value={quotationData.status}
+              onValueChange={(value) =>
+                setQuotationData((prev) => ({ ...prev, status: value }))
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="DRAFT">
+                  <div className="flex flex-col items-start">
+                    <span>Borrador</span>
+                    <span className="text-xs text-gray-500">
+                      Puede ser modificada, no visible para el importador
+                    </span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="SENT">
+                  <div className="flex flex-col items-start">
+                    <span>Publicada</span>
+                    <span className="text-xs text-gray-500">
+                      Visible para el importador, lista para revisión
+                    </span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label htmlFor="terms">Términos y Condiciones</Label>
@@ -694,6 +815,18 @@ function QuotationGenerator({
               <p className="text-sm font-medium text-blue-900">
                 Total de la Cotización: ${totalAmount.toFixed(2)} USD
               </p>
+              <p className="text-xs text-blue-700 mt-1">
+                Estado:{" "}
+                {quotationData.status === "DRAFT"
+                  ? "Borrador (no visible para importador)"
+                  : "Publicada (visible para importador)"}
+              </p>
+              <p className="text-xs text-blue-700">
+                Válida hasta:{" "}
+                {format(new Date(quotationData.validUntil), "dd/MM/yyyy", {
+                  locale: es,
+                })}
+              </p>
             </div>
           )}
         </div>
@@ -701,11 +834,16 @@ function QuotationGenerator({
           <Button variant="outline" onClick={() => setIsOpen(false)}>
             Cancelar
           </Button>
-          <Button onClick={handleGenerate} disabled={isGenerating}>
+          <Button
+            onClick={handleGenerate}
+            disabled={isGenerating || !isDateValid || !quotationData.baseAmount}
+          >
             {isGenerating ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : null}
-            Generar Cotización
+            {quotationData.status === "DRAFT"
+              ? "Guardar Borrador"
+              : "Generar y Publicar"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -900,6 +1038,138 @@ function handleDownloadDocuments(requestId: string, toast: ToastInstance) {
   };
 }
 
+function QuotationEditForm({
+  quotation,
+  onSave,
+  onCancel,
+}: {
+  quotation: QuotationItem;
+  onSave: (data: {
+    baseAmount: number;
+    fees: number;
+    taxes: number;
+    totalAmount: number;
+    validUntil: string;
+    terms: string;
+    notes: string;
+    status: string;
+  }) => void;
+  onCancel: () => void;
+}) {
+  const [formData, setFormData] = useState({
+    baseAmount: quotation.totalAmount?.toString() || "",
+    fees: "0",
+    taxes: "0",
+    validUntil: format(new Date(quotation.validUntil), "yyyy-MM-dd"),
+    terms: quotation.notes || "",
+    notes: quotation.notes || "",
+    status: quotation.status,
+  });
+
+  // Get tomorrow's date as minimum (to ensure it's always future)
+  const getMinimumDate = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const year = tomorrow.getFullYear();
+    const month = String(tomorrow.getMonth() + 1).padStart(2, "0");
+    const day = String(tomorrow.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const handleSave = () => {
+    // Validate date
+    const selectedDate = new Date(formData.validUntil + "T00:00:00");
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+
+    if (selectedDate < tomorrow) {
+      return; // Don't save if date is invalid
+    }
+
+    const baseAmount = parseFloat(formData.baseAmount) || 0;
+    const fees = parseFloat(formData.fees) || 0;
+    const taxes = parseFloat(formData.taxes) || 0;
+    const totalAmount = baseAmount + fees + taxes;
+
+    onSave({
+      baseAmount,
+      fees,
+      taxes,
+      totalAmount,
+      validUntil: formData.validUntil,
+      terms: formData.terms,
+      notes: formData.notes,
+      status: formData.status,
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="editBaseAmount">Monto Base (USD)*</Label>
+          <Input
+            id="editBaseAmount"
+            type="number"
+            step="0.01"
+            value={formData.baseAmount}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, baseAmount: e.target.value }))
+            }
+          />
+        </div>
+        <div>
+          <Label htmlFor="editValidUntil">Válida hasta*</Label>
+          <Input
+            id="editValidUntil"
+            type="date"
+            min={getMinimumDate()}
+            value={formData.validUntil}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, validUntil: e.target.value }))
+            }
+          />
+        </div>
+      </div>
+      <div>
+        <Label htmlFor="editStatus">Estado</Label>
+        <Select
+          value={formData.status}
+          onValueChange={(value) =>
+            setFormData((prev) => ({ ...prev, status: value }))
+          }
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="DRAFT">Borrador</SelectItem>
+            <SelectItem value="SENT">Publicada</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label htmlFor="editNotes">Notas</Label>
+        <Textarea
+          id="editNotes"
+          value={formData.notes}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, notes: e.target.value }))
+          }
+          rows={3}
+        />
+      </div>
+      <div className="flex justify-end gap-3">
+        <Button variant="outline" onClick={onCancel}>
+          Cancelar
+        </Button>
+        <Button onClick={handleSave}>Guardar Cambios</Button>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminSolicitudDetail() {
   const { toast } = useToast();
   const params = useParams();
@@ -909,6 +1179,12 @@ export default function AdminSolicitudDetail() {
   const [isForceStatusOpen, setIsForceStatusOpen] = useState(false);
   const [forceStatus, setForceStatus] = useState("");
   const [forceReason, setForceReason] = useState("");
+  const [editingQuotation, setEditingQuotation] =
+    useState<QuotationItem | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [quotationToDelete, setQuotationToDelete] =
+    useState<QuotationItem | null>(null);
 
   const { data, isLoading, refetch } = useRequest(requestId);
   const { updateRequest, isLoading: isUpdating } = useUpdateRequest();
@@ -922,12 +1198,86 @@ export default function AdminSolicitudDetail() {
   const request = data?.request;
   const history = historyData || [];
 
-  // Check for expired quotations when the component loads or request data changes
-  useEffect(() => {
-    if (request?.id && request?.quotations && request?.quotations.length > 0) {
-      checkExpiredQuotations(request.id);
+  const handleEditQuotation = (quotation: QuotationItem) => {
+    setEditingQuotation(quotation);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDeleteQuotation = (quotation: QuotationItem) => {
+    setQuotationToDelete(quotation);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteQuotation = async () => {
+    if (!quotationToDelete) return;
+
+    try {
+      const response = await fetch(`/api/quotations/${quotationToDelete.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al eliminar la cotización");
+      }
+
+      toast({
+        title: "Éxito",
+        description: "Cotización eliminada correctamente",
+      });
+
+      setIsDeleteDialogOpen(false);
+      setQuotationToDelete(null);
+      refetch();
+    } catch {
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar la cotización",
+        variant: "destructive",
+      });
     }
-  }, [request?.id, request?.quotations, checkExpiredQuotations]);
+  };
+
+  const handleUpdateQuotation = async (updatedData: {
+    baseAmount: number;
+    fees: number;
+    taxes: number;
+    totalAmount: number;
+    validUntil: string;
+    terms: string;
+    notes: string;
+    status: string;
+  }) => {
+    if (!editingQuotation) return;
+
+    try {
+      const response = await fetch(`/api/quotations/${editingQuotation.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al actualizar la cotización");
+      }
+
+      toast({
+        title: "Éxito",
+        description: "Cotización actualizada correctamente",
+      });
+
+      setIsEditDialogOpen(false);
+      setEditingQuotation(null);
+      refetch();
+    } catch {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar la cotización",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleDownloadPDF = () => {
     downloadPDF(requestId, {
@@ -980,12 +1330,18 @@ export default function AdminSolicitudDetail() {
     );
   };
 
-  // Enhanced quotation refresh that includes expiration check
-  const handleQuotationRefresh = async () => {
-    if (request?.id) {
-      await checkExpiredQuotations(request.id);
+  // Manual refresh function for the "Verificar Estado" button
+  const handleManualStatusCheck = async () => {
+    try {
+      await checkExpiredQuotations(requestId);
+      refetch();
+    } catch {
+      toast({
+        title: "Error",
+        description: "Error al verificar estado",
+        variant: "destructive",
+      });
     }
-    refetch();
   };
 
   if (isLoading) {
@@ -1019,18 +1375,33 @@ export default function AdminSolicitudDetail() {
     );
   }
 
-  // Check if we have any expired quotations
-  const expiredQuotations =
-    request.quotations?.filter((q: QuotationItem) =>
-      isQuotationExpired(q.validUntil)
-    ) || [];
+  // Enhanced quotation analysis
+  const allQuotations = request.quotations || [];
+  const expiredQuotations = allQuotations.filter((q: QuotationItem) =>
+    isQuotationExpired(q.validUntil)
+  );
+  const draftQuotations = allQuotations.filter(
+    (q: QuotationItem) => q.status === "DRAFT"
+  );
+  const publishedQuotations = allQuotations.filter(
+    (q: QuotationItem) =>
+      q.status === "SENT" && !isQuotationExpired(q.validUntil)
+  );
+  const rejectedQuotations = allQuotations.filter(
+    (q: QuotationItem) => q.status === "REJECTED"
+  );
+  const approvedQuotations = allQuotations.filter(
+    (q: QuotationItem) => q.status === "ACCEPTED"
+  );
 
-  const activeQuotations =
-    request.quotations?.filter(
-      (q: QuotationItem) =>
-        !isQuotationExpired(q.validUntil) &&
-        (q.status === "SENT" || q.status === "DRAFT")
-    ) || [];
+  // Priority logic: Rejected > Expired (when no active quotes) > Drafts
+  const shouldShowRejectionAlert =
+    rejectedQuotations.length > 0 && publishedQuotations.length === 0;
+  const shouldShowExpirationAlert =
+    !shouldShowRejectionAlert &&
+    expiredQuotations.length > 0 &&
+    publishedQuotations.length === 0;
+  const shouldShowApprovalAlert = approvedQuotations.length > 0;
 
   return (
     <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -1062,33 +1433,231 @@ export default function AdminSolicitudDetail() {
           </div>
         </div>
 
-        {/* Expiration Alert */}
-        {expiredQuotations.length > 0 && (
-          <Card className="border-amber-200 bg-amber-50">
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+        {/* Rejection Alert - Highest Priority */}
+        {shouldShowRejectionAlert && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                    <XCircle className="h-5 w-5 text-red-600" />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-semibold text-red-900 mb-3">
+                    {rejectedQuotations.length === 1
+                      ? "Cotización Rechazada"
+                      : `${rejectedQuotations.length} Cotizaciones Rechazadas`}
+                  </h3>
+
+                  <div className="space-y-3 mb-4">
+                    {rejectedQuotations.map((q: QuotationItem) => (
+                      <div
+                        key={q.id}
+                        className="bg-white/50 rounded-lg p-3 border border-red-200"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div>
+                            <p className="font-medium text-red-900">{q.code}</p>
+                            <p className="text-sm text-red-700">
+                              Monto: ${q.totalAmount?.toLocaleString()}{" "}
+                              {q.currency}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <Badge className="bg-red-100 text-red-800 border-red-200">
+                              <XCircle className="h-3 w-3 mr-1" />
+                              Rechazada
+                            </Badge>
+                          </div>
+                        </div>
+                        {q.rejectionReason && (
+                          <div className="bg-red-100/70 rounded p-2 mt-2">
+                            <p className="text-xs font-medium text-red-800 mb-1">
+                              Motivo del rechazo:
+                            </p>
+                            <p className="text-sm text-red-700">
+                              {q.rejectionReason}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="bg-white/70 rounded-lg p-4 mb-4">
+                    <h4 className="font-medium text-red-900 mb-2">
+                      ¿Qué hacer ahora?
+                    </h4>
+                    <p className="text-sm text-red-800 leading-relaxed">
+                      {rejectedQuotations.length === 1
+                        ? "El importador ha rechazado la cotización. Revisa el motivo del rechazo y genera una nueva cotización con los ajustes necesarios."
+                        : `Se han rechazado ${rejectedQuotations.length} cotizaciones. Revisa los motivos y genera una nueva cotización que atienda las observaciones del importador.`}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <QuotationGenerator
+                      requestId={requestId}
+                      onSuccess={handleManualStatusCheck}
+                      variant="compact"
+                    />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Approval Success Alert */}
+        {shouldShowApprovalAlert && (
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                  </div>
+                </div>
                 <div className="flex-1">
-                  <h4 className="font-medium text-amber-900">
-                    Cotizaciones Expiradas Detectadas
-                  </h4>
-                  <p className="text-sm text-amber-800 mt-1">
-                    {expiredQuotations.length} cotización(es) han expirado.
-                    {activeQuotations.length === 0 && (
-                      <span className="font-medium">
-                        {" "}
-                        Se recomienda generar una nueva cotización para
-                        continuar con el proceso.
-                      </span>
-                    )}
+                  <h3 className="text-lg font-semibold text-green-900 mb-2">
+                    {approvedQuotations.length === 1
+                      ? "Cotización Aprobada"
+                      : `${approvedQuotations.length} Cotizaciones Aprobadas`}
+                  </h3>
+                  <p className="text-sm text-green-800 leading-relaxed mb-3">
+                    {approvedQuotations.length === 1
+                      ? "La cotización ha sido aprobada por el importador. El proceso puede continuar al siguiente paso."
+                      : "Las cotizaciones han sido aprobadas. El proceso puede continuar al siguiente paso."}
+                  </p>
+
+                  <div className="space-y-2">
+                    {approvedQuotations.map((q: QuotationItem) => (
+                      <div
+                        key={q.id}
+                        className="bg-white/50 rounded-lg p-3 border border-green-200"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium text-green-900">
+                              {q.code}
+                            </p>
+                            <p className="text-sm text-green-700">
+                              Monto Aprobado: ${q.totalAmount?.toLocaleString()}{" "}
+                              {q.currency}
+                            </p>
+                          </div>
+                          <Badge className="bg-green-100 text-green-800 border-green-200">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Aprobada
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Consolidated Expiration Alert - Only show when necessary */}
+        {shouldShowExpirationAlert && (
+          <Card className="border-amber-200 bg-amber-50">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+                    <AlertTriangle className="h-5 w-5 text-amber-600" />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-semibold text-amber-900 mb-3">
+                    {expiredQuotations.length === 1
+                      ? "Cotización Expirada Detectada"
+                      : `${expiredQuotations.length} Cotizaciones Expiradas Detectadas`}
+                  </h3>
+
+                  <div className="space-y-3 mb-4">
+                    {expiredQuotations.map((q: QuotationItem) => (
+                      <div
+                        key={q.id}
+                        className="bg-white/50 rounded-lg p-3 border border-amber-200"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium text-amber-900">
+                              {q.code}
+                            </p>
+                            <p className="text-sm text-amber-700">
+                              Monto: ${q.totalAmount?.toLocaleString()}{" "}
+                              {q.currency}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-medium text-amber-800">
+                              Expiró el{" "}
+                              {format(new Date(q.validUntil), "dd/MM/yyyy", {
+                                locale: es,
+                              })}
+                            </p>
+                            <p className="text-xs text-amber-600">
+                              {format(new Date(q.validUntil), "HH:mm", {
+                                locale: es,
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="bg-white/70 rounded-lg p-4 mb-4">
+                    <h4 className="font-medium text-amber-900 mb-2">
+                      ¿Qué hacer ahora?
+                    </h4>
+                    <p className="text-sm text-amber-800 leading-relaxed">
+                      {draftQuotations.length > 0
+                        ? `Tienes ${draftQuotations.length} cotización${draftQuotations.length !== 1 ? "es" : ""} en borrador que puedes revisar y publicar, o crear una nueva cotización desde cero.`
+                        : "Se recomienda generar una nueva cotización para que el importador pueda continuar con el proceso de importación."}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <QuotationGenerator
+                      requestId={requestId}
+                      onSuccess={handleManualStatusCheck}
+                      variant="compact"
+                    />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Draft Quotations Alert */}
+        {draftQuotations.length > 0 && (
+          <Card className="border-blue-200 bg-blue-50">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <FileText className="h-5 w-5 text-blue-600" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                    {draftQuotations.length === 1
+                      ? "Cotización en Borrador"
+                      : `${draftQuotations.length} Cotizaciones en Borrador`}
+                  </h3>
+                  <p className="text-sm text-blue-800 leading-relaxed">
+                    {draftQuotations.length === 1
+                      ? "Hay una cotización guardada como borrador que no es visible para el importador. Puedes revisarla y publicarla cuando esté lista."
+                      : `Hay ${draftQuotations.length} cotizaciones guardadas como borradores que no son visibles para el importador. Puedes revisarlas y publicarlas cuando estén listas.`}
                   </p>
                 </div>
-                {activeQuotations.length === 0 && (
-                  <QuotationGenerator
-                    requestId={requestId}
-                    onSuccess={handleQuotationRefresh}
-                  />
-                )}
               </div>
             </CardContent>
           </Card>
@@ -1187,7 +1756,7 @@ export default function AdminSolicitudDetail() {
 
                 <QuotationGenerator
                   requestId={requestId}
-                  onSuccess={handleQuotationRefresh}
+                  onSuccess={handleManualStatusCheck}
                 />
 
                 <Dialog
@@ -1268,16 +1837,36 @@ export default function AdminSolicitudDetail() {
           </Card>
         </div>
 
-        {/* Enhanced Quotations Section */}
-        {request.quotations && request.quotations.length > 0 && (
+        {/* Enhanced Quotations Section - Simplified alerts */}
+        {allQuotations.length > 0 && (
           <Card className="mb-6">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>COTIZACIONES</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  COTIZACIONES
+                  {draftQuotations.length > 0 && (
+                    <Badge
+                      variant="outline"
+                      className="bg-blue-50 text-blue-700 border-blue-200"
+                    >
+                      {draftQuotations.length} Borrador
+                      {draftQuotations.length !== 1 ? "s" : ""}
+                    </Badge>
+                  )}
+                  {publishedQuotations.length > 0 && (
+                    <Badge
+                      variant="outline"
+                      className="bg-green-50 text-green-700 border-green-200"
+                    >
+                      {publishedQuotations.length} Publicada
+                      {publishedQuotations.length !== 1 ? "s" : ""}
+                    </Badge>
+                  )}
+                </CardTitle>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleQuotationRefresh}
+                  onClick={handleManualStatusCheck}
                   disabled={isChecking}
                 >
                   {isChecking ? (
@@ -1291,18 +1880,23 @@ export default function AdminSolicitudDetail() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {request.quotations.map((quotation: QuotationItem) => {
+                {allQuotations.map((quotation: QuotationItem) => {
                   const actualStatus = getQuotationStatusWithExpiry(
                     quotation.status,
                     quotation.validUntil
                   );
                   const isExpired = actualStatus === "EXPIRED";
+                  const isDraft = quotation.status === "DRAFT";
 
                   return (
                     <div
                       key={quotation.id}
                       className={`border rounded-lg p-4 ${
-                        isExpired ? "bg-red-50 border-red-200" : "bg-gray-50"
+                        isExpired
+                          ? "bg-red-50 border-red-200"
+                          : isDraft
+                            ? "bg-blue-50 border-blue-200"
+                            : "bg-gray-50"
                       }`}
                     >
                       <div className="flex items-center justify-between mb-2">
@@ -1310,18 +1904,63 @@ export default function AdminSolicitudDetail() {
                           Cotización {quotation.code}
                         </h4>
                         <div className="flex items-center gap-2">
+                          {isDraft && (
+                            <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+                              <FileText className="h-3 w-3 mr-1" />
+                              Borrador
+                            </Badge>
+                          )}
                           <Badge
                             className={getQuotationStatusColor(actualStatus)}
                           >
                             {getQuotationStatusLabel(actualStatus)}
                           </Badge>
-                          {isExpired && (
+                          {isExpired && !isDraft && (
                             <AlertTriangle className="h-4 w-4 text-red-500" />
+                          )}
+
+                          {/* Action buttons for draft and sent quotations */}
+                          {(quotation.status === "DRAFT" ||
+                            quotation.status === "SENT") && (
+                            <div className="flex items-center gap-1 ml-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditQuotation(quotation)}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteQuotation(quotation)}
+                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
                           )}
                         </div>
                       </div>
 
-                      {isExpired && (
+                      {isDraft && (
+                        <div className="mb-3 p-2 bg-blue-100 border border-blue-200 rounded text-sm text-blue-800">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4" />
+                            <span className="font-medium">
+                              Cotización en Borrador
+                            </span>
+                          </div>
+                          <p className="mt-1">
+                            Esta cotización no es visible para el importador.
+                            Puede ser modificada antes de publicarla.
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Only show expiration warning for non-draft quotations */}
+                      {isExpired && !isDraft && (
                         <div className="mb-3 p-2 bg-red-100 border border-red-200 rounded text-sm text-red-800">
                           <div className="flex items-center gap-2">
                             <AlertTriangle className="h-4 w-4" />
@@ -1330,13 +1969,12 @@ export default function AdminSolicitudDetail() {
                             </span>
                           </div>
                           <p className="mt-1">
-                            Esta cotización expiró el{" "}
+                            Expiró el{" "}
                             {format(
                               new Date(quotation.validUntil),
                               "dd/MM/yyyy 'a las' HH:mm",
                               { locale: es }
                             )}
-                            . Se recomienda generar una nueva cotización.
                           </p>
                         </div>
                       )}
@@ -1353,7 +1991,9 @@ export default function AdminSolicitudDetail() {
                           <p className="text-gray-600">Válida hasta</p>
                           <p
                             className={
-                              isExpired ? "text-red-600 font-medium" : ""
+                              isExpired && !isDraft
+                                ? "text-red-600 font-medium"
+                                : ""
                             }
                           >
                             {format(
@@ -1398,28 +2038,6 @@ export default function AdminSolicitudDetail() {
                   );
                 })}
               </div>
-
-              {expiredQuotations.length > 0 &&
-                activeQuotations.length === 0 && (
-                  <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <AlertTriangle className="h-5 w-5 text-amber-600" />
-                      <div className="flex-1">
-                        <h4 className="font-medium text-amber-900">
-                          Todas las cotizaciones han expirado
-                        </h4>
-                        <p className="text-sm text-amber-800 mt-1">
-                          No hay cotizaciones activas. Genere una nueva
-                          cotización para continuar con el proceso.
-                        </p>
-                      </div>
-                      <QuotationGenerator
-                        requestId={requestId}
-                        onSuccess={handleQuotationRefresh}
-                      />
-                    </div>
-                  </div>
-                )}
             </CardContent>
           </Card>
         )}
@@ -1469,6 +2087,51 @@ export default function AdminSolicitudDetail() {
           <InternalNotesCard requestId={request.id} />
         </div>
       </div>
+
+      {/* Edit Quotation Dialog */}
+      {editingQuotation && (
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>
+                Editar Cotización {editingQuotation.code}
+              </DialogTitle>
+              <DialogDescription>
+                Modifique los detalles de la cotización.
+              </DialogDescription>
+            </DialogHeader>
+            <QuotationEditForm
+              quotation={editingQuotation}
+              onSave={handleUpdateQuotation}
+              onCancel={() => setIsEditDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Delete Quotation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Eliminar Cotización</DialogTitle>
+            <DialogDescription>
+              ¿Está seguro que desea eliminar la cotización{" "}
+              {quotationToDelete?.code}? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-3 mt-6">
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={confirmDeleteQuotation}>
+              Eliminar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

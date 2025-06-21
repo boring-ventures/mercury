@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import prisma from "@/lib/prisma";
 import { createSystemNotification } from "@/lib/notifications";
-import { RequestStatus } from "@prisma/client";
+import { RequestStatus, QuotationStatus } from "@prisma/client";
 
 // API route for updating quotation status (approve/reject)
 export async function PUT(
@@ -249,6 +249,258 @@ export async function PUT(
       success: true,
       quotation: updatedQuotation,
       message: `Quotation ${action.toLowerCase()} successfully`,
+    });
+  } catch (error) {
+    console.error("Error updating quotation:", error);
+    return NextResponse.json(
+      { error: "Failed to update quotation" },
+      { status: 500 }
+    );
+  }
+}
+
+// Helper function to get authenticated admin user
+async function getAuthenticatedAdminUser() {
+  const supabase = createServerComponentClient({ cookies });
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    return { error: "Not authenticated", status: 401 };
+  }
+
+  const profile = await prisma.profile.findUnique({
+    where: { userId: session.user.id },
+    include: { company: true },
+  });
+
+  if (!profile) {
+    return { error: "Profile not found", status: 404 };
+  }
+
+  if (profile.role !== "SUPERADMIN") {
+    return { error: "Not authorized. Admin access required.", status: 403 };
+  }
+
+  return { profile };
+}
+
+// API route for deleting quotations (admin only)
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: quotationId } = await params;
+
+    // Get authenticated admin user
+    const authResult = await getAuthenticatedAdminUser();
+    if ("error" in authResult) {
+      return NextResponse.json(
+        { error: authResult.error },
+        { status: authResult.status }
+      );
+    }
+    const { profile } = authResult;
+
+    // Find quotation
+    const quotation = await prisma.quotation.findUnique({
+      where: { id: quotationId },
+      include: {
+        request: true,
+      },
+    });
+
+    if (!quotation) {
+      return NextResponse.json(
+        { error: "Quotation not found" },
+        { status: 404 }
+      );
+    }
+
+    // Only allow deletion of DRAFT and SENT quotations
+    if (!["DRAFT", "SENT"].includes(quotation.status)) {
+      return NextResponse.json(
+        { error: "Cannot delete quotations that have been responded to" },
+        { status: 400 }
+      );
+    }
+
+    // Delete the quotation
+    await prisma.quotation.delete({
+      where: { id: quotationId },
+    });
+
+    // Create audit log
+    await prisma.auditLog.create({
+      data: {
+        action: "DELETE_QUOTATION",
+        entity: "Quotation",
+        entityId: quotationId,
+        oldValues: {
+          code: quotation.code,
+          status: quotation.status,
+          totalAmount: quotation.totalAmount,
+        },
+        profileId: profile.id,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Quotation deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error deleting quotation:", error);
+    return NextResponse.json(
+      { error: "Failed to delete quotation" },
+      { status: 500 }
+    );
+  }
+}
+
+// API route for updating quotations (admin only)
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: quotationId } = await params;
+    const body = await request.json();
+    const {
+      baseAmount,
+      fees,
+      taxes,
+      totalAmount,
+      validUntil,
+      terms,
+      notes,
+      status,
+    } = body;
+
+    // Get authenticated admin user
+    const authResult = await getAuthenticatedAdminUser();
+    if ("error" in authResult) {
+      return NextResponse.json(
+        { error: authResult.error },
+        { status: authResult.status }
+      );
+    }
+    const { profile } = authResult;
+
+    // Find quotation
+    const quotation = await prisma.quotation.findUnique({
+      where: { id: quotationId },
+      include: {
+        request: true,
+      },
+    });
+
+    if (!quotation) {
+      return NextResponse.json(
+        { error: "Quotation not found" },
+        { status: 404 }
+      );
+    }
+
+    // Only allow editing of DRAFT and SENT quotations
+    if (!["DRAFT", "SENT"].includes(quotation.status)) {
+      return NextResponse.json(
+        { error: "Cannot edit quotations that have been responded to" },
+        { status: 400 }
+      );
+    }
+
+    // Validate required fields
+    if (!baseAmount || !validUntil || !status) {
+      return NextResponse.json(
+        { error: "Base amount, valid until date, and status are required" },
+        { status: 400 }
+      );
+    }
+
+    // Validate future date
+    const selectedDate = new Date(validUntil + "T00:00:00");
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+
+    if (selectedDate < tomorrow) {
+      return NextResponse.json(
+        { error: "Valid until date must be at least tomorrow" },
+        { status: 400 }
+      );
+    }
+
+    // Prepare update data
+    const updateData: {
+      baseAmount: number;
+      fees: number;
+      taxes: number;
+      totalAmount: number;
+      validUntil: Date;
+      status: QuotationStatus;
+      terms?: string;
+      notes?: string;
+      sentAt?: Date;
+    } = {
+      baseAmount: parseFloat(baseAmount),
+      fees: parseFloat(fees) || 0,
+      taxes: parseFloat(taxes) || 0,
+      totalAmount: parseFloat(totalAmount),
+      validUntil: new Date(validUntil + "T23:59:59"), // Set to end of day
+      status: status as QuotationStatus,
+    };
+
+    // Only update terms and notes if provided
+    if (terms !== undefined) updateData.terms = terms;
+    if (notes !== undefined) updateData.notes = notes;
+
+    // If status is changing from DRAFT to SENT, set sentAt
+    if (quotation.status === "DRAFT" && status === "SENT") {
+      updateData.sentAt = new Date();
+    }
+
+    // Update the quotation
+    const updatedQuotation = await prisma.quotation.update({
+      where: { id: quotationId },
+      data: updateData,
+      include: {
+        request: {
+          include: {
+            company: true,
+          },
+        },
+      },
+    });
+
+    // Create audit log
+    await prisma.auditLog.create({
+      data: {
+        action: "UPDATE_QUOTATION",
+        entity: "Quotation",
+        entityId: quotationId,
+        oldValues: {
+          baseAmount: quotation.baseAmount,
+          totalAmount: quotation.totalAmount,
+          status: quotation.status,
+          validUntil: quotation.validUntil,
+        },
+        newValues: {
+          baseAmount: updateData.baseAmount,
+          totalAmount: updateData.totalAmount,
+          status: updateData.status,
+          validUntil: updateData.validUntil,
+        },
+        profileId: profile.id,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      quotation: updatedQuotation,
+      message: "Quotation updated successfully",
     });
   } catch (error) {
     console.error("Error updating quotation:", error);

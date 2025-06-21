@@ -755,11 +755,21 @@ export default function ImportadorSolicitudDetail() {
   const router = useRouter();
   const requestId = params.id as string;
 
-  const { data, isLoading, error, refetch } = useRequest(requestId);
+  const { data, isLoading, refetch } = useRequest(requestId);
   const { getStatusConfig } = useRequestStatusConfig();
   const { getWorkflowStep, getNextAction, getProgress } = useRequestWorkflow();
 
   const request = data?.request;
+
+  // Only show published quotations to importador (filter out drafts)
+  const visibleQuotations =
+    request?.quotations?.filter(
+      (quotation: QuotationType) => quotation.status === "SENT"
+    ) || [];
+
+  const handleQuotationUpdate = () => {
+    refetch(); // Refresh the request data
+  };
 
   if (isLoading) {
     return (
@@ -768,26 +778,6 @@ export default function ImportadorSolicitudDetail() {
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
             <span className="ml-2 text-gray-600">Cargando solicitud...</span>
-          </div>
-        </div>
-      </ImportadorLayout>
-    );
-  }
-
-  if (error) {
-    return (
-      <ImportadorLayout>
-        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col items-center justify-center py-12">
-            <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Error al cargar la solicitud
-            </h3>
-            <p className="text-gray-600 text-center">{error.message}</p>
-            <Button className="mt-4" onClick={() => router.back()}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Volver
-            </Button>
           </div>
         </div>
       </ImportadorLayout>
@@ -821,10 +811,6 @@ export default function ImportadorSolicitudDetail() {
   const statusConfig = getStatusConfig(request.status);
   const currentStep = getWorkflowStep(request);
   const nextAction = getNextAction(request);
-
-  const handleQuotationUpdate = () => {
-    refetch(); // Refresh the request data
-  };
 
   return (
     <ImportadorLayout>
@@ -964,8 +950,8 @@ export default function ImportadorSolicitudDetail() {
                 </CardContent>
               </Card>
 
-              {/* Enhanced Quotations Section */}
-              {request.quotations && request.quotations.length > 0 && (
+              {/* Enhanced Quotations Section - Only show published quotations */}
+              {visibleQuotations.length > 0 && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -974,7 +960,7 @@ export default function ImportadorSolicitudDetail() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {request.quotations.map((quotation: QuotationType) => (
+                    {visibleQuotations.map((quotation: QuotationType) => (
                       <QuotationCard
                         key={quotation.id}
                         quotation={quotation}
@@ -1019,45 +1005,61 @@ export default function ImportadorSolicitudDetail() {
                       Este es el siguiente paso en tu proceso de importación.
                     </p>
 
-                    {/* Conditional rendering: Modal for quotation review, Link for other actions */}
-                    {currentStep === 2 &&
-                    request.quotations &&
-                    request.quotations.length > 0 ? (
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button className="w-full">
-                            <ArrowRight className="h-4 w-4 mr-2" />
-                            {nextAction.text}
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                          <DialogHeader>
-                            <DialogTitle className="flex items-center gap-2">
-                              <DollarSign className="h-5 w-5" />
-                              Revisar Cotización {request.quotations[0].code}
-                            </DialogTitle>
-                            <DialogDescription>
-                              Revise los detalles de la cotización y decida si
-                              aprobarla o rechazarla.
-                            </DialogDescription>
-                          </DialogHeader>
+                    {/* Conditional rendering: Only show button if there's a meaningful action */}
+                    {/* Hide the button for step 1 (Esperar Cotización) as it doesn't do anything */}
+                    {currentStep !== 1 && (
+                      <>
+                        {/* Conditional rendering: Modal for quotation review, Link for other actions */}
+                        {currentStep === 2 && visibleQuotations.length > 0 ? (
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button className="w-full">
+                                <ArrowRight className="h-4 w-4 mr-2" />
+                                {nextAction.text}
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                              <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2">
+                                  <DollarSign className="h-5 w-5" />
+                                  Revisar Cotización {visibleQuotations[0].code}
+                                </DialogTitle>
+                                <DialogDescription>
+                                  Revise los detalles de la cotización y decida
+                                  si aprobarla o rechazarla.
+                                </DialogDescription>
+                              </DialogHeader>
 
-                          {/* Use the existing QuotationCard component */}
-                          <div className="py-4">
-                            <QuotationCard
-                              quotation={request.quotations[0]}
-                              onUpdate={handleQuotationUpdate}
-                            />
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    ) : (
-                      <Button className="w-full" asChild>
-                        <Link href={nextAction.href}>
-                          <ArrowRight className="h-4 w-4 mr-2" />
-                          {nextAction.text}
-                        </Link>
-                      </Button>
+                              {/* Use the existing QuotationCard component */}
+                              <div className="py-4">
+                                <QuotationCard
+                                  quotation={visibleQuotations[0]}
+                                  onUpdate={handleQuotationUpdate}
+                                />
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        ) : (
+                          <Button className="w-full" asChild>
+                            <Link href={nextAction.href}>
+                              <ArrowRight className="h-4 w-4 mr-2" />
+                              {nextAction.text}
+                            </Link>
+                          </Button>
+                        )}
+                      </>
+                    )}
+
+                    {/* Show waiting message when at step 1 */}
+                    {currentStep === 1 && (
+                      <div className="text-center">
+                        <p className="text-sm text-gray-600 mb-2">
+                          Tu solicitud está siendo revisada
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          El administrador te enviará una cotización pronto
+                        </p>
+                      </div>
                     )}
                   </div>
                 </CardContent>
