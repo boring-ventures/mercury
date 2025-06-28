@@ -57,7 +57,7 @@ export default function NuevaSolicitud() {
 
   const [formData, setFormData] = useState({
     amount: "",
-    currency: "USDT",
+    currency: "USD",
     description: "",
     providerName: "",
     providerCountry: "",
@@ -398,7 +398,7 @@ export default function NuevaSolicitud() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="monto">Monto en USDT *</Label>
+                <Label htmlFor="monto">Monto en USD *</Label>
                 <Input
                   id="monto"
                   type="number"
@@ -420,7 +420,7 @@ export default function NuevaSolicitud() {
                     <SelectValue placeholder="Seleccionar moneda" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="USD">USD - Dólar Americano</SelectItem>
+                    <SelectItem value="USD">USD - US Dollar</SelectItem>
                     <SelectItem value="EUR">EUR - Euro</SelectItem>
                     <SelectItem value="CNY">CNY - Yuan Chino</SelectItem>
                     <SelectItem value="JPY">JPY - Yen Japonés</SelectItem>

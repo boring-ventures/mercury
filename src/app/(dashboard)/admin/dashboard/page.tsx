@@ -247,7 +247,7 @@ export default function AdminDashboard() {
                 <div>
                   <p className="font-medium">SH-001 - ABC Importaciones</p>
                   <p className="text-sm text-muted-foreground">
-                    1,000 USDT - 22/05/2025
+                    1,000 USD - 22/05/2025
                   </p>
                 </div>
                 <Badge
@@ -262,7 +262,7 @@ export default function AdminDashboard() {
                 <div>
                   <p className="font-medium">SH-005 - XYZ Trading</p>
                   <p className="text-sm text-muted-foreground">
-                    2,500 USDT - 21/05/2025
+                    2,500 USD - 21/05/2025
                   </p>
                 </div>
                 <Badge

@@ -125,7 +125,7 @@ export const NotificationsPage = () => {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Total</p>
-                  <p className="text-2xl font-bold">{stats.total}</p>
+                  <p className="text-2xl font-bold">{stats?.total || 0}</p>
                 </div>
               </div>
             </CardContent>
@@ -139,7 +139,7 @@ export const NotificationsPage = () => {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">No leídas</p>
-                  <p className="text-2xl font-bold">{stats.unread}</p>
+                  <p className="text-2xl font-bold">{stats?.unread || 0}</p>
                 </div>
               </div>
             </CardContent>
@@ -154,7 +154,7 @@ export const NotificationsPage = () => {
                 <div>
                   <p className="text-sm text-gray-600">Leídas</p>
                   <p className="text-2xl font-bold">
-                    {stats.total - stats.unread}
+                    {(stats?.total || 0) - (stats?.unread || 0)}
                   </p>
                 </div>
               </div>
@@ -170,7 +170,7 @@ export const NotificationsPage = () => {
                 <div>
                   <p className="text-sm text-gray-600">Advertencias</p>
                   <p className="text-2xl font-bold">
-                    {stats.byType[NotificationType.WARNING] || 0}
+                    {stats?.byType?.[NotificationType.WARNING] || 0}
                   </p>
                 </div>
               </div>

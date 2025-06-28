@@ -91,10 +91,7 @@ interface InternalNote {
   id?: string;
   content: string;
   createdAt: Date;
-  createdBy: {
-    firstName?: string;
-    lastName?: string;
-  };
+  author: string;
 }
 
 interface ToastInstance {
@@ -978,9 +975,7 @@ function InternalNotesCard({ requestId }: { requestId: string }) {
               notes.map((note: InternalNote, index: number) => (
                 <div key={note.id || index} className="p-3 border rounded-md">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium">
-                      {note.createdBy.firstName} {note.createdBy.lastName}
-                    </span>
+                    <span className="font-medium">{note.author}</span>
                     <span className="text-sm text-muted-foreground">
                       {format(new Date(note.createdAt), "dd/MM/yyyy HH:mm", {
                         locale: es,
