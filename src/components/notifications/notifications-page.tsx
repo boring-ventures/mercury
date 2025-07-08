@@ -21,7 +21,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { NotificationItem } from "./notification-item";
 import { CreateNotificationDialog } from "./create-notification-dialog";
 import {
   useNotifications,

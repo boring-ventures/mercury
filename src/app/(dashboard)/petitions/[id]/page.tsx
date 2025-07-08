@@ -38,7 +38,6 @@ import {
   Phone,
   MessageSquare,
   ArrowLeft,
-  ZoomIn,
   Briefcase,
 } from "lucide-react";
 import { format } from "date-fns";
