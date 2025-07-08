@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, Settings, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,17 @@ import {
 } from "@/hooks/use-notifications";
 import { NotificationFilters, Notification } from "@/types/notifications";
 
+interface NotificationMetadata {
+  path?: string;
+  requestId?: string;
+  petitionId?: string;
+  solicitudId?: string;
+  userId?: string;
+  context?: "admin" | "importador";
+  userRole?: "SUPERADMIN" | "IMPORTADOR";
+  [key: string]: unknown;
+}
+
 interface NotificationDropdownProps {
   className?: string;
 }
@@ -36,7 +47,10 @@ export const NotificationDropdown = ({
   const { data: notificationsData, isLoading } = useNotifications(filters);
   const { markAsRead, isLoading: isMarkingRead } = useMarkNotificationsRead();
 
-  const notifications = notificationsData?.notifications || [];
+  const notifications = useMemo(() => {
+    return notificationsData?.notifications || [];
+  }, [notificationsData?.notifications]);
+
   const totalNotifications = notificationsData?.pagination?.total || 0;
   const hasMoreNotifications = totalNotifications > 3;
   const hasUnread = unreadCount > 0;
@@ -72,7 +86,7 @@ export const NotificationDropdown = ({
     setIsOpen(false);
 
     // Navigate based on notification metadata or type
-    const metadata = notification.metadata as any;
+    const metadata = notification.metadata as NotificationMetadata;
 
     if (metadata?.path) {
       // If notification has a specific path in metadata

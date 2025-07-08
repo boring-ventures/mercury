@@ -224,7 +224,7 @@ function DocumentViewer({
   if (isImage) {
     return (
       <>
-        <div className="relative group cursor-pointer" onClick={onOpenModal}>
+        <div className="relative cursor-pointer" onClick={onOpenModal}>
           <div className="border rounded-lg overflow-hidden bg-gray-50">
             {shouldShowPlaceholder ? (
               <div className="w-full h-64 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
@@ -257,18 +257,6 @@ function DocumentViewer({
               />
             )}
           </div>
-
-          {!shouldShowPlaceholder && (
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
-              <Button
-                size="sm"
-                className="bg-black/50 hover:bg-black/70 text-white"
-              >
-                <ZoomIn className="h-4 w-4 mr-1" />
-                Ver completo
-              </Button>
-            </div>
-          )}
         </div>
 
         <div className="flex gap-2 mt-2">
