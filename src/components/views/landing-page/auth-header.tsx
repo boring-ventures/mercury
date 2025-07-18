@@ -8,7 +8,9 @@ export function AuthHeader() {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
-    return <div className="h-9 w-[100px] animate-pulse rounded-md bg-muted" />;
+    return (
+      <div className="h-9 w-[100px] animate-pulse rounded-md bg-gray-200" />
+    );
   }
 
   if (user) {
@@ -19,13 +21,13 @@ export function AuthHeader() {
     <div className="flex items-center space-x-4">
       <Link
         href="/sign-in"
-        className="text-primary hover:text-primary-foreground hover:bg-primary px-4 py-2 rounded-md transition-colors"
+        className="text-[#051D67] hover:text-white hover:bg-[#051D67] px-4 py-2 rounded-md transition-colors border border-[#051D67]"
       >
         Iniciar Sesión
       </Link>
       <Link
         href="/sign-up"
-        className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
+        className="bg-[#051D67] text-white px-4 py-2 rounded-md hover:bg-black transition-colors"
       >
         Registrarse
       </Link>
