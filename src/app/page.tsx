@@ -1,9 +1,9 @@
-import ObsidianHeroSection from "@/components/views/landing-page/obsidian-hero-section";
-import ObsidianValuesSection from "@/components/views/landing-page/obsidian-values-section";
-import ObsidianFeaturesSection from "@/components/views/landing-page/obsidian-features-section";
-import ObsidianSyncSection from "@/components/views/landing-page/obsidian-sync-section";
-import ObsidianPublishSection from "@/components/views/landing-page/obsidian-publish-section";
-import ObsidianCommunitySection from "@/components/views/landing-page/obsidian-community-section";
+import NordexHeroSection from "@/components/views/landing-page/obsidian-hero-section";
+import NordexBenefitsSection from "@/components/views/landing-page/obsidian-values-section";
+import NordexProcessSection from "@/components/views/landing-page/obsidian-features-section";
+import NordexCharacteristicsSection from "@/components/views/landing-page/obsidian-sync-section";
+import NordexMetricsSection from "@/components/views/landing-page/obsidian-publish-section";
+import NordexTestimonialsSection from "@/components/views/landing-page/obsidian-community-section";
 import Header from "@/components/views/landing-page/Header";
 
 export default function Home() {
@@ -11,12 +11,12 @@ export default function Home() {
     <div className="bg-white">
       <Header />
       <main className="bg-white">
-        <ObsidianHeroSection />
-        <ObsidianValuesSection />
-        <ObsidianFeaturesSection />
-        <ObsidianSyncSection />
-        <ObsidianPublishSection />
-        <ObsidianCommunitySection />
+        <NordexHeroSection />
+        <NordexBenefitsSection />
+        <NordexProcessSection />
+        <NordexCharacteristicsSection />
+        <NordexMetricsSection />
+        <NordexTestimonialsSection />
       </main>
     </div>
   );

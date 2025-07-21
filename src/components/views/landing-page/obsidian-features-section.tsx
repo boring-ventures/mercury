@@ -1,280 +1,111 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  Link,
-  Share2,
-  Layers,
-  Puzzle,
-  ArrowRight,
-  Calendar,
-  Kanban,
-  Database,
-  List,
-  CheckSquare,
-} from "lucide-react";
+import { Search, FileText, Cog, CheckCircle, ArrowRight } from "lucide-react";
 
-export default function ObsidianFeaturesSection() {
-  const [activeFeature, setActiveFeature] = useState("links");
+export default function NordexProcessSection() {
+  const [activeStep, setActiveStep] = useState("consulta");
 
-  const features = [
+  const steps = [
     {
-      id: "links",
-      title: "Links",
+      id: "consulta",
+      step: "Paso 1",
+      title: "Consulta Inicial",
+      subtitle: "Análisis de necesidades",
       description:
-        "Create connections between your notes. Link anything and everything — ideas, people, places, books, and beyond. Invent your own personal Wikipedia.",
-      icon: Link,
+        "Evaluamos tus requerimientos específicos de comercio internacional y diseñamos la estrategia más efectiva para tu empresa.",
+      icon: Search,
       demo: (
-        <div className="bg-gray-900 text-white p-6 rounded-lg font-mono text-sm">
-          <div className="mb-4">
-            <div className="text-gray-400 mb-2">
-              In Meditations on First Philosophy the philosopher René Descartes
-              describes a series of doubts about the nature of reality, arriving
-              at the famous phrase:
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center">
-                <span className="text-gray-400">- </span>
-                <span className="text-[#051D67]">[[I thin]]</span>
-              </div>
-              <div className="ml-4 space-y-1">
-                <div className="flex items-center">
-                  <span className="text-gray-400">- </span>
-                  <span className="text-white">**I thin**</span>
-                  <span className="text-gray-400">k therefore I am</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="text-gray-400">- Just </span>
-                  <span className="text-white">**thin**</span>
-                  <span className="text-gray-400">k about it</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="text-gray-400">- </span>
-                  <span className="text-white">**Thin**</span>
-                  <span className="text-gray-400">king, Fast and Slow</span>
-                </div>
-              </div>
-            </div>
-            <div className="mt-4 text-gray-400">
-              <div>Books/</div>
-              <div className="ml-4">
-                - The <span className="text-white">**Thin**</span>g
-              </div>
-              <div>Movies/</div>
-            </div>
+        <div className="bg-gradient-to-br from-[#051D67] to-black p-6 rounded-lg h-64 flex items-center justify-center relative overflow-hidden text-white">
+          <div className="text-center">
+            <div className="text-6xl mb-4">🔍</div>
+            <h3 className="text-xl font-semibold mb-2">
+              Análisis Personalizado
+            </h3>
+            <p className="text-sm text-gray-300">
+              Evaluamos tus necesidades específicas
+            </p>
           </div>
         </div>
       ),
     },
     {
-      id: "graph",
-      title: "Graph",
+      id: "propuesta",
+      step: "Paso 2",
+      title: "Propuesta Personalizada",
+      subtitle: "Solución a medida",
       description:
-        "Visualize the relationships between your notes. Find hidden patterns in your thinking through a visually engaging and interactive graph.",
-      icon: Share2,
+        "Presentamos una propuesta detallada con costos transparentes, tiempos estimados y metodología de trabajo específica para tu caso.",
+      icon: FileText,
       demo: (
-        <div className="bg-gradient-to-br from-[#051D67] to-black p-6 rounded-lg h-64 flex items-center justify-center relative overflow-hidden">
-          <div className="absolute inset-0">
-            {/* Simulated graph nodes */}
-            <div className="absolute top-1/4 left-1/4 w-3 h-3 bg-white rounded-full"></div>
-            <div className="absolute top-1/3 left-1/2 w-4 h-4 bg-gray-300 rounded-full"></div>
-            <div className="absolute top-2/3 left-1/3 w-3 h-3 bg-white rounded-full"></div>
-            <div className="absolute top-1/2 right-1/4 w-3 h-3 bg-gray-300 rounded-full"></div>
-            <div className="absolute bottom-1/4 right-1/3 w-4 h-4 bg-white rounded-full"></div>
-
-            {/* Simulated connections */}
-            <svg className="absolute inset-0 w-full h-full">
-              <line
-                x1="25%"
-                y1="25%"
-                x2="50%"
-                y2="33%"
-                stroke="rgba(255, 255, 255, 0.5)"
-                strokeWidth="2"
-              />
-              <line
-                x1="50%"
-                y1="33%"
-                x2="33%"
-                y2="67%"
-                stroke="rgba(255, 255, 255, 0.5)"
-                strokeWidth="2"
-              />
-              <line
-                x1="33%"
-                y1="67%"
-                x2="75%"
-                y2="50%"
-                stroke="rgba(255, 255, 255, 0.5)"
-                strokeWidth="2"
-              />
-              <line
-                x1="75%"
-                y1="50%"
-                x2="67%"
-                y2="75%"
-                stroke="rgba(255, 255, 255, 0.5)"
-                strokeWidth="2"
-              />
-            </svg>
-          </div>
-
-          <div className="relative z-10 text-white text-center">
-            <div className="text-lg font-semibold mb-2">
-              Interactive Knowledge Graph
-            </div>
-            <div className="text-sm text-gray-300">
-              Discover connections between ideas
-            </div>
+        <div className="bg-white border-2 border-[#051D67] rounded-lg p-6 h-64 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-6xl mb-4 text-[#051D67]">📋</div>
+            <h3 className="text-xl font-semibold mb-2 text-[#051D67]">
+              Propuesta Detallada
+            </h3>
+            <p className="text-sm text-gray-600">
+              Costos transparentes y metodología clara
+            </p>
           </div>
         </div>
       ),
     },
     {
-      id: "canvas",
-      title: "Canvas",
+      id: "implementacion",
+      step: "Paso 3",
+      title: "Implementación",
+      subtitle: "Ejecución experta",
       description:
-        "An infinite space to research, brainstorm, diagram, and lay out your ideas. Canvas is a limitless playground for your mind.",
-      icon: Layers,
+        "Nuestro equipo especializado ejecuta la operación con seguimiento constante y comunicación fluida durante todo el proceso.",
+      icon: Cog,
       demo: (
-        <div className="bg-gray-100 p-6 rounded-lg h-64 relative overflow-hidden">
-          <div className="absolute top-4 left-4 bg-white p-3 rounded shadow-md">
-            <div className="font-semibold text-sm mb-1">Lecture 1</div>
-            <div className="text-xs text-gray-600">Philosophy 101</div>
-          </div>
-
-          <div className="absolute top-4 right-4 bg-yellow-100 p-3 rounded shadow-md">
-            <div className="font-semibold text-sm mb-1">Rationalists</div>
-            <div className="text-xs text-gray-600">vs. Empiricists</div>
-          </div>
-
-          <div className="absolute bottom-4 left-4 bg-blue-100 p-3 rounded shadow-md">
-            <div className="font-semibold text-sm mb-1">Cogito, ergo sum</div>
-            <div className="text-xs text-gray-600">
-              "I think therefore I am"
+        <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg p-6 h-64 relative overflow-hidden">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-6xl mb-4">⚙️</div>
+              <h3 className="text-xl font-semibold mb-2 text-[#051D67]">
+                En Proceso
+              </h3>
+              <p className="text-sm text-gray-600">
+                Seguimiento constante y comunicación fluida
+              </p>
             </div>
           </div>
-
-          <div className="absolute bottom-4 right-4 bg-green-100 p-3 rounded shadow-md">
-            <div className="font-semibold text-sm mb-1">Philosophers</div>
-            <div className="text-xs text-gray-600">
-              Descartes, Spinoza, Hume
-            </div>
+          {/* Progress indicators */}
+          <div className="absolute top-4 left-4 flex space-x-2">
+            <div className="w-3 h-3 bg-[#051D67] rounded-full animate-pulse"></div>
+            <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
+            <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
           </div>
-
-          {/* Connection lines */}
-          <svg className="absolute inset-0 w-full h-full">
-            <line
-              x1="25%"
-              y1="25%"
-              x2="75%"
-              y2="25%"
-              stroke="rgba(107, 114, 128, 0.3)"
-              strokeWidth="2"
-              strokeDasharray="5,5"
-            />
-            <line
-              x1="25%"
-              y1="75%"
-              x2="75%"
-              y2="75%"
-              stroke="rgba(107, 114, 128, 0.3)"
-              strokeWidth="2"
-              strokeDasharray="5,5"
-            />
-            <line
-              x1="50%"
-              y1="25%"
-              x2="50%"
-              y2="75%"
-              stroke="rgba(107, 114, 128, 0.3)"
-              strokeWidth="2"
-              strokeDasharray="5,5"
-            />
-          </svg>
         </div>
       ),
     },
     {
-      id: "plugins",
-      title: "Plugins",
+      id: "entrega",
+      step: "Paso 4",
+      title: "Entrega y Seguimiento",
+      subtitle: "Resultados garantizados",
       description:
-        "Build your ideal thinking space. With thousands of plugins and our open API, it's easy to tailor Obsidian to fit your personal workflow.",
-      icon: Puzzle,
+        "Completamos la operación exitosamente y proporcionamos seguimiento post-servicio para asegurar tu total satisfacción.",
+      icon: CheckCircle,
       demo: (
-        <div className="bg-white border rounded-lg p-6 space-y-4">
-          <div className="text-lg font-semibold text-gray-900 mb-4">
-            Community plugins
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-              <Calendar className="w-5 h-5 text-[#051D67]" />
-              <div>
-                <div className="font-semibold text-sm">
-                  Calendar by Liam Cain
-                </div>
-                <div className="text-xs text-gray-600">
-                  Calendar view of your daily notes.
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-              <Kanban className="w-5 h-5 text-black" />
-              <div>
-                <div className="font-semibold text-sm">
-                  Kanban by Matthew Meyers
-                </div>
-                <div className="text-xs text-gray-600">
-                  Markdown-backed kanban boards.
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-              <Database className="w-5 h-5 text-[#051D67]" />
-              <div>
-                <div className="font-semibold text-sm">
-                  Dataview by Michael Brenan
-                </div>
-                <div className="text-xs text-gray-600">
-                  Advanced queries for the data-obsessed.
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-              <List className="w-5 h-5 text-black" />
-              <div>
-                <div className="font-semibold text-sm">
-                  Outliner by Viacheslav Slinko
-                </div>
-                <div className="text-xs text-gray-600">
-                  Work with your lists.
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-              <CheckSquare className="w-5 h-5 text-[#051D67]" />
-              <div>
-                <div className="font-semibold text-sm">
-                  Tasks by Martin Schenck and Clare Macrae
-                </div>
-                <div className="text-xs text-gray-600">
-                  Track tasks across your entire vault.
-                </div>
-              </div>
-            </div>
+        <div className="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-300 rounded-lg p-6 h-64 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-6xl mb-4">✅</div>
+            <h3 className="text-xl font-semibold mb-2 text-green-700">
+              Operación Completada
+            </h3>
+            <p className="text-sm text-green-600">
+              Con seguimiento post-servicio
+            </p>
           </div>
         </div>
       ),
     },
   ];
 
-  const activeFeatureData =
-    features.find((f) => f.id === activeFeature) || features[0];
+  const activeStepData = steps.find((s) => s.id === activeStep) || steps[0];
 
   return (
     <section className="bg-white py-20">
@@ -282,66 +113,77 @@ export default function ObsidianFeaturesSection() {
         {/* Section Header */}
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-black mb-6">
-            Spark ideas.
+            Así de simple es trabajar con NORDEX
           </h2>
           <p className="text-xl text-gray-600 max-w-4xl mx-auto">
-            From personal notes to journaling, knowledge bases, and project
-            management, Obsidian gives you the tools to come up with ideas and
-            organize them.
+            Un proceso estructurado y transparente que garantiza resultados
+            exitosos en cada operación de comercio internacional.
           </p>
         </div>
 
-        {/* Features Navigation */}
+        {/* Steps Navigation */}
         <div className="flex flex-wrap justify-center gap-4 mb-12">
-          {features.map((feature) => {
-            const IconComponent = feature.icon;
+          {steps.map((step) => {
+            const IconComponent = step.icon;
             return (
               <button
-                key={feature.id}
-                onClick={() => setActiveFeature(feature.id)}
-                className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
-                  activeFeature === feature.id
+                key={step.id}
+                onClick={() => setActiveStep(step.id)}
+                className={`flex flex-col items-center space-y-2 px-6 py-4 rounded-lg font-semibold transition-all duration-300 min-w-[200px] ${
+                  activeStep === step.id
                     ? "bg-[#051D67] text-white shadow-lg"
                     : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
                 }`}
               >
-                <IconComponent className="w-5 h-5" />
-                <span>{feature.title}</span>
+                <IconComponent className="w-6 h-6" />
+                <div className="text-center">
+                  <div className="text-sm font-medium">{step.step}</div>
+                  <div className="text-sm">{step.title}</div>
+                </div>
               </button>
             );
           })}
         </div>
 
-        {/* Active Feature Display */}
+        {/* Active Step Display */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          {/* Feature Description */}
+          {/* Step Description */}
           <div className="space-y-6">
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                <activeFeatureData.icon className="w-6 h-6 text-[#051D67]" />
+                <activeStepData.icon className="w-6 h-6 text-[#051D67]" />
               </div>
-              <h3 className="text-3xl font-bold text-black">
-                {activeFeatureData.title}
-              </h3>
+              <div>
+                <div className="text-sm font-semibold text-[#051D67] mb-1">
+                  {activeStepData.step}
+                </div>
+                <h3 className="text-3xl font-bold text-black">
+                  {activeStepData.title}
+                </h3>
+              </div>
             </div>
 
+            <h4 className="text-xl font-semibold text-[#051D67]">
+              {activeStepData.subtitle}
+            </h4>
+
             <p className="text-lg text-gray-600 leading-relaxed">
-              {activeFeatureData.description}
+              {activeStepData.description}
             </p>
 
             <a
-              href={`https://obsidian.md/${activeFeatureData.id.toLowerCase()}`}
+              href="#contacto"
               className="inline-flex items-center text-[#051D67] hover:text-black font-semibold group"
             >
-              Learn more
+              Iniciar proceso
               <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
             </a>
           </div>
 
-          {/* Feature Demo */}
+          {/* Step Demo */}
           <div className="relative">
             <div className="transform hover:scale-105 transition-transform duration-300">
-              {activeFeatureData.demo}
+              {activeStepData.demo}
             </div>
           </div>
         </div>

@@ -15,7 +15,7 @@ export default function Header() {
           <div className="flex items-center space-x-2">
             <Globe className="h-8 w-8 text-[#051D67]" />
             <Link href="/" className="text-2xl font-bold text-[#051D67]">
-              MERCURY
+              NORDEX
             </Link>
           </div>
           <div className="hidden md:flex">

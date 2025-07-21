@@ -1,28 +1,50 @@
 import React from "react";
-import { Shield, Settings, Clock, Users, ArrowRight } from "lucide-react";
+import {
+  Monitor,
+  Users,
+  Globe,
+  Shield,
+  Settings,
+  MessageSquare,
+} from "lucide-react";
 
-export default function ObsidianSyncSection() {
-  const features = [
+export default function NordexCharacteristicsSection() {
+  const characteristics = [
     {
-      icon: Settings,
-      title: "Fine-grained control.",
+      icon: Monitor,
+      title: "Tecnología Avanzada",
       description:
-        "Decide which files and preferences you want to sync to which devices.",
-      image: "https://obsidian.md/images/sync-settings.png",
-    },
-    {
-      icon: Clock,
-      title: "Version history.",
-      description:
-        "Easily track changes between revisions, with one year of version history for every note.",
-      image: "https://obsidian.md/images/sync-diff.png",
+        "Utilizamos plataformas tecnológicas de vanguardia que nos permiten procesar operaciones de manera eficiente y segura, manteniéndonos a la forefront de la innovación en servicios comerciales.",
     },
     {
       icon: Users,
-      title: "Collaboration.",
+      title: "Equipo Especializado",
       description:
-        "Work with your team on shared files without compromising your private data.",
-      image: "https://obsidian.md/images/sync-share.png",
+        "Profesionales con amplia experiencia en comercio internacional, regulaciones financieras y mercados globales, capacitados para manejar operaciones de cualquier complejidad.",
+    },
+    {
+      icon: Globe,
+      title: "Red Global de Contactos",
+      description:
+        "Alianzas estratégicas con instituciones financieras y socios comerciales en múltiples países que nos permiten ofrecer soluciones integrales a nivel mundial.",
+    },
+    {
+      icon: Shield,
+      title: "Cumplimiento Normativo",
+      description:
+        "Adherencia estricta a todas las regulaciones locales e internacionales, garantizando que tus operaciones cumplan con todos los requisitos legales y normativos.",
+    },
+    {
+      icon: Settings,
+      title: "Flexibilidad de Servicios",
+      description:
+        "Adaptamos nuestros servicios a las necesidades específicas de cada cliente, desde operaciones puntuales hasta programas de facilitación comercial de largo plazo.",
+    },
+    {
+      icon: MessageSquare,
+      title: "Comunicación Proactiva",
+      description:
+        "Mantenemos comunicación constante y proactiva durante todo el proceso, proporcionando actualizaciones regulares y disponibilidad inmediata para consultas.",
     },
   ];
 
@@ -32,69 +54,64 @@ export default function ObsidianSyncSection() {
         {/* Section Header */}
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-black mb-6">
-            Sync securely.
+            Lo que nos hace únicos en el mercado
           </h2>
           <p className="text-xl text-gray-600 max-w-4xl mx-auto">
-            Access your notes on any device, secured with end-to-end encryption.{" "}
-            <a
-              href="https://obsidian.md/sync"
-              className="text-[#051D67] hover:text-black underline"
-            >
-              Learn more.
-            </a>
+            Características distintivas que posicionan a NORDEX como líder en
+            facilitación comercial internacional en Bolivia.
           </p>
         </div>
 
-        {/* Features Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 mb-16">
-          {features.map((feature, index) => {
-            const IconComponent = feature.icon;
+        {/* Characteristics Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 mb-16">
+          {characteristics.map((characteristic, index) => {
+            const IconComponent = characteristic.icon;
             return (
-              <div key={index} className="text-center group">
-                <div className="mb-6">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4 group-hover:bg-gray-200 transition-colors">
-                    <IconComponent className="w-8 h-8 text-[#051D67]" />
+              <div key={index} className="group">
+                <div className="bg-gray-50 rounded-xl p-8 h-full hover:shadow-lg transition-all duration-300 hover:scale-105">
+                  <div className="mb-6">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-[#051D67] to-black rounded-full mb-4 shadow-lg">
+                      <IconComponent className="w-8 h-8 text-white" />
+                    </div>
                   </div>
+
+                  <h3 className="text-2xl font-bold text-black mb-4 group-hover:text-[#051D67] transition-colors">
+                    {characteristic.title}
+                  </h3>
+
+                  <p className="text-gray-600 text-base leading-relaxed">
+                    {characteristic.description}
+                  </p>
                 </div>
-
-                <h3 className="text-2xl font-bold text-black mb-4">
-                  {feature.title}
-                </h3>
-
-                <p className="text-gray-600 text-lg leading-relaxed">
-                  {feature.description}
-                </p>
               </div>
             );
           })}
         </div>
 
-        {/* Screenshots Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
-            <div key={index} className="group">
-              <div className="bg-gray-100 rounded-lg p-4 mb-4 transform hover:scale-105 transition-transform duration-300">
-                <img
-                  src={feature.image}
-                  alt={`${feature.title} screenshot`}
-                  className="w-full h-auto rounded-lg shadow-md"
-                />
-              </div>
-              <div className="text-center">
-                <h4 className="font-semibold text-black mb-2">
-                  {feature.title}
-                </h4>
-                <p className="text-sm text-gray-600">{feature.description}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+        {/* Additional Value Props */}
+        <div className="bg-gradient-to-r from-[#051D67] to-black rounded-2xl p-12 text-white text-center">
+          <h3 className="text-3xl font-bold mb-6">
+            La combinación perfecta de experiencia, tecnología y compromiso
+          </h3>
+          <p className="text-xl text-gray-200 mb-8 max-w-4xl mx-auto">
+            Estas características únicas nos permiten ofrecer un servicio
+            integral que transforma la manera en que las empresas bolivianas
+            participan en el comercio internacional.
+          </p>
 
-        {/* Security Badge */}
-        <div className="text-center mt-16">
-          <div className="inline-flex items-center justify-center space-x-2 bg-[#051D67] text-white px-6 py-3 rounded-full">
-            <Shield className="w-5 h-5" />
-            <span className="font-semibold">End-to-end encrypted</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="text-4xl font-bold mb-2">+50</div>
+              <div className="text-gray-200">Países conectados</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold mb-2">24/7</div>
+              <div className="text-gray-200">Soporte disponible</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold mb-2">99.8%</div>
+              <div className="text-gray-200">Tasa de éxito</div>
+            </div>
           </div>
         </div>
       </div>
