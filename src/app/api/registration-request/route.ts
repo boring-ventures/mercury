@@ -2,35 +2,40 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { ActivityType } from "@prisma/client";
 import { resend, FROM_EMAIL } from "@/lib/resend";
-import { generateRegistrationConfirmationEmail } from "@/lib/email-templates";
+import {
+  generateRegistrationConfirmationEmail,
+  generateAdminNotificationEmail,
+} from "@/lib/email-templates";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const {
       companyName,
-      ruc,
+      nit,
+      companyType,
       country,
+      city,
       activity,
       contactName,
       contactPosition,
       email,
       phone,
-      bankingDetails,
       documents,
     } = body;
 
     // Validate required fields
     if (
       !companyName ||
-      !ruc ||
+      !nit ||
+      !companyType ||
       !country ||
+      !city ||
       !activity ||
       !contactName ||
       !contactPosition ||
       !email ||
-      !phone ||
-      !bankingDetails
+      !phone
     ) {
       return NextResponse.json(
         { error: "Todos los campos obligatorios deben ser completados" },
@@ -111,14 +116,15 @@ export async function POST(request: NextRequest) {
     const registrationRequest = await prisma.registrationRequest.create({
       data: {
         companyName,
-        ruc,
+        nit,
+        companyType,
         country,
+        city,
         activity,
         contactName,
         contactPosition,
         email,
         phone,
-        bankingDetails,
         status: "PENDING",
       },
     });
@@ -214,14 +220,15 @@ export async function POST(request: NextRequest) {
     try {
       const emailHtml = generateRegistrationConfirmationEmail({
         companyName,
-        ruc,
+        nit,
+        companyType,
         country,
+        city,
         activity,
         contactName,
         contactPosition,
         email,
         phone,
-        bankingDetails,
         requestId: registrationRequest.id,
         submittedAt: registrationRequest.createdAt.toISOString(),
       });
@@ -241,6 +248,73 @@ export async function POST(request: NextRequest) {
       console.error("Error sending confirmation email:", emailError);
       // The registration was successful, so we still return success
       // but could add a note about email delivery
+    }
+
+    // Send admin notification emails to all SUPERADMIN users
+    try {
+      // Get all users with SUPERADMIN role and their emails
+      const superAdmins = await prisma.profile.findMany({
+        where: {
+          role: "SUPERADMIN",
+          status: "ACTIVE",
+        },
+        select: {
+          email: true,
+        },
+      });
+
+      // Filter out profiles without emails
+      const adminEmails = superAdmins
+        .map(admin => admin.email)
+        .filter(email => email) as string[];
+
+      if (adminEmails.length > 0) {
+        // Count uploaded documents
+        const documentsCount = documents
+          ? Object.keys(documents).length
+          : 0;
+
+        const adminEmailHtml = generateAdminNotificationEmail({
+          companyName,
+          nit,
+          companyType,
+          country,
+          city,
+          activity,
+          contactName,
+          contactPosition,
+          email,
+          phone,
+          requestId: registrationRequest.id,
+          submittedAt: registrationRequest.createdAt.toISOString(),
+          documentsCount,
+        });
+
+        // Send email to all SUPERADMIN users
+        const adminEmailPromises = adminEmails.map((email) =>
+          resend.emails.send({
+            from: FROM_EMAIL,
+            to: email,
+            subject: `🚨 Nueva Solicitud de Registro - Mercury Platform (ID: ${registrationRequest.id})`,
+            html: adminEmailHtml,
+          })
+        );
+
+        await Promise.all(adminEmailPromises);
+
+        console.log(
+          `Admin notification emails sent to ${adminEmails.length} SUPERADMIN users for request ${registrationRequest.id}`
+        );
+      } else {
+        console.log("No SUPERADMIN users with valid emails found");
+      }
+    } catch (adminEmailError) {
+      // Log admin email error but don't fail the registration
+      console.error(
+        "Error sending admin notification emails:",
+        adminEmailError
+      );
+      // The registration was successful, so we still return success
     }
 
     // Return success response

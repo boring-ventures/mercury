@@ -4,14 +4,15 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 export interface RegistrationData {
   companyName: string;
-  ruc: string;
+  nit: string;
+  companyType: string;
   country: string;
+  city: string;
   activity: string;
   contactName: string;
   contactPosition: string;
   email: string;
   phone: string;
-  bankingDetails: string;
   terms: boolean;
   privacy: boolean;
 }
@@ -214,8 +215,15 @@ export function useRegistration() {
         }
       }
 
-      // Check for required documents
-      const requiredDocs = ["matricula", "nit", "poder", "carnet"];
+      // Check for required documents based on company type
+      const companyType = data.companyType;
+      const requiredDocs: string[] = ["nit", "carnet"]; // Always required
+
+      // Add conditional required documents
+      if (companyType !== "UNIPERSONAL") {
+        requiredDocs.push("matricula", "poder");
+      }
+
       const missingDocs = requiredDocs.filter(
         (doc) => !documents[doc as keyof DocumentFiles]
       );
