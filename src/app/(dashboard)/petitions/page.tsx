@@ -47,7 +47,7 @@ import Link from "next/link";
 interface RegistrationPetition {
   id: string;
   companyName: string;
-  ruc: string;
+  nit: string;
   country: string;
   activity: string;
   contactName: string;
@@ -124,7 +124,7 @@ function PetitionsPageContent() {
       petition.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       petition.contactName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       petition.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      petition.ruc.includes(searchTerm);
+      petition.nit.includes(searchTerm);
 
     return matchesStatus && matchesSearch;
   });
@@ -227,7 +227,7 @@ function PetitionsPageContent() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
-                  placeholder="Buscar por empresa, contacto, email o RUC..."
+                  placeholder="Buscar por empresa, contacto, email o NIT..."
                   value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
@@ -303,7 +303,7 @@ function PetitionsPageContent() {
                             {petition.companyName}
                           </div>
                           <div className="text-sm text-gray-500">
-                            RUC: {petition.ruc}
+                            NIT: {petition.nit}
                           </div>
                         </div>
                       </TableCell>

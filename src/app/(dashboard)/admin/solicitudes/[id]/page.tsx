@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -524,14 +524,21 @@ function QuotationGenerator({
   };
 
   const [quotationData, setQuotationData] = useState({
-    baseAmount: "",
-    fees: "",
-    taxes: "",
+    valueToSendUSD: "",
+    exchangeRate: "",
+    valueInBs: "",
+    financialExpenseUSD: "",
+    financialExpenseBs: "",
+    managementServiceBs: "",
+    managementServicePercentage: "",
+    totalInBs: "",
     validUntil: getDefaultValidUntil(),
     terms: "",
     notes: "",
-    status: "DRAFT", // Add status field with default value
+    status: "DRAFT",
   });
+
+  const [isLoadingExchangeRate, setIsLoadingExchangeRate] = useState(false);
 
   // Validate if the selected date is valid (at least tomorrow)
   const isValidDate = (dateString: string) => {
@@ -547,17 +554,124 @@ function QuotationGenerator({
 
   const isDateValid = isValidDate(quotationData.validUntil);
 
+  // Auto-calculation functions
+  const calculateValueInBs = useCallback(() => {
+    const valueToSendUSD = parseFloat(quotationData.valueToSendUSD) || 0;
+    const exchangeRate = parseFloat(quotationData.exchangeRate) || 0;
+
+    if (valueToSendUSD > 0 && exchangeRate > 0) {
+      const calculatedValue = valueToSendUSD * exchangeRate;
+      setQuotationData((prev) => ({
+        ...prev,
+        valueInBs: calculatedValue.toFixed(2),
+      }));
+    }
+  }, [quotationData.valueToSendUSD, quotationData.exchangeRate]);
+
+  const calculateFinancialExpenseBs = useCallback(() => {
+    const financialExpenseUSD =
+      parseFloat(quotationData.financialExpenseUSD) || 0;
+    const exchangeRate = parseFloat(quotationData.exchangeRate) || 0;
+
+    if (financialExpenseUSD > 0 && exchangeRate > 0) {
+      const calculatedValue = financialExpenseUSD * exchangeRate;
+      setQuotationData((prev) => ({
+        ...prev,
+        financialExpenseBs: calculatedValue.toFixed(2),
+      }));
+    }
+  }, [quotationData.financialExpenseUSD, quotationData.exchangeRate]);
+
+  const calculateTotalInBs = useCallback(() => {
+    const valueInBs = parseFloat(quotationData.valueInBs) || 0;
+    const financialExpenseBs =
+      parseFloat(quotationData.financialExpenseBs) || 0;
+    const managementServiceBs =
+      parseFloat(quotationData.managementServiceBs) || 0;
+
+    const total = valueInBs + financialExpenseBs + managementServiceBs;
+    setQuotationData((prev) => ({
+      ...prev,
+      totalInBs: total.toFixed(2),
+    }));
+  }, [
+    quotationData.valueInBs,
+    quotationData.financialExpenseBs,
+    quotationData.managementServiceBs,
+  ]);
+
+  // Debounced calculation for exchange rate and value changes
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      calculateValueInBs();
+      calculateFinancialExpenseBs();
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [
+    quotationData.exchangeRate,
+    quotationData.valueToSendUSD,
+    quotationData.financialExpenseUSD,
+    calculateValueInBs,
+    calculateFinancialExpenseBs,
+  ]);
+
+  // Auto-calculate total when any component changes
+  useEffect(() => {
+    calculateTotalInBs();
+  }, [calculateTotalInBs]);
+
+  // Function to fetch exchange rate from Binance P2P API
+  const fetchExchangeRate = async () => {
+    setIsLoadingExchangeRate(true);
+    try {
+      const response = await fetch("/api/binance/exchange-rate");
+      const data = await response.json();
+
+      if (data.success && data.data && data.data.usdt_bob) {
+        setQuotationData((prev) => ({
+          ...prev,
+          exchangeRate: data.data.usdt_bob.toString(),
+        }));
+        toast({
+          title: "Tipo de cambio actualizado",
+          description: `Precio promedio: ${data.data.usdt_bob.toFixed(2)} BOB/USDT (${data.data.valid_offers_count} ofertas válidas)`,
+        });
+      } else {
+        throw new Error(data.error || "Error al obtener el tipo de cambio");
+      }
+    } catch (error) {
+      console.error("Error fetching exchange rate:", error);
+      toast({
+        title: "Error al obtener tipo de cambio",
+        description:
+          "No se pudo obtener el precio desde Binance P2P. Intenta de nuevo.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingExchangeRate(false);
+    }
+  };
+
   const handleGenerate = async () => {
-    const baseAmount = parseFloat(quotationData.baseAmount);
-    const fees = parseFloat(quotationData.fees) || 0;
-    const taxes = parseFloat(quotationData.taxes) || 0;
-    const totalAmount = baseAmount + fees + taxes;
+    const valueToSendUSD = parseFloat(quotationData.valueToSendUSD);
+    const exchangeRate = parseFloat(quotationData.exchangeRate) || 0;
+    const valueInBs = parseFloat(quotationData.valueInBs) || 0;
+    const financialExpenseUSD =
+      parseFloat(quotationData.financialExpenseUSD) || 0;
+    const financialExpenseBs =
+      parseFloat(quotationData.financialExpenseBs) || 0;
+    const managementServiceBs =
+      parseFloat(quotationData.managementServiceBs) || 0;
+    const managementServicePercentage =
+      parseFloat(quotationData.managementServicePercentage) || 0;
+    const totalInBs = parseFloat(quotationData.totalInBs) || 0;
 
     // Validate required fields
-    if (!baseAmount || !quotationData.validUntil) {
+    if (!valueToSendUSD || !quotationData.validUntil) {
       toast({
         title: "Error",
-        description: "Monto base y fecha de validez son obligatorios",
+        description: "Valor a enviar USD y fecha de validez son obligatorios",
         variant: "destructive",
       });
       return;
@@ -582,14 +696,18 @@ function QuotationGenerator({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          baseAmount,
-          fees,
-          taxes,
-          totalAmount,
+          valueToSendUSD,
+          exchangeRate,
+          valueInBs,
+          financialExpenseUSD,
+          financialExpenseBs,
+          managementServiceBs,
+          managementServicePercentage,
+          totalInBs,
           validUntil: quotationData.validUntil,
           terms: quotationData.terms,
           notes: quotationData.notes,
-          status: quotationData.status, // Include status in request
+          status: quotationData.status,
         }),
       });
 
@@ -606,9 +724,14 @@ function QuotationGenerator({
 
       setIsOpen(false);
       setQuotationData({
-        baseAmount: "",
-        fees: "",
-        taxes: "",
+        valueToSendUSD: "",
+        exchangeRate: "",
+        valueInBs: "",
+        financialExpenseUSD: "",
+        financialExpenseBs: "",
+        managementServiceBs: "",
+        managementServicePercentage: "",
+        totalInBs: "",
         validUntil: getDefaultValidUntil(),
         terms: "",
         notes: "",
@@ -626,10 +749,10 @@ function QuotationGenerator({
     }
   };
 
-  const totalAmount =
-    (parseFloat(quotationData.baseAmount) || 0) +
-    (parseFloat(quotationData.fees) || 0) +
-    (parseFloat(quotationData.taxes) || 0);
+  const totalInBs =
+    (parseFloat(quotationData.valueInBs) || 0) +
+    (parseFloat(quotationData.financialExpenseBs) || 0) +
+    (parseFloat(quotationData.managementServiceBs) || 0);
 
   const buttonProps =
     variant === "compact"
@@ -650,7 +773,7 @@ function QuotationGenerator({
           {variant === "compact" ? "Nueva Cotización" : "Generar Cotización"}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[800px] max-h-[85vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle>Generar Nueva Cotización</DialogTitle>
           <DialogDescription>
@@ -658,35 +781,153 @@ function QuotationGenerator({
             solicitud.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="space-y-4 max-h-[calc(85vh-180px)] overflow-y-auto pr-2">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="baseAmount">Monto Base (USD)*</Label>
+              <Label htmlFor="valueToSendUSD">Valor a Enviar (USD)*</Label>
               <Input
-                id="baseAmount"
+                id="valueToSendUSD"
                 type="number"
                 step="0.01"
-                value={quotationData.baseAmount}
+                value={quotationData.valueToSendUSD}
                 onChange={(e) =>
                   setQuotationData((prev) => ({
                     ...prev,
-                    baseAmount: e.target.value,
+                    valueToSendUSD: e.target.value,
                   }))
                 }
                 placeholder="0.00"
               />
             </div>
             <div>
-              <Label htmlFor="fees">Comisiones (USD)</Label>
+              <Label htmlFor="exchangeRate">Tipo de Cambio</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="exchangeRate"
+                  type="number"
+                  step="0.0001"
+                  value={quotationData.exchangeRate}
+                  onChange={(e) =>
+                    setQuotationData((prev) => ({
+                      ...prev,
+                      exchangeRate: e.target.value,
+                    }))
+                  }
+                  placeholder="0.0000"
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={fetchExchangeRate}
+                  disabled={isLoadingExchangeRate}
+                  className="whitespace-nowrap"
+                >
+                  {isLoadingExchangeRate ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      Cargando...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-1" />
+                      Obtener
+                    </>
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Obtén el precio promedio desde Binance P2P
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="valueInBs">Valor en Bs (Auto-calculado)</Label>
               <Input
-                id="fees"
+                id="valueInBs"
                 type="number"
                 step="0.01"
-                value={quotationData.fees}
+                value={quotationData.valueInBs}
+                readOnly
+                className="bg-gray-50 cursor-not-allowed"
+                placeholder="0.00"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Calculado automáticamente: Valor USD × Tipo de Cambio
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="financialExpenseUSD">
+                Gasto Financiero (USD)
+              </Label>
+              <Input
+                id="financialExpenseUSD"
+                type="number"
+                step="0.01"
+                value={quotationData.financialExpenseUSD}
                 onChange={(e) =>
                   setQuotationData((prev) => ({
                     ...prev,
-                    fees: e.target.value,
+                    financialExpenseUSD: e.target.value,
+                  }))
+                }
+                placeholder="0.00"
+              />
+            </div>
+            <div>
+              <Label htmlFor="financialExpenseBs">
+                Gasto Financiero (Bs) (Auto-calculado)
+              </Label>
+              <Input
+                id="financialExpenseBs"
+                type="number"
+                step="0.01"
+                value={quotationData.financialExpenseBs}
+                readOnly
+                className="bg-gray-50 cursor-not-allowed"
+                placeholder="0.00"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Calculado automáticamente: Gasto USD × Tipo de Cambio
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="managementServiceBs">
+                Servicio de Gestión (Bs)
+              </Label>
+              <Input
+                id="managementServiceBs"
+                type="number"
+                step="0.01"
+                value={quotationData.managementServiceBs}
+                onChange={(e) =>
+                  setQuotationData((prev) => ({
+                    ...prev,
+                    managementServiceBs: e.target.value,
+                  }))
+                }
+                placeholder="0.00"
+              />
+            </div>
+            <div>
+              <Label htmlFor="managementServicePercentage">
+                Porcentaje Servicio (%)
+              </Label>
+              <Input
+                id="managementServicePercentage"
+                type="number"
+                step="0.01"
+                value={quotationData.managementServicePercentage}
+                onChange={(e) =>
+                  setQuotationData((prev) => ({
+                    ...prev,
+                    managementServicePercentage: e.target.value,
                   }))
                 }
                 placeholder="0.00"
@@ -695,20 +936,19 @@ function QuotationGenerator({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="taxes">Impuestos (USD)</Label>
+              <Label htmlFor="totalInBs">Total en Bs (Auto-calculado)</Label>
               <Input
-                id="taxes"
+                id="totalInBs"
                 type="number"
                 step="0.01"
-                value={quotationData.taxes}
-                onChange={(e) =>
-                  setQuotationData((prev) => ({
-                    ...prev,
-                    taxes: e.target.value,
-                  }))
-                }
+                value={quotationData.totalInBs}
+                readOnly
+                className="bg-gray-50 cursor-not-allowed font-semibold"
                 placeholder="0.00"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Calculado automáticamente: Valor Bs + Gasto Bs + Servicio Bs
+              </p>
             </div>
             <div>
               <Label htmlFor="validUntil">Válida hasta*</Label>
@@ -807,10 +1047,10 @@ function QuotationGenerator({
               rows={2}
             />
           </div>
-          {totalAmount > 0 && (
+          {totalInBs > 0 && (
             <div className="bg-blue-50 p-3 rounded-lg">
               <p className="text-sm font-medium text-blue-900">
-                Total de la Cotización: ${totalAmount.toFixed(2)} USD
+                Total de la Cotización: ${totalInBs.toFixed(2)} Bs
               </p>
               <p className="text-xs text-blue-700 mt-1">
                 Estado:{" "}
@@ -827,13 +1067,20 @@ function QuotationGenerator({
             </div>
           )}
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setIsOpen(false)}>
+        <DialogFooter className="flex gap-2 pt-4 border-t">
+          <Button
+            variant="outline"
+            onClick={() => setIsOpen(false)}
+            className="flex-1"
+          >
             Cancelar
           </Button>
           <Button
             onClick={handleGenerate}
-            disabled={isGenerating || !isDateValid || !quotationData.baseAmount}
+            disabled={
+              isGenerating || !isDateValid || !quotationData.valueToSendUSD
+            }
+            className="flex-1"
           >
             {isGenerating ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />

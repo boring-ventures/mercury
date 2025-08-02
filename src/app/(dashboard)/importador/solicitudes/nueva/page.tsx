@@ -31,6 +31,7 @@ import {
   X,
 } from "lucide-react";
 import { useCreateRequest } from "@/hooks/use-requests";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { toast } from "@/components/ui/use-toast";
 import { uploadDocument } from "@/lib/supabase/upload-documents";
 
@@ -46,6 +47,7 @@ interface DocumentFile {
 
 export default function NuevaSolicitud() {
   const router = useRouter();
+  const { isLoading: userLoading } = useCurrentUser();
 
   // Custom success handler for redirecting after successful creation
   const { createRequest, isLoading } = useCreateRequest({
@@ -61,7 +63,13 @@ export default function NuevaSolicitud() {
     description: "",
     providerName: "",
     providerCountry: "",
-    providerBankingDetails: "",
+    providerBankName: "",
+    providerAccountNumber: "",
+    providerSwiftCode: "",
+    providerBankAddress: "",
+    providerBeneficiaryName: "",
+    providerEmail: "",
+    providerPhone: "",
     terms: false,
   });
 
@@ -218,7 +226,10 @@ export default function NuevaSolicitud() {
       !formData.description ||
       !formData.providerName ||
       !formData.providerCountry ||
-      !formData.providerBankingDetails
+      !formData.providerBankName ||
+      !formData.providerAccountNumber ||
+      !formData.providerSwiftCode ||
+      !formData.providerBeneficiaryName
     ) {
       toast({
         title: "Campos requeridos",
@@ -237,10 +248,12 @@ export default function NuevaSolicitud() {
       return;
     }
 
-    if (!documents.proforma) {
+    // Check that at least one document is uploaded
+    if (!documents.proforma && !documents.factura) {
       toast({
         title: "Documento requerido",
-        description: "La Proforma Invoice es obligatoria",
+        description:
+          "Debes subir al menos un documento: Proforma Invoice o Factura Comercial",
         variant: "destructive",
       });
       return;
@@ -262,7 +275,13 @@ export default function NuevaSolicitud() {
       description: formData.description,
       providerName: formData.providerName,
       providerCountry: formData.providerCountry,
-      providerBankingDetails: formData.providerBankingDetails,
+      providerBankName: formData.providerBankName,
+      providerAccountNumber: formData.providerAccountNumber,
+      providerSwiftCode: formData.providerSwiftCode,
+      providerBankAddress: formData.providerBankAddress,
+      providerBeneficiaryName: formData.providerBeneficiaryName,
+      providerEmail: formData.providerEmail,
+      providerPhone: formData.providerPhone,
       documents: documentsForSubmission,
     });
   };
@@ -372,6 +391,20 @@ export default function NuevaSolicitud() {
       </div>
     </div>
   );
+
+  // Show loading state while user data is being fetched
+  if (userLoading) {
+    return (
+      <ImportadorLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span>Cargando...</span>
+          </div>
+        </div>
+      </ImportadorLayout>
+    );
+  }
 
   return (
     <ImportadorLayout>
@@ -500,24 +533,102 @@ export default function NuevaSolicitud() {
               </div>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="provider-bank-name">Nombre del Banco *</Label>
+                <Input
+                  id="provider-bank-name"
+                  placeholder="Ej: Bank of China"
+                  required
+                  value={formData.providerBankName}
+                  onChange={(e) =>
+                    handleInputChange("providerBankName", e.target.value)
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="provider-account-number">
+                  Número de Cuenta *
+                </Label>
+                <Input
+                  id="provider-account-number"
+                  placeholder="Ej: 1234567890"
+                  required
+                  value={formData.providerAccountNumber}
+                  onChange={(e) =>
+                    handleInputChange("providerAccountNumber", e.target.value)
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="provider-swift-code">Código SWIFT/BIC *</Label>
+                <Input
+                  id="provider-swift-code"
+                  placeholder="Ej: BKCHCNBJ"
+                  required
+                  value={formData.providerSwiftCode}
+                  onChange={(e) =>
+                    handleInputChange("providerSwiftCode", e.target.value)
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="provider-beneficiary-name">
+                  Nombre del Beneficiario *
+                </Label>
+                <Input
+                  id="provider-beneficiary-name"
+                  placeholder="Ej: Shanghai Trading Co., Ltd."
+                  required
+                  value={formData.providerBeneficiaryName}
+                  onChange={(e) =>
+                    handleInputChange("providerBeneficiaryName", e.target.value)
+                  }
+                />
+              </div>
+            </div>
+
             <div>
-              <Label htmlFor="datos-bancarios">
-                Datos Bancarios del Proveedor *
-              </Label>
+              <Label htmlFor="provider-bank-address">Dirección del Banco</Label>
               <Textarea
-                id="datos-bancarios"
-                placeholder="Incluye: Nombre del banco, número de cuenta, código SWIFT/BIC, dirección del banco, nombre del beneficiario, etc."
-                rows={4}
-                required
-                value={formData.providerBankingDetails}
+                id="provider-bank-address"
+                placeholder="Dirección completa del banco"
+                rows={2}
+                value={formData.providerBankAddress}
                 onChange={(e) =>
-                  handleInputChange("providerBankingDetails", e.target.value)
+                  handleInputChange("providerBankAddress", e.target.value)
                 }
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                Proporciona toda la información bancaria necesaria para realizar
-                la transferencia
-              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="provider-email">Email del Proveedor</Label>
+                <Input
+                  id="provider-email"
+                  type="email"
+                  placeholder="proveedor@ejemplo.com"
+                  value={formData.providerEmail}
+                  onChange={(e) =>
+                    handleInputChange("providerEmail", e.target.value)
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="provider-phone">Teléfono del Proveedor</Label>
+                <Input
+                  id="provider-phone"
+                  type="tel"
+                  placeholder="+86 123 4567 8900"
+                  value={formData.providerPhone}
+                  onChange={(e) =>
+                    handleInputChange("providerPhone", e.target.value)
+                  }
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -537,7 +648,7 @@ export default function NuevaSolicitud() {
                 onFileChange={(e) => handleFileChange(e, "proforma")}
                 title="Proforma Invoice"
                 inputId="proforma"
-                required={true}
+                required={false}
                 isUploading={uploadingFiles.has("proforma")}
               />
 
@@ -546,6 +657,7 @@ export default function NuevaSolicitud() {
                 onFileChange={(e) => handleFileChange(e, "factura")}
                 title="Factura Comercial"
                 inputId="factura"
+                required={false}
                 isUploading={uploadingFiles.has("factura")}
               />
             </div>
@@ -556,16 +668,21 @@ export default function NuevaSolicitud() {
               </h4>
               <ul className="text-sm text-blue-800 space-y-1">
                 <li>
-                  • <strong>Proforma Invoice:</strong> Documento obligatorio que
-                  detalla los productos y precios
+                  • <strong>Proforma Invoice:</strong> Documento que detalla los
+                  productos y precios (al menos uno de los dos documentos es
+                  requerido)
                 </li>
                 <li>
                   • <strong>Factura Comercial:</strong> Documento oficial de
-                  venta (opcional si solo tienes proforma)
+                  venta (al menos uno de los dos documentos es requerido)
                 </li>
                 <li>• Ambos documentos deben estar en inglés o español</li>
                 <li>
                   • Asegúrate de que los montos coincidan con el valor declarado
+                </li>
+                <li>
+                  • <strong>Importante:</strong> Debes subir al menos uno de los
+                  dos documentos
                 </li>
               </ul>
             </div>
