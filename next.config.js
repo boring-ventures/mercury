@@ -11,7 +11,7 @@ const nextConfig = {
       "www.w3.org",
     ],
   },
-  output: "standalone",
+  // output: "standalone", // Temporarily disabled due to Windows symlink issues
   // Security headers configuration
   async headers() {
     return [
