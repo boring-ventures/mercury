@@ -20,7 +20,8 @@ export interface UserProfile {
 export interface UserCompany {
   id: string;
   name: string;
-  ruc: string;
+  nit: string;
+  companyType: string;
   country: string;
   activity: ActivityType;
   contactName: string;

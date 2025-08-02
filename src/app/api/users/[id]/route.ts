@@ -43,8 +43,10 @@ export async function GET(
           select: {
             id: true,
             name: true,
-            ruc: true,
+            nit: true,
+            companyType: true,
             country: true,
+            city: true,
             activity: true,
             contactName: true,
             contactPosition: true,
@@ -138,8 +140,10 @@ export async function PUT(
           select: {
             id: true,
             name: true,
-            ruc: true,
+            nit: true,
+            companyType: true,
             country: true,
+            city: true,
             activity: true,
             contactName: true,
             contactPosition: true,
