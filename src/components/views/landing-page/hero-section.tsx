@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { ArrowRight, Download, Smartphone } from "lucide-react";
+import { Download, Smartphone } from "lucide-react";
 import { SparklesText } from "@/components/magicui/sparkles-text";
 import { BoxReveal } from "@/components/magicui/box-reveal";
-import { ShineBorder } from "@/components/magicui/shine-border";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import { ShimmerButton } from "@/components/magicui/shimmer-button";
 import { AnimatedGridPattern } from "@/components/magicui/animated-grid-pattern";

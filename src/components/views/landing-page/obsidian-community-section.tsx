@@ -2,7 +2,6 @@ import React from "react";
 import {
   MessageCircle,
   Star,
-  ArrowRight,
   Building,
   Users,
   TrendingUp,
@@ -136,7 +135,7 @@ export default function NordexTestimonialsSection() {
                 </div>
 
                 <blockquote className="text-gray-200 leading-relaxed mb-6 italic">
-                  "{testimonial.quote}"
+                  &ldquo;{testimonial.quote}&rdquo;
                 </blockquote>
 
                 <div className="border-t border-white/20 pt-4">
