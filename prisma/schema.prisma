@@ -11,6 +11,7 @@ datasource db {
 model Profile {
   id                 String         @id @default(cuid())
   userId             String         @unique
+  email              String?
   avatarUrl          String?
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
@@ -31,6 +32,7 @@ model Profile {
   createdQuotations  Quotation[]    @relation("QuotationCreatedBy")
   assignedRequests   Request[]      @relation("RequestAssignedTo")
   createdRequests    Request[]      @relation("RequestCreatedBy")
+  providers         Provider[]
 
   @@index([userId])
   @@index([role])
@@ -42,14 +44,16 @@ model Profile {
 model Company {
   id                  String               @id @default(cuid())
   name                String
-  ruc                 String               @unique
+  nit                 String               @unique
+  companyType         CompanyType
   country             String
+  city                String
   activity            ActivityType
   contactName         String
   contactPosition     String
   email               String
   phone               String
-  bankingDetails      String?
+  bankingDetails      Json?
   status              UserStatus           @default(ACTIVE)
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
@@ -61,21 +65,22 @@ model Company {
   registrationRequest RegistrationRequest?
   requests            Request[]
 
-  @@index([ruc])
+  @@index([nit])
   @@index([status])
 }
 
 model RegistrationRequest {
   id                String             @id @default(cuid())
   companyName       String
-  ruc               String
+  nit               String
+  companyType       CompanyType
   country           String
+  city              String
   activity          ActivityType
   contactName       String
   contactPosition   String
   email             String
   phone             String
-  bankingDetails    String
   status            RegistrationStatus @default(PENDING)
   reviewedAt        DateTime?
   reviewedBy        String?
@@ -93,12 +98,16 @@ model Provider {
   id             String    @id @default(cuid())
   name           String
   country        String
-  bankingDetails String
+  bankingDetails Json?
   email          String?
   phone          String?
+  userId         String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   requests       Request[]
+  user           Profile?  @relation(fields: [userId], references: [id])
+
+  @@index([userId])
 }
 
 model Request {
@@ -166,34 +175,38 @@ model Document {
 }
 
 model Quotation {
-  id              String          @id @default(cuid())
-  code            String          @unique
-  amount          Decimal         @db.Decimal(15, 2)
-  currency        Currency        @default(USD)
-  description     String
-  validUntil      DateTime
-  status          QuotationStatus @default(DRAFT)
-  baseAmount      Decimal         @default(0) @db.Decimal(15, 2)
-  fees            Decimal         @default(0) @db.Decimal(15, 2)
-  taxes           Decimal         @default(0) @db.Decimal(15, 2)
-  totalAmount     Decimal         @db.Decimal(15, 2)
-  terms           String?
-  notes           String?
-  rejectionReason String?
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  sentAt          DateTime?
-  respondedAt     DateTime?
-  requestId       String
-  companyId       String
-  createdById     String
-  assignedToId    String?
-  contracts       Contract[]
-  documents       Document[]
-  assignedTo      Profile?        @relation("QuotationAssignedTo", fields: [assignedToId], references: [id])
-  company         Company         @relation(fields: [companyId], references: [id])
-  createdBy       Profile         @relation("QuotationCreatedBy", fields: [createdById], references: [id])
-  request         Request         @relation(fields: [requestId], references: [id])
+  id                    String          @id @default(cuid())
+  code                  String          @unique
+  amount                Decimal         @db.Decimal(15, 2)
+  currency              Currency        @default(USD)
+  description           String
+  validUntil            DateTime
+  status                QuotationStatus @default(DRAFT)
+  valueToSendUSD        Decimal         @default(0) @db.Decimal(15, 2)
+  exchangeRate          Decimal         @default(0) @db.Decimal(10, 4)
+  valueInBs             Decimal         @default(0) @db.Decimal(15, 2)
+  financialExpenseUSD   Decimal         @default(0) @db.Decimal(15, 2)
+  financialExpenseBs    Decimal         @default(0) @db.Decimal(15, 2)
+  managementServiceBs   Decimal         @default(0) @db.Decimal(15, 2)
+  managementServicePercentage Decimal    @default(0) @db.Decimal(5, 2)
+  totalInBs             Decimal         @default(0) @db.Decimal(15, 2)
+  terms                 String?
+  notes                 String?
+  rejectionReason       String?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  sentAt                DateTime?
+  respondedAt           DateTime?
+  requestId             String
+  companyId             String
+  createdById           String
+  assignedToId          String?
+  contracts             Contract[]
+  documents             Document[]
+  assignedTo            Profile?        @relation("QuotationAssignedTo", fields: [assignedToId], references: [id])
+  company               Company         @relation(fields: [companyId], references: [id])
+  createdBy             Profile         @relation("QuotationCreatedBy", fields: [createdById], references: [id])
+  request               Request         @relation(fields: [requestId], references: [id])
 
   @@index([code])
   @@index([status])
@@ -415,4 +428,10 @@ enum ActivityType {
   COMERCIO_MAYORISTA
   COMERCIO_MINORISTA
   OTROS
+}
+
+enum CompanyType {
+  UNIPERSONAL
+  SRL
+  SA
 }
