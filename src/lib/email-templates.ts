@@ -1,13 +1,14 @@
 interface RegistrationConfirmationData {
   companyName: string;
-  ruc: string;
+  nit: string;
+  companyType: string;
   country: string;
+  city: string;
   activity: string;
   contactName: string;
   contactPosition: string;
   email: string;
   phone: string;
-  bankingDetails: string;
   requestId: string;
   submittedAt: string;
 }
@@ -317,12 +318,20 @@ export const generateRegistrationConfirmationEmail = (
                     <td class="detail-value">${data.companyName}</td>
                 </tr>
                 <tr class="detail-row">
-                    <td class="detail-label">RUC:</td>
-                    <td class="detail-value">${data.ruc}</td>
+                    <td class="detail-label">NIT:</td>
+                    <td class="detail-value">${data.nit}</td>
+                </tr>
+                <tr class="detail-row">
+                    <td class="detail-label">Tipo de Empresa:</td>
+                    <td class="detail-value">${data.companyType}</td>
                 </tr>
                 <tr class="detail-row">
                     <td class="detail-label">País:</td>
                     <td class="detail-value">${data.country}</td>
+                </tr>
+                <tr class="detail-row">
+                    <td class="detail-label">Ciudad:</td>
+                    <td class="detail-value">${data.city}</td>
                 </tr>
                 <tr class="detail-row">
                     <td class="detail-label">Actividad Económica:</td>
@@ -350,10 +359,6 @@ export const generateRegistrationConfirmationEmail = (
                 <tr class="detail-row">
                     <td class="detail-label">Teléfono:</td>
                     <td class="detail-value">${data.phone}</td>
-                </tr>
-                <tr class="detail-row">
-                    <td class="detail-label">Detalles Bancarios:</td>
-                    <td class="detail-value">${data.bankingDetails}</td>
                 </tr>
             </table>
         </div>
@@ -415,6 +420,349 @@ export const generateRegistrationConfirmationEmail = (
             </p>
             <p class="footer-text">
                 Este es un email automático, por favor no responda a esta dirección.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+  `;
+};
+
+interface AdminNotificationData {
+  companyName: string;
+  nit: string;
+  companyType: string;
+  country: string;
+  city: string;
+  activity: string;
+  contactName: string;
+  contactPosition: string;
+  email: string;
+  phone: string;
+  requestId: string;
+  submittedAt: string;
+  documentsCount: number;
+}
+
+export const generateAdminNotificationEmail = (
+  data: AdminNotificationData
+): string => {
+  return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nueva Solicitud de Registro - Mercury Platform</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #ffffff;
+            color: #1f2937;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .logo {
+            color: #f59e0b;
+            font-size: 28px;
+            font-weight: bold;
+            margin: 0;
+        }
+        .tagline {
+            color: #6b7280;
+            font-size: 14px;
+            margin: 5px 0 0 0;
+        }
+        .alert-section {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            border: 1px solid #fecaca;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            margin: 30px 0;
+        }
+        .alert-title {
+            color: #dc2626;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0 0 15px 0;
+        }
+        .alert-subtitle {
+            color: #4b5563;
+            font-size: 16px;
+            margin: 0 0 20px 0;
+        }
+        .priority-badge {
+            background-color: #dc2626;
+            color: #ffffff;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            display: inline-block;
+            font-size: 14px;
+        }
+        .details-section {
+            background-color: #f9fafb;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+        .section-title {
+            color: #1f2937;
+            font-size: 22px;
+            font-weight: bold;
+            margin: 0 0 20px 0;
+        }
+        .request-id-box {
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin: 20px 0;
+        }
+        .request-id-label {
+            color: #6b7280;
+            font-size: 14px;
+            margin: 0 0 5px 0;
+        }
+        .request-id-value {
+            color: #1f2937;
+            font-size: 18px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            margin: 0;
+        }
+        .submitted-date {
+            color: #6b7280;
+            font-size: 14px;
+            margin: 0 0 20px 0;
+        }
+        .subsection-title {
+            color: #1f2937;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 25px 0 15px 0;
+        }
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .detail-row {
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .detail-label {
+            color: #6b7280;
+            font-size: 14px;
+            padding: 10px 0;
+            width: 40%;
+            vertical-align: top;
+        }
+        .detail-value {
+            color: #1f2937;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 10px 0;
+            vertical-align: top;
+        }
+        .divider {
+            height: 1px;
+            background-color: #e5e7eb;
+            margin: 25px 0;
+            border: none;
+        }
+        .action-section {
+            background-color: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+        .action-title {
+            color: #0369a1;
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0 0 15px 0;
+        }
+        .action-text {
+            color: #4b5563;
+            font-size: 14px;
+            margin: 0 0 20px 0;
+        }
+        .cta-button {
+            background-color: #0369a1;
+            color: #ffffff;
+            padding: 16px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 16px;
+            display: inline-block;
+            transition: background-color 0.2s;
+            text-align: center;
+            min-width: 200px;
+            box-shadow: 0 2px 4px rgba(3, 105, 161, 0.2);
+        }
+        .cta-button:hover {
+            background-color: #075985;
+            box-shadow: 0 4px 8px rgba(3, 105, 161, 0.3);
+        }
+        .footer {
+            border-top: 1px solid #e5e7eb;
+            padding: 25px 0;
+            text-align: center;
+            margin-top: 40px;
+        }
+        .footer-text {
+            color: #9ca3af;
+            font-size: 12px;
+            margin: 5px 0;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            .alert-section, .details-section, .action-section {
+                padding: 20px;
+            }
+            .alert-title {
+                font-size: 20px;
+            }
+            .detail-table {
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1 class="logo">MERCURY</h1>
+            <p class="tagline">Plataforma especializada para gestión de envíos internacionales</p>
+        </div>
+
+        <!-- Alert Message -->
+        <div class="alert-section">
+            <h2 class="alert-title">🚨 Nueva Solicitud de Registro</h2>
+            <p class="alert-subtitle">
+                Se ha recibido una nueva solicitud de registro que requiere revisión administrativa.
+            </p>
+            <div class="priority-badge">
+                Requiere Atención Inmediata
+            </div>
+        </div>
+
+        <!-- Request Details -->
+        <div class="details-section">
+            <h3 class="section-title">Detalles de la Solicitud</h3>
+            
+            <div class="request-id-box">
+                <p class="request-id-label">ID de Solicitud:</p>
+                <p class="request-id-value">${data.requestId}</p>
+            </div>
+
+            <p class="submitted-date">
+                Recibido el: ${formatDate(data.submittedAt)}
+            </p>
+
+            <hr class="divider">
+
+            <!-- Company Information -->
+            <h4 class="subsection-title">📋 Información de la Empresa</h4>
+            <table class="detail-table">
+                <tr class="detail-row">
+                    <td class="detail-label">Nombre de la Empresa:</td>
+                    <td class="detail-value">${data.companyName}</td>
+                </tr>
+                <tr class="detail-row">
+                    <td class="detail-label">NIT:</td>
+                    <td class="detail-value">${data.nit}</td>
+                </tr>
+                <tr class="detail-row">
+                    <td class="detail-label">Tipo de Empresa:</td>
+                    <td class="detail-value">${data.companyType}</td>
+                </tr>
+                <tr class="detail-row">
+                    <td class="detail-label">País:</td>
+                    <td class="detail-value">${data.country}</td>
+                </tr>
+                <tr class="detail-row">
+                    <td class="detail-label">Ciudad:</td>
+                    <td class="detail-value">${data.city}</td>
+                </tr>
+                <tr class="detail-row">
+                    <td class="detail-label">Actividad Económica:</td>
+                    <td class="detail-value">${activityLabels[data.activity] || data.activity}</td>
+                </tr>
+            </table>
+
+            <hr class="divider">
+
+            <!-- Contact Information -->
+            <h4 class="subsection-title">👤 Información de Contacto</h4>
+            <table class="detail-table">
+                <tr class="detail-row">
+                    <td class="detail-label">Nombre de Contacto:</td>
+                    <td class="detail-value">${data.contactName}</td>
+                </tr>
+                <tr class="detail-row">
+                    <td class="detail-label">Cargo:</td>
+                    <td class="detail-value">${data.contactPosition}</td>
+                </tr>
+                <tr class="detail-row">
+                    <td class="detail-label">Email:</td>
+                    <td class="detail-value">${data.email}</td>
+                </tr>
+                <tr class="detail-row">
+                    <td class="detail-label">Teléfono:</td>
+                    <td class="detail-value">${data.phone}</td>
+                </tr>
+            </table>
+
+            <hr class="divider">
+
+            <!-- Documents Information -->
+            <h4 class="subsection-title">📄 Documentos Adjuntos</h4>
+            <table class="detail-table">
+                <tr class="detail-row">
+                    <td class="detail-label">Total de Documentos:</td>
+                    <td class="detail-value">${data.documentsCount} archivo(s)</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Action Section -->
+        <div class="action-section">
+            <h3 class="action-title">Acción Requerida</h3>
+            <p class="action-text">
+                Por favor, revise esta solicitud en el panel de administración y tome la decisión correspondiente 
+                (aprobar o rechazar) basándose en la documentación proporcionada y la información de la empresa.
+            </p>
+            
+            <a href="${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/petitions/${data.requestId}" class="cta-button">
+                Revisar Solicitud
+            </a>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <hr class="divider">
+            <p class="footer-text">
+                © 2025 Mercury Platform. Todos los derechos reservados.
+            </p>
+            <p class="footer-text">
+                Este es un email automático del sistema de notificaciones.
             </p>
         </div>
     </div>
