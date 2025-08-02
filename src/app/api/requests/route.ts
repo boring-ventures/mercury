@@ -160,10 +160,7 @@ export async function GET(request: NextRequest) {
               id: true,
               code: true,
               status: true,
-              totalAmount: true,
-              baseAmount: true,
-              fees: true,
-              taxes: true,
+              amount: true,
               currency: true,
               validUntil: true,
               createdAt: true,
@@ -263,7 +260,13 @@ export async function POST(request: NextRequest) {
       description,
       providerName,
       providerCountry,
-      providerBankingDetails,
+      providerBankName,
+      providerAccountNumber,
+      providerSwiftCode,
+      providerBankAddress,
+      providerBeneficiaryName,
+      providerEmail,
+      providerPhone,
       documents,
     } = body;
 
@@ -273,7 +276,10 @@ export async function POST(request: NextRequest) {
       !description ||
       !providerName ||
       !providerCountry ||
-      !providerBankingDetails
+      !providerBankName ||
+      !providerAccountNumber ||
+      !providerSwiftCode ||
+      !providerBeneficiaryName
     ) {
       return NextResponse.json(
         { error: "Todos los campos obligatorios deben ser completados" },
@@ -286,6 +292,7 @@ export async function POST(request: NextRequest) {
       where: {
         name: providerName,
         country: providerCountry,
+        userId: profile.id,
       },
     });
 
@@ -294,7 +301,16 @@ export async function POST(request: NextRequest) {
         data: {
           name: providerName,
           country: providerCountry,
-          bankingDetails: providerBankingDetails,
+          userId: profile.id,
+          email: providerEmail,
+          phone: providerPhone,
+          bankingDetails: {
+            bankName: providerBankName,
+            accountNumber: providerAccountNumber,
+            swiftCode: providerSwiftCode,
+            bankAddress: providerBankAddress,
+            beneficiaryName: providerBeneficiaryName,
+          },
         },
       });
     }

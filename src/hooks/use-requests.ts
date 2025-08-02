@@ -18,7 +18,13 @@ export interface CreateRequestData {
   description: string;
   providerName: string;
   providerCountry: string;
-  providerBankingDetails: string;
+  providerBankName: string;
+  providerAccountNumber: string;
+  providerSwiftCode: string;
+  providerBankAddress?: string;
+  providerBeneficiaryName: string;
+  providerEmail?: string;
+  providerPhone?: string;
   documents?: Array<{
     filename: string;
     fileUrl: string;

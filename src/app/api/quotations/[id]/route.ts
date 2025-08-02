@@ -187,7 +187,7 @@ export async function PUT(
               quotationId: quotationId,
               quotationCode: quotation.code,
               companyName: quotation.request.company.name,
-              amount: quotation.totalAmount,
+              amount: quotation.amount,
             })
           )
         );
@@ -341,7 +341,7 @@ export async function DELETE(
         oldValues: {
           code: quotation.code,
           status: quotation.status,
-          totalAmount: quotation.totalAmount,
+          amount: quotation.amount,
         },
         profileId: profile.id,
       },
@@ -368,16 +368,7 @@ export async function PATCH(
   try {
     const { id: quotationId } = await params;
     const body = await request.json();
-    const {
-      baseAmount,
-      fees,
-      taxes,
-      totalAmount,
-      validUntil,
-      terms,
-      notes,
-      status,
-    } = body;
+    const { amount, validUntil, terms, notes, status } = body;
 
     // Get authenticated admin user
     const authResult = await getAuthenticatedAdminUser();
@@ -413,9 +404,9 @@ export async function PATCH(
     }
 
     // Validate required fields
-    if (!baseAmount || !validUntil || !status) {
+    if (!amount || !validUntil || !status) {
       return NextResponse.json(
-        { error: "Base amount, valid until date, and status are required" },
+        { error: "Amount, valid until date, and status are required" },
         { status: 400 }
       );
     }
@@ -435,20 +426,14 @@ export async function PATCH(
 
     // Prepare update data
     const updateData: {
-      baseAmount: number;
-      fees: number;
-      taxes: number;
-      totalAmount: number;
+      amount: number;
       validUntil: Date;
       status: QuotationStatus;
       terms?: string;
       notes?: string;
       sentAt?: Date;
     } = {
-      baseAmount: parseFloat(baseAmount),
-      fees: parseFloat(fees) || 0,
-      taxes: parseFloat(taxes) || 0,
-      totalAmount: parseFloat(totalAmount),
+      amount: parseFloat(amount),
       validUntil: new Date(validUntil + "T23:59:59"), // Set to end of day
       status: status as QuotationStatus,
     };
@@ -482,14 +467,12 @@ export async function PATCH(
         entity: "Quotation",
         entityId: quotationId,
         oldValues: {
-          baseAmount: quotation.baseAmount,
-          totalAmount: quotation.totalAmount,
+          amount: quotation.amount,
           status: quotation.status,
           validUntil: quotation.validUntil,
         },
         newValues: {
-          baseAmount: updateData.baseAmount,
-          totalAmount: updateData.totalAmount,
+          amount: updateData.amount,
           status: updateData.status,
           validUntil: updateData.validUntil,
         },

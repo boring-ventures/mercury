@@ -13,13 +13,25 @@ export async function POST(
     const { id: requestIdOrCode } = await params;
     const body = await request.json();
 
-    const { baseAmount, fees, taxes, totalAmount, validUntil, terms, notes } =
-      body;
+    const {
+      valueToSendUSD,
+      exchangeRate,
+      valueInBs,
+      financialExpenseUSD,
+      financialExpenseBs,
+      managementServiceBs,
+      managementServicePercentage,
+      totalInBs,
+      validUntil,
+      terms,
+      notes,
+      status,
+    } = body;
 
     // Validate required fields
-    if (!baseAmount || !validUntil) {
+    if (!valueToSendUSD || !validUntil) {
       return NextResponse.json(
-        { error: "Base amount and valid until date are required" },
+        { error: "Value to send USD and valid until date are required" },
         { status: 400 }
       );
     }
@@ -91,20 +103,25 @@ export async function POST(
     const quotation = await prisma.quotation.create({
       data: {
         code: quotationCode,
-        amount: parseFloat(totalAmount),
+        amount: parseFloat(valueToSendUSD),
         currency: "USD",
         description: `Cotización para solicitud ${requestData.code}`,
         validUntil: new Date(validUntil),
-        status: "SENT",
-        baseAmount: parseFloat(baseAmount),
-        fees: parseFloat(fees) || 0,
-        taxes: parseFloat(taxes) || 0,
-        totalAmount: parseFloat(totalAmount),
+        status: status || "SENT",
+        valueToSendUSD: parseFloat(valueToSendUSD),
+        exchangeRate: parseFloat(exchangeRate) || 0,
+        valueInBs: parseFloat(valueInBs) || 0,
+        financialExpenseUSD: parseFloat(financialExpenseUSD) || 0,
+        financialExpenseBs: parseFloat(financialExpenseBs) || 0,
+        managementServiceBs: parseFloat(managementServiceBs) || 0,
+        managementServicePercentage:
+          parseFloat(managementServicePercentage) || 0,
+        totalInBs: parseFloat(totalInBs) || 0,
         terms: terms || null,
         notes: notes || null,
         requestId: requestData.id,
         companyId: requestData.companyId,
-        createdById: profile.id, // Use actual profile ID
+        createdById: profile.id,
       },
     });
 
@@ -117,7 +134,7 @@ export async function POST(
         newValues: {
           quotationId: quotation.id,
           quotationCode: quotation.code,
-          totalAmount: quotation.totalAmount,
+          totalInBs: quotation.totalInBs,
         },
         profileId: profile.id, // Use actual profile ID
       },
@@ -143,7 +160,7 @@ export async function POST(
             requestCode: requestData.code,
             quotationId: quotation.id,
             quotationCode: quotation.code,
-            totalAmount: quotation.totalAmount,
+            totalInBs: quotation.totalInBs,
             currency: quotation.currency,
             validUntil: quotation.validUntil.toISOString(),
           }
