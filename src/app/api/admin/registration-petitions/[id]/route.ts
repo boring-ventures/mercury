@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import prisma from "@/lib/prisma";
 import { resend, FROM_EMAIL } from "@/lib/resend";
-import crypto from "crypto";
 
 interface RouteParams {
   params: Promise<{
@@ -14,14 +13,16 @@ interface RouteParams {
 interface RegistrationRequest {
   id: string;
   companyName: string;
-  ruc: string;
+  nit: string;
+  companyType: string;
   country: string;
+  city: string;
   activity: string;
   contactName: string;
   contactPosition: string;
   email: string;
   phone: string;
-  bankingDetails: string;
+  bankingDetails?: string;
   status: string;
   reviewedAt: Date | null;
   reviewedBy: string | null;
@@ -199,81 +200,183 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     const reviewDate = new Date();
 
     if (action === "approve") {
-      // Generate a temporary password for the new user
-      const temporaryPassword = crypto.randomBytes(12).toString("hex");
+      // Generate a temporary password for the new user that meets Supabase requirements
+      // Must be at least 6 characters and contain letters and numbers
+      // Using a more robust password generation
+      const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      const lowercase = "abcdefghijklmnopqrstuvwxyz";
+      const numbers = "0123456789";
+      const allChars = uppercase + lowercase + numbers;
+
+      let temporaryPassword = "";
+
+      // Ensure at least one uppercase, one lowercase, and one number
+      temporaryPassword += uppercase.charAt(
+        Math.floor(Math.random() * uppercase.length)
+      );
+      temporaryPassword += lowercase.charAt(
+        Math.floor(Math.random() * lowercase.length)
+      );
+      temporaryPassword += numbers.charAt(
+        Math.floor(Math.random() * numbers.length)
+      );
+
+      // Fill the rest with random characters
+      for (let i = 3; i < 12; i++) {
+        temporaryPassword += allChars.charAt(
+          Math.floor(Math.random() * allChars.length)
+        );
+      }
+
+      // Shuffle the password to make it more random
+      temporaryPassword = temporaryPassword
+        .split("")
+        .sort(() => Math.random() - 0.5)
+        .join("");
 
       try {
-        // Create user in Supabase Auth
-        const { data: authUser, error: authError } =
-          await supabase.auth.admin.createUser({
-            email: registrationRequest.email,
-            password: temporaryPassword,
-            email_confirm: true,
-            user_metadata: {
+        // Check if user already exists in Supabase
+        const { data: existingUser, error: checkError } =
+          await supabase.auth.admin.listUsers();
+
+        if (checkError) {
+          console.error("Error checking existing users:", checkError);
+          throw new Error(
+            `Error verificando usuarios existentes: ${checkError.message}`
+          );
+        }
+
+        const userExists = existingUser.users.some(
+          (user) => user.email === registrationRequest.email
+        );
+
+        let userId;
+
+        if (userExists) {
+          console.log("User already exists in Supabase, skipping creation");
+          // Find the existing user
+          const existingAuthUser = existingUser.users.find(
+            (user) => user.email === registrationRequest.email
+          );
+          if (!existingAuthUser) {
+            throw new Error("Usuario existente no encontrado");
+          }
+          userId = existingAuthUser.id;
+        } else {
+          // Create user in Supabase Auth
+          console.log(
+            "Creating Supabase user with email:",
+            registrationRequest.email
+          );
+          console.log("Temporary password generated:", temporaryPassword);
+
+          const { data: newAuthUser, error: authError } =
+            await supabase.auth.admin.createUser({
+              email: registrationRequest.email,
+              password: temporaryPassword,
+              email_confirm: true,
+              user_metadata: {
+                firstName: registrationRequest.contactName.split(" ")[0],
+                lastName: registrationRequest.contactName
+                  .split(" ")
+                  .slice(1)
+                  .join(" "),
+                companyName: registrationRequest.companyName,
+                role: "IMPORTADOR",
+              },
+            });
+
+          if (authError) {
+            console.error("Error creating Supabase user:", authError);
+            console.error("Error details:", JSON.stringify(authError, null, 2));
+            throw new Error(`Error creando usuario: ${authError.message}`);
+          }
+
+          if (!newAuthUser.user) {
+            throw new Error("No se pudo crear el usuario en Supabase");
+          }
+
+          userId = newAuthUser.user.id;
+          console.log("Supabase user created successfully:", userId);
+          console.log("User details:", {
+            id: newAuthUser.user.id,
+            email: newAuthUser.user.email,
+            email_confirmed_at: newAuthUser.user.email_confirmed_at,
+            created_at: newAuthUser.user.created_at,
+          });
+        }
+
+        // Check if profile already exists for this user
+        let profile = await prisma.profile.findUnique({
+          where: { userId: userId },
+        });
+
+        if (!profile) {
+          // Create Profile record with company association
+          profile = await prisma.profile.create({
+            data: {
+              userId: userId,
+              email: registrationRequest.email,
               firstName: registrationRequest.contactName.split(" ")[0],
-              lastName: registrationRequest.contactName
-                .split(" ")
-                .slice(1)
-                .join(" "),
-              companyName: registrationRequest.companyName,
+              lastName:
+                registrationRequest.contactName.split(" ").slice(1).join(" ") ||
+                "",
               role: "IMPORTADOR",
+              status: "ACTIVE",
+              phone: registrationRequest.phone,
+              // We'll set the companyId after creating the company
             },
           });
 
-        if (authError) {
-          console.error("Error creating Supabase user:", authError);
-          throw new Error(`Error creando usuario: ${authError.message}`);
+          console.log("Profile created successfully:", profile.id);
+        } else {
+          console.log("Profile already exists for user:", profile.id);
         }
 
-        if (!authUser.user) {
-          throw new Error("No se pudo crear el usuario en Supabase");
-        }
-
-        console.log("Supabase user created successfully:", authUser.user.id);
-
-        // Create Profile record with company association
-        const profile = await prisma.profile.create({
-          data: {
-            userId: authUser.user.id,
-            firstName: registrationRequest.contactName.split(" ")[0],
-            lastName:
-              registrationRequest.contactName.split(" ").slice(1).join(" ") ||
-              "",
-            role: "IMPORTADOR",
-            status: "ACTIVE",
-            phone: registrationRequest.phone,
-            // We'll set the companyId after creating the company
+        // Check if company already exists for this registration request
+        let company = await prisma.company.findFirst({
+          where: {
+            OR: [
+              { nit: registrationRequest.nit },
+              { email: registrationRequest.email },
+            ],
           },
         });
 
-        console.log("Profile created successfully:", profile.id);
+        if (!company) {
+          // Create Company record with all information from registration request
+          company = await prisma.company.create({
+            data: {
+              name: registrationRequest.companyName,
+              nit: registrationRequest.nit,
+              companyType: registrationRequest.companyType as
+                | "UNIPERSONAL"
+                | "SRL"
+                | "SA",
+              country: registrationRequest.country,
+              city: registrationRequest.city,
+              activity: registrationRequest.activity as
+                | "IMPORTACION_GENERAL"
+                | "IMPORTACION_ALIMENTOS"
+                | "IMPORTACION_TEXTILES"
+                | "IMPORTACION_MAQUINARIA"
+                | "IMPORTACION_ELECTRONICA"
+                | "IMPORTACION_VEHICULOS"
+                | "COMERCIO_MAYORISTA"
+                | "COMERCIO_MINORISTA"
+                | "OTROS",
+              contactName: registrationRequest.contactName,
+              contactPosition: registrationRequest.contactPosition,
+              email: registrationRequest.email,
+              phone: registrationRequest.phone,
+              status: "ACTIVE",
+            },
+          });
 
-        // Create Company record with all information from registration request
-        const company = await prisma.company.create({
-          data: {
-            name: registrationRequest.companyName,
-            ruc: registrationRequest.ruc,
-            country: registrationRequest.country,
-            activity: registrationRequest.activity as
-              | "IMPORTACION_GENERAL"
-              | "IMPORTACION_ALIMENTOS"
-              | "IMPORTACION_TEXTILES"
-              | "IMPORTACION_MAQUINARIA"
-              | "IMPORTACION_ELECTRONICA"
-              | "IMPORTACION_VEHICULOS"
-              | "COMERCIO_MAYORISTA"
-              | "COMERCIO_MINORISTA"
-              | "OTROS",
-            contactName: registrationRequest.contactName,
-            contactPosition: registrationRequest.contactPosition,
-            email: registrationRequest.email,
-            phone: registrationRequest.phone,
-            bankingDetails: registrationRequest.bankingDetails, // Transfer banking details
-            status: "ACTIVE",
-          },
-        });
-
-        console.log("Company created successfully:", company.id);
+          console.log("Company created successfully:", company.id);
+        } else {
+          console.log("Company already exists:", company.id);
+        }
 
         // Update the profile to link it to the company
         await prisma.profile.update({
@@ -318,6 +421,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         console.log("Registration request updated successfully");
 
         emailSubject = "¡Solicitud Aprobada! - Bienvenido a Mercury Platform";
+        console.log("Sending approval email with password:", temporaryPassword);
         emailContent = generateApprovalEmail(
           updatedRequest,
           temporaryPassword,
@@ -610,7 +714,7 @@ function generateApprovalEmail(
             <div style="grid: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
                 <div>
                     <p style="margin: 5px 0;"><strong>Empresa:</strong> ${request.companyName}</p>
-                    <p style="margin: 5px 0;"><strong>RUC:</strong> ${request.ruc}</p>
+                    <p style="margin: 5px 0;"><strong>NIT:</strong> ${request.nit}</p>
                 </div>
                 <div>
                     <p style="margin: 5px 0;"><strong>País:</strong> ${request.country}</p>
@@ -838,7 +942,7 @@ function generateRejectionEmail(
                 <div class="details-grid">
                     <div>
                         <p style="margin: 5px 0;"><strong>Empresa:</strong> ${request.companyName}</p>
-                        <p style="margin: 5px 0;"><strong>RUC:</strong> ${request.ruc}</p>
+                        <p style="margin: 5px 0;"><strong>NIT:</strong> ${request.nit}</p>
                         <p style="margin: 5px 0;"><strong>País:</strong> ${request.country}</p>
                     </div>
                     <div>

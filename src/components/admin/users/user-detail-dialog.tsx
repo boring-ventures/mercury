@@ -194,9 +194,9 @@ export function UserDetailDialog({
                     </div>
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">
-                        RUC
+                        NIT
                       </label>
-                      <p className="font-medium">{user.company.ruc}</p>
+                      <p className="font-medium">{user.company.nit}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">
