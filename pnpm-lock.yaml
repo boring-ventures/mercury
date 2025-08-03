@@ -20,9 +20,6 @@ importers:
       '@prisma/client':
         specifier: ^6.4.0
         version: 6.4.0(prisma@6.4.0(typescript@5.7.3))(typescript@5.7.3)
-      '@prisma/engines':
-        specifier: ^6.4.0
-        version: 6.4.0
       '@prisma/extension-accelerate':
         specifier: ^1.2.2
         version: 1.2.2(@prisma/client@6.4.0(prisma@6.4.0(typescript@5.7.3))(typescript@5.7.3))
@@ -204,9 +201,6 @@ importers:
       eslint-config-prettier:
         specifier: ^10.0.1
         version: 10.0.1(eslint@9.20.1(jiti@1.21.7))
-      eslint-plugin-react-hooks:
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@9.20.1(jiti@1.21.7))
       postcss:
         specifier: ^8.5.3
         version: 8.5.3
