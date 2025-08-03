@@ -1,35 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: [
-      // Add your Supabase project domain
-      "swfgvfhpmicwptupjyko.supabase.co",
-      "xqakfzhkeiongvzgbhji.supabase.co",
-      "hhineqbtekizcogikaef.supabase.co",
-      // Add placeholder image domains for fallbacks
-      "via.placeholder.com",
-      "www.w3.org",
-      "localhost",
-    ],
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "via.placeholder.com",
-        port: "",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "*.supabase.co",
-        port: "",
-        pathname: "/**",
-      },
-    ],
-    dangerouslyAllowSVG: true,
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    domains: ["hhineqbtekizcogikaef.supabase.co"],
   },
-  // output: "standalone", // Temporarily disabled due to Windows symlink issues
-  // Security headers configuration
   async headers() {
     return [
       {
