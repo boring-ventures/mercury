@@ -9,7 +9,24 @@ const nextConfig = {
       // Add placeholder image domains for fallbacks
       "via.placeholder.com",
       "www.w3.org",
+      "localhost",
     ],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "via.placeholder.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
+        port: "",
+        pathname: "/**",
+      },
+    ],
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   // output: "standalone", // Temporarily disabled due to Windows symlink issues
   // Security headers configuration
