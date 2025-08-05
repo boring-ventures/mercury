@@ -33,11 +33,11 @@ export async function GET(request: Request) {
         body: JSON.stringify({
           fiat: "BOB",
           page: 1,
-          rows: 20,
-          payTypes: [],
+          rows: 10,
           asset: "USDT",
           tradeType: "BUY",
-          transAmount: amount, // Amount in USDT
+          transAmount: amount,
+          sortType: "price",
         }),
         signal: AbortSignal.timeout(10000),
       }
