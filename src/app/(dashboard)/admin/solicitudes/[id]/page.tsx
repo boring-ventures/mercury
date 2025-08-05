@@ -16,6 +16,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -43,6 +48,7 @@ import {
   AlertTriangle,
   Edit,
   Trash2,
+  ChevronDown,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -58,6 +64,7 @@ import {
   useDownloadPDF,
   useRequestHistory,
 } from "@/hooks/use-admin-requests";
+import { useUserDocuments } from "@/hooks/use-user-documents";
 import {
   useQuotationExpiry,
   isQuotationExpired,
@@ -106,10 +113,20 @@ interface QuotationItem {
   id: string;
   code: string;
   status: string;
-  totalAmount: number;
+  amount: number;
   currency: string;
+  exchangeRate: number;
+  amountInBs: number;
+  swiftBankUSD: number;
+  correspondentBankUSD: number;
+  swiftBankBs: number;
+  correspondentBankBs: number;
+  managementServiceBs: number;
+  managementServicePercentage: number;
+  totalInBs: number;
   validUntil: Date;
   createdAt: Date;
+  terms?: string;
   notes?: string;
   rejectionReason?: string;
 }
@@ -390,9 +407,11 @@ function DocumentViewer({ document }: DocumentViewerProps) {
 function DocumentCard({
   document,
   requestId,
+  compact = false,
 }: {
   document: DocumentItem;
   requestId: string;
+  compact?: boolean;
 }) {
   const { toast } = useToast();
   const { mutate: updateDocumentStatus, isPending: isUpdating } =
@@ -454,6 +473,53 @@ function DocumentCard({
     );
   };
 
+  if (compact) {
+    return (
+      <Card className="mb-2 p-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <FileText className="h-3 w-3 text-blue-500 flex-shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="font-medium text-sm truncate">
+                {document.filename}
+              </p>
+              <p className="text-xs text-gray-500">
+                {getDocumentTypeLabel(document.type || "")}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              onClick={() => {
+                const url = `/api/documents/${document.id}`;
+                window.open(url, "_blank");
+              }}
+            >
+              <Eye className="h-3 w-3" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              onClick={() => {
+                const url = `/api/documents/${document.id}`;
+                const link = window.document.createElement("a");
+                link.href = url;
+                link.download = document.filename;
+                link.click();
+              }}
+            >
+              <Download className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <Card className="mb-4">
       <CardHeader className="pb-3">
@@ -497,10 +563,14 @@ function QuotationGenerator({
   requestId,
   onSuccess,
   variant = "default",
+  disabled = false,
+  disabledReason = "",
 }: {
   requestId: string;
   onSuccess: () => void;
   variant?: "default" | "compact";
+  disabled?: boolean;
+  disabledReason?: string;
 }) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
@@ -510,27 +580,31 @@ function QuotationGenerator({
   const getDefaultValidUntil = () => {
     const date = new Date();
     date.setDate(date.getDate() + 30);
-    return date.toISOString().split("T")[0];
+    // Set default time to 23:59 (end of day)
+    date.setHours(23, 59, 0, 0);
+    return date.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:mm
   };
 
   // Get tomorrow's date as minimum (to ensure it's always future)
   const getMinimumDate = () => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const year = tomorrow.getFullYear();
-    const month = String(tomorrow.getMonth() + 1).padStart(2, "0");
-    const day = String(tomorrow.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
+    // Set time to 00:00 (start of day)
+    tomorrow.setHours(0, 0, 0, 0);
+    return tomorrow.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:mm
   };
 
   const [quotationData, setQuotationData] = useState({
-    valueToSendUSD: "",
+    amount: "",
+    currency: "USD",
     exchangeRate: "",
-    valueInBs: "",
-    financialExpenseUSD: "",
-    financialExpenseBs: "",
+    amountInBs: "",
+    swiftBankUSD: "",
+    correspondentBankUSD: "",
+    swiftBankBs: "",
+    correspondentBankBs: "",
     managementServiceBs: "",
-    managementServicePercentage: "",
+    managementServicePercentage: "1.5",
     totalInBs: "",
     validUntil: getDefaultValidUntil(),
     terms: "",
@@ -544,7 +618,7 @@ function QuotationGenerator({
   const isValidDate = (dateString: string) => {
     if (!dateString) return false;
 
-    const selectedDate = new Date(dateString + "T00:00:00");
+    const selectedDate = new Date(dateString);
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(0, 0, 0, 0);
@@ -555,66 +629,98 @@ function QuotationGenerator({
   const isDateValid = isValidDate(quotationData.validUntil);
 
   // Auto-calculation functions
-  const calculateValueInBs = useCallback(() => {
-    const valueToSendUSD = parseFloat(quotationData.valueToSendUSD) || 0;
+  const calculateAmountInBs = useCallback(() => {
+    const amount = parseFloat(quotationData.amount) || 0;
     const exchangeRate = parseFloat(quotationData.exchangeRate) || 0;
 
-    if (valueToSendUSD > 0 && exchangeRate > 0) {
-      const calculatedValue = valueToSendUSD * exchangeRate;
+    if (amount > 0 && exchangeRate > 0) {
+      const calculatedValue = amount * exchangeRate;
       setQuotationData((prev) => ({
         ...prev,
-        valueInBs: calculatedValue.toFixed(2),
+        amountInBs: calculatedValue.toFixed(2),
       }));
     }
-  }, [quotationData.valueToSendUSD, quotationData.exchangeRate]);
+  }, [quotationData.amount, quotationData.exchangeRate]);
 
-  const calculateFinancialExpenseBs = useCallback(() => {
-    const financialExpenseUSD =
-      parseFloat(quotationData.financialExpenseUSD) || 0;
+  const calculateExpensesInBs = useCallback(() => {
+    const swiftBankUSD = parseFloat(quotationData.swiftBankUSD) || 0;
+    const correspondentBankUSD =
+      parseFloat(quotationData.correspondentBankUSD) || 0;
     const exchangeRate = parseFloat(quotationData.exchangeRate) || 0;
 
-    if (financialExpenseUSD > 0 && exchangeRate > 0) {
-      const calculatedValue = financialExpenseUSD * exchangeRate;
+    if (exchangeRate > 0) {
+      const swiftBankBs = swiftBankUSD * exchangeRate;
+      const correspondentBankBs = correspondentBankUSD * exchangeRate;
+
       setQuotationData((prev) => ({
         ...prev,
-        financialExpenseBs: calculatedValue.toFixed(2),
+        swiftBankBs: swiftBankBs.toFixed(2),
+        correspondentBankBs: correspondentBankBs.toFixed(2),
       }));
     }
-  }, [quotationData.financialExpenseUSD, quotationData.exchangeRate]);
+  }, [
+    quotationData.swiftBankUSD,
+    quotationData.correspondentBankUSD,
+    quotationData.exchangeRate,
+  ]);
+
+  const calculateManagementServiceBs = useCallback(() => {
+    const amountInBs = parseFloat(quotationData.amountInBs) || 0;
+    const managementServicePercentage =
+      parseFloat(quotationData.managementServicePercentage) || 0;
+
+    if (amountInBs > 0 && managementServicePercentage > 0) {
+      const calculatedService =
+        (amountInBs * managementServicePercentage) / 100;
+      setQuotationData((prev) => ({
+        ...prev,
+        managementServiceBs: calculatedService.toFixed(2),
+      }));
+    }
+  }, [quotationData.amountInBs, quotationData.managementServicePercentage]);
 
   const calculateTotalInBs = useCallback(() => {
-    const valueInBs = parseFloat(quotationData.valueInBs) || 0;
-    const financialExpenseBs =
-      parseFloat(quotationData.financialExpenseBs) || 0;
+    const amountInBs = parseFloat(quotationData.amountInBs) || 0;
+    const swiftBankBs = parseFloat(quotationData.swiftBankBs) || 0;
+    const correspondentBankBs =
+      parseFloat(quotationData.correspondentBankBs) || 0;
     const managementServiceBs =
       parseFloat(quotationData.managementServiceBs) || 0;
 
-    const total = valueInBs + financialExpenseBs + managementServiceBs;
+    const total =
+      amountInBs + swiftBankBs + correspondentBankBs + managementServiceBs;
     setQuotationData((prev) => ({
       ...prev,
       totalInBs: total.toFixed(2),
     }));
   }, [
-    quotationData.valueInBs,
-    quotationData.financialExpenseBs,
+    quotationData.amountInBs,
+    quotationData.swiftBankBs,
+    quotationData.correspondentBankBs,
     quotationData.managementServiceBs,
   ]);
 
   // Debounced calculation for exchange rate and value changes
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      calculateValueInBs();
-      calculateFinancialExpenseBs();
+      calculateAmountInBs();
+      calculateExpensesInBs();
     }, 500); // 500ms debounce
 
     return () => clearTimeout(timeoutId);
   }, [
     quotationData.exchangeRate,
-    quotationData.valueToSendUSD,
-    quotationData.financialExpenseUSD,
-    calculateValueInBs,
-    calculateFinancialExpenseBs,
+    quotationData.amount,
+    quotationData.swiftBankUSD,
+    quotationData.correspondentBankUSD,
+    calculateAmountInBs,
+    calculateExpensesInBs,
   ]);
+
+  // Auto-calculate management service when amount changes
+  useEffect(() => {
+    calculateManagementServiceBs();
+  }, [calculateManagementServiceBs]);
 
   // Auto-calculate total when any component changes
   useEffect(() => {
@@ -654,13 +760,15 @@ function QuotationGenerator({
   };
 
   const handleGenerate = async () => {
-    const valueToSendUSD = parseFloat(quotationData.valueToSendUSD);
+    const amount = parseFloat(quotationData.amount);
     const exchangeRate = parseFloat(quotationData.exchangeRate) || 0;
-    const valueInBs = parseFloat(quotationData.valueInBs) || 0;
-    const financialExpenseUSD =
-      parseFloat(quotationData.financialExpenseUSD) || 0;
-    const financialExpenseBs =
-      parseFloat(quotationData.financialExpenseBs) || 0;
+    const amountInBs = parseFloat(quotationData.amountInBs) || 0;
+    const swiftBankUSD = parseFloat(quotationData.swiftBankUSD) || 0;
+    const correspondentBankUSD =
+      parseFloat(quotationData.correspondentBankUSD) || 0;
+    const swiftBankBs = parseFloat(quotationData.swiftBankBs) || 0;
+    const correspondentBankBs =
+      parseFloat(quotationData.correspondentBankBs) || 0;
     const managementServiceBs =
       parseFloat(quotationData.managementServiceBs) || 0;
     const managementServicePercentage =
@@ -668,10 +776,10 @@ function QuotationGenerator({
     const totalInBs = parseFloat(quotationData.totalInBs) || 0;
 
     // Validate required fields
-    if (!valueToSendUSD || !quotationData.validUntil) {
+    if (!amount || !quotationData.validUntil) {
       toast({
         title: "Error",
-        description: "Valor a enviar USD y fecha de validez son obligatorios",
+        description: "Monto a enviar y fecha de validez son obligatorios",
         variant: "destructive",
       });
       return;
@@ -696,11 +804,14 @@ function QuotationGenerator({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          valueToSendUSD,
+          amount,
+          currency: quotationData.currency,
           exchangeRate,
-          valueInBs,
-          financialExpenseUSD,
-          financialExpenseBs,
+          amountInBs,
+          swiftBankUSD,
+          correspondentBankUSD,
+          swiftBankBs,
+          correspondentBankBs,
           managementServiceBs,
           managementServicePercentage,
           totalInBs,
@@ -712,7 +823,8 @@ function QuotationGenerator({
       });
 
       if (!response.ok) {
-        throw new Error("Error al generar la cotización");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Error al generar la cotización");
       }
 
       const statusLabel =
@@ -724,13 +836,16 @@ function QuotationGenerator({
 
       setIsOpen(false);
       setQuotationData({
-        valueToSendUSD: "",
+        amount: "",
+        currency: "USD",
         exchangeRate: "",
-        valueInBs: "",
-        financialExpenseUSD: "",
-        financialExpenseBs: "",
+        amountInBs: "",
+        swiftBankUSD: "",
+        correspondentBankUSD: "",
+        swiftBankBs: "",
+        correspondentBankBs: "",
         managementServiceBs: "",
-        managementServicePercentage: "",
+        managementServicePercentage: "1.5",
         totalInBs: "",
         validUntil: getDefaultValidUntil(),
         terms: "",
@@ -750,348 +865,485 @@ function QuotationGenerator({
   };
 
   const totalInBs =
-    (parseFloat(quotationData.valueInBs) || 0) +
-    (parseFloat(quotationData.financialExpenseBs) || 0) +
+    (parseFloat(quotationData.amountInBs) || 0) +
+    (parseFloat(quotationData.swiftBankBs) || 0) +
+    (parseFloat(quotationData.correspondentBankBs) || 0) +
     (parseFloat(quotationData.managementServiceBs) || 0);
 
   const buttonProps =
     variant === "compact"
       ? {
-          className: "bg-amber-600 hover:bg-amber-700 text-white",
+          className: disabled
+            ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+            : "bg-amber-600 hover:bg-amber-700 text-white",
           size: "default" as const,
+          disabled: disabled,
         }
       : {
-          className: "w-full justify-start gap-2",
+          className: disabled
+            ? "w-full justify-start gap-2 bg-gray-100 text-gray-500 cursor-not-allowed"
+            : "w-full justify-start gap-2",
           size: "default" as const,
+          disabled: disabled,
         };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button {...buttonProps}>
-          <Banknote className="h-4 w-4 mr-2" />
-          {variant === "compact" ? "Nueva Cotización" : "Generar Cotización"}
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[800px] max-h-[85vh] overflow-hidden">
-        <DialogHeader>
-          <DialogTitle>Generar Nueva Cotización</DialogTitle>
-          <DialogDescription>
-            Complete los detalles para generar una cotización para esta
-            solicitud.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 max-h-[calc(85vh-180px)] overflow-y-auto pr-2">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="valueToSendUSD">Valor a Enviar (USD)*</Label>
-              <Input
-                id="valueToSendUSD"
-                type="number"
-                step="0.01"
-                value={quotationData.valueToSendUSD}
-                onChange={(e) =>
-                  setQuotationData((prev) => ({
-                    ...prev,
-                    valueToSendUSD: e.target.value,
-                  }))
-                }
-                placeholder="0.00"
-              />
-            </div>
-            <div>
-              <Label htmlFor="exchangeRate">Tipo de Cambio</Label>
-              <div className="flex gap-2">
+    <div className={disabled ? "relative" : ""}>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild disabled={disabled}>
+          <Button {...buttonProps}>
+            <Banknote className="h-4 w-4 mr-2" />
+            {variant === "compact" ? "Nueva Cotización" : "Generar Cotización"}
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[800px] max-h-[85vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>Generar Nueva Cotización</DialogTitle>
+            <DialogDescription>
+              Complete los detalles para generar una cotización para esta
+              solicitud.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 max-h-[calc(85vh-180px)] overflow-y-auto pr-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="amount">Monto a Enviar*</Label>
                 <Input
-                  id="exchangeRate"
+                  id="amount"
                   type="number"
-                  step="0.0001"
-                  value={quotationData.exchangeRate}
+                  step="0.01"
+                  value={quotationData.amount}
                   onChange={(e) =>
                     setQuotationData((prev) => ({
                       ...prev,
-                      exchangeRate: e.target.value,
+                      amount: e.target.value,
                     }))
                   }
-                  placeholder="0.0000"
-                  className="flex-1"
+                  placeholder="0.00"
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={fetchExchangeRate}
-                  disabled={isLoadingExchangeRate}
-                  className="whitespace-nowrap"
+              </div>
+              <div>
+                <Label htmlFor="currency">Moneda*</Label>
+                <Select
+                  value={quotationData.currency}
+                  onValueChange={(value) =>
+                    setQuotationData((prev) => ({ ...prev, currency: value }))
+                  }
                 >
-                  {isLoadingExchangeRate ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                      Cargando...
-                    </>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">Dólares (USD)</SelectItem>
+                    <SelectItem value="EUR">Euros (EUR)</SelectItem>
+                    <SelectItem value="CNY">Yuan Chino (CNY)</SelectItem>
+                    <SelectItem value="JPY">Yen Japonés (JPY)</SelectItem>
+                    <SelectItem value="USDT">Tether (USDT)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="exchangeRate">Tipo de Cambio</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="exchangeRate"
+                    type="number"
+                    step="0.0001"
+                    value={quotationData.exchangeRate}
+                    onChange={(e) =>
+                      setQuotationData((prev) => ({
+                        ...prev,
+                        exchangeRate: e.target.value,
+                      }))
+                    }
+                    placeholder="0.0000"
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={fetchExchangeRate}
+                    disabled={isLoadingExchangeRate}
+                    className="whitespace-nowrap"
+                  >
+                    {isLoadingExchangeRate ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                        Cargando...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="h-4 w-4 mr-1" />
+                        Obtener
+                      </>
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Obtén el precio promedio desde Binance P2P
+                </p>
+              </div>
+              <div>
+                <Label htmlFor="amountInBs">
+                  Monto a Enviar en Bs (Auto-calculado)
+                </Label>
+                <Input
+                  id="amountInBs"
+                  type="number"
+                  step="0.01"
+                  value={quotationData.amountInBs}
+                  readOnly
+                  className="bg-gray-50 cursor-not-allowed"
+                  placeholder="0.00"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Calculado automáticamente: Monto × Tipo de Cambio
+                </p>
+              </div>
+            </div>
+
+            {/* Gastos Financieros Section */}
+            <div className="border-t pt-4">
+              <h4 className="font-medium text-sm mb-3 text-blue-600">
+                Gastos Financieros
+              </h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="swiftBankUSD">SWIFT Banco (USD)</Label>
+                  <Input
+                    id="swiftBankUSD"
+                    type="number"
+                    step="0.01"
+                    value={quotationData.swiftBankUSD}
+                    onChange={(e) =>
+                      setQuotationData((prev) => ({
+                        ...prev,
+                        swiftBankUSD: e.target.value,
+                      }))
+                    }
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="swiftBankBs">
+                    SWIFT Banco (Bs) (Auto-calculado)
+                  </Label>
+                  <Input
+                    id="swiftBankBs"
+                    type="number"
+                    step="0.01"
+                    value={quotationData.swiftBankBs}
+                    readOnly
+                    className="bg-gray-50 cursor-not-allowed"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div>
+                  <Label htmlFor="correspondentBankUSD">
+                    Com. Corresponsal (USD)
+                  </Label>
+                  <Input
+                    id="correspondentBankUSD"
+                    type="number"
+                    step="0.01"
+                    value={quotationData.correspondentBankUSD}
+                    onChange={(e) =>
+                      setQuotationData((prev) => ({
+                        ...prev,
+                        correspondentBankUSD: e.target.value,
+                      }))
+                    }
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="correspondentBankBs">
+                    Com. Corresponsal (Bs) (Auto-calculado)
+                  </Label>
+                  <Input
+                    id="correspondentBankBs"
+                    type="number"
+                    step="0.01"
+                    value={quotationData.correspondentBankBs}
+                    readOnly
+                    className="bg-gray-50 cursor-not-allowed"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+            </div>
+            {/* Servicio de Gestión Section */}
+            <div className="border-t pt-4">
+              <h4 className="font-medium text-sm mb-3 text-green-600">
+                Servicio de Gestión
+              </h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="managementServicePercentage">
+                    Porcentaje Servicio (%)*
+                  </Label>
+                  <Input
+                    id="managementServicePercentage"
+                    type="number"
+                    step="0.01"
+                    value={quotationData.managementServicePercentage}
+                    onChange={(e) =>
+                      setQuotationData((prev) => ({
+                        ...prev,
+                        managementServicePercentage: e.target.value,
+                      }))
+                    }
+                    placeholder="1.5"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Se aplica solo sobre el monto a enviar en Bs
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="managementServiceBs">
+                    Servicio de Gestión (Bs) (Auto-calculado)
+                  </Label>
+                  <Input
+                    id="managementServiceBs"
+                    type="number"
+                    step="0.01"
+                    value={quotationData.managementServiceBs}
+                    readOnly
+                    className="bg-gray-50 cursor-not-allowed"
+                    placeholder="0.00"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Calculado automáticamente: Monto Bs × Porcentaje / 100
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="totalInBs">Total en Bs (Auto-calculado)</Label>
+                <Input
+                  id="totalInBs"
+                  type="number"
+                  step="0.01"
+                  value={quotationData.totalInBs}
+                  readOnly
+                  className="bg-gray-50 cursor-not-allowed font-semibold"
+                  placeholder="0.00"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Calculado automáticamente: Valor Bs + Gasto Bs + Servicio Bs
+                </p>
+              </div>
+              <div>
+                <Label htmlFor="validUntil">Válida hasta*</Label>
+                <Input
+                  id="validUntil"
+                  type="datetime-local"
+                  min={getMinimumDate()}
+                  value={quotationData.validUntil}
+                  onChange={(e) =>
+                    setQuotationData((prev) => ({
+                      ...prev,
+                      validUntil: e.target.value,
+                    }))
+                  }
+                  className={
+                    !isDateValid ? "border-red-500 focus:border-red-500" : ""
+                  }
+                />
+                <div className="mt-1">
+                  {!isDateValid ? (
+                    <p className="text-xs text-red-600 font-medium">
+                      ⚠️ La fecha y hora deben ser al menos desde mañana (
+                      {format(
+                        new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
+                        "dd/MM/yyyy 'a las' HH:mm",
+                        { locale: es }
+                      )}
+                      )
+                    </p>
                   ) : (
-                    <>
-                      <RefreshCw className="h-4 w-4 mr-1" />
-                      Obtener
-                    </>
+                    <p className="text-xs text-gray-500">
+                      La fecha y hora deben ser al menos desde mañana (
+                      {format(
+                        new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
+                        "dd/MM/yyyy 'a las' HH:mm",
+                        { locale: es }
+                      )}
+                      )
+                    </p>
                   )}
-                </Button>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Obtén el precio promedio desde Binance P2P
-              </p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="valueInBs">Valor en Bs (Auto-calculado)</Label>
-              <Input
-                id="valueInBs"
-                type="number"
-                step="0.01"
-                value={quotationData.valueInBs}
-                readOnly
-                className="bg-gray-50 cursor-not-allowed"
-                placeholder="0.00"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Calculado automáticamente: Valor USD × Tipo de Cambio
-              </p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="financialExpenseUSD">
-                Gasto Financiero (USD)
-              </Label>
-              <Input
-                id="financialExpenseUSD"
-                type="number"
-                step="0.01"
-                value={quotationData.financialExpenseUSD}
-                onChange={(e) =>
-                  setQuotationData((prev) => ({
-                    ...prev,
-                    financialExpenseUSD: e.target.value,
-                  }))
-                }
-                placeholder="0.00"
-              />
-            </div>
-            <div>
-              <Label htmlFor="financialExpenseBs">
-                Gasto Financiero (Bs) (Auto-calculado)
-              </Label>
-              <Input
-                id="financialExpenseBs"
-                type="number"
-                step="0.01"
-                value={quotationData.financialExpenseBs}
-                readOnly
-                className="bg-gray-50 cursor-not-allowed"
-                placeholder="0.00"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Calculado automáticamente: Gasto USD × Tipo de Cambio
-              </p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="managementServiceBs">
-                Servicio de Gestión (Bs)
-              </Label>
-              <Input
-                id="managementServiceBs"
-                type="number"
-                step="0.01"
-                value={quotationData.managementServiceBs}
-                onChange={(e) =>
-                  setQuotationData((prev) => ({
-                    ...prev,
-                    managementServiceBs: e.target.value,
-                  }))
-                }
-                placeholder="0.00"
-              />
-            </div>
-            <div>
-              <Label htmlFor="managementServicePercentage">
-                Porcentaje Servicio (%)
-              </Label>
-              <Input
-                id="managementServicePercentage"
-                type="number"
-                step="0.01"
-                value={quotationData.managementServicePercentage}
-                onChange={(e) =>
-                  setQuotationData((prev) => ({
-                    ...prev,
-                    managementServicePercentage: e.target.value,
-                  }))
-                }
-                placeholder="0.00"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="totalInBs">Total en Bs (Auto-calculado)</Label>
-              <Input
-                id="totalInBs"
-                type="number"
-                step="0.01"
-                value={quotationData.totalInBs}
-                readOnly
-                className="bg-gray-50 cursor-not-allowed font-semibold"
-                placeholder="0.00"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Calculado automáticamente: Valor Bs + Gasto Bs + Servicio Bs
-              </p>
-            </div>
-            <div>
-              <Label htmlFor="validUntil">Válida hasta*</Label>
-              <Input
-                id="validUntil"
-                type="date"
-                min={getMinimumDate()}
-                value={quotationData.validUntil}
-                onChange={(e) =>
-                  setQuotationData((prev) => ({
-                    ...prev,
-                    validUntil: e.target.value,
-                  }))
-                }
-                className={
-                  !isDateValid ? "border-red-500 focus:border-red-500" : ""
-                }
-              />
-              <div className="mt-1">
-                {!isDateValid ? (
-                  <p className="text-xs text-red-600 font-medium">
-                    ⚠️ La fecha debe ser al menos desde mañana (
-                    {format(
-                      new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
-                      "dd/MM/yyyy",
-                      { locale: es }
-                    )}
-                    )
-                  </p>
-                ) : (
-                  <p className="text-xs text-gray-500">
-                    La fecha debe ser al menos desde mañana (
-                    {format(
-                      new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
-                      "dd/MM/yyyy",
-                      { locale: es }
-                    )}
-                    )
-                  </p>
-                )}
+                </div>
               </div>
             </div>
+            <div>
+              <Label htmlFor="status">Estado de la Cotización*</Label>
+              <Select
+                value={quotationData.status}
+                onValueChange={(value) =>
+                  setQuotationData((prev) => ({ ...prev, status: value }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="DRAFT">
+                    <div className="flex flex-col items-start">
+                      <span>Borrador</span>
+                      <span className="text-xs text-gray-500">
+                        Puede ser modificada, no visible para el importador
+                      </span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="SENT">
+                    <div className="flex flex-col items-start">
+                      <span>Publicada</span>
+                      <span className="text-xs text-gray-500">
+                        Visible para el importador, lista para revisión
+                      </span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="terms">Términos y Condiciones</Label>
+              <Textarea
+                id="terms"
+                value={quotationData.terms}
+                onChange={(e) =>
+                  setQuotationData((prev) => ({
+                    ...prev,
+                    terms: e.target.value,
+                  }))
+                }
+                placeholder="Términos y condiciones de la cotización..."
+                rows={3}
+              />
+            </div>
+            <div>
+              <Label htmlFor="notes">Notas Adicionales</Label>
+              <Textarea
+                id="notes"
+                value={quotationData.notes}
+                onChange={(e) =>
+                  setQuotationData((prev) => ({
+                    ...prev,
+                    notes: e.target.value,
+                  }))
+                }
+                placeholder="Notas adicionales para el cliente..."
+                rows={2}
+              />
+            </div>
+            {parseFloat(quotationData.totalInBs) > 0 && (
+              <div className="bg-blue-50 p-4 rounded-lg border">
+                <h4 className="font-medium text-sm mb-2 text-blue-900">
+                  Resumen de Cotización
+                </h4>
+                <div className="space-y-1 text-xs text-blue-700">
+                  <div className="flex justify-between">
+                    <span>Monto a Enviar ({quotationData.currency}):</span>
+                    <span>
+                      {parseFloat(quotationData.amount || "0").toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Monto a Enviar (Bs):</span>
+                    <span>
+                      {parseFloat(quotationData.amountInBs || "0").toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>SWIFT Banco (Bs):</span>
+                    <span>
+                      {parseFloat(quotationData.swiftBankBs || "0").toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Com. Corresponsal (Bs):</span>
+                    <span>
+                      {parseFloat(
+                        quotationData.correspondentBankBs || "0"
+                      ).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>
+                      Servicio de Gestión (
+                      {quotationData.managementServicePercentage}%):
+                    </span>
+                    <span>
+                      {parseFloat(
+                        quotationData.managementServiceBs || "0"
+                      ).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="border-t pt-1 mt-2">
+                    <div className="flex justify-between font-medium text-blue-900">
+                      <span>Total en Bs:</span>
+                      <span>
+                        {parseFloat(quotationData.totalInBs || "0").toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-2 pt-2 border-t">
+                  <p className="text-xs text-blue-700">
+                    Estado:{" "}
+                    {quotationData.status === "DRAFT"
+                      ? "Borrador (no visible para importador)"
+                      : "Publicada (visible para importador)"}
+                  </p>
+                  <p className="text-xs text-blue-700">
+                    Válida hasta:{" "}
+                    {format(
+                      new Date(quotationData.validUntil),
+                      "dd/MM/yyyy 'a las' HH:mm",
+                      {
+                        locale: es,
+                      }
+                    )}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
-          <div>
-            <Label htmlFor="status">Estado de la Cotización*</Label>
-            <Select
-              value={quotationData.status}
-              onValueChange={(value) =>
-                setQuotationData((prev) => ({ ...prev, status: value }))
-              }
+          <DialogFooter className="flex gap-2 pt-4 border-t">
+            <Button
+              variant="outline"
+              onClick={() => setIsOpen(false)}
+              className="flex-1"
             >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="DRAFT">
-                  <div className="flex flex-col items-start">
-                    <span>Borrador</span>
-                    <span className="text-xs text-gray-500">
-                      Puede ser modificada, no visible para el importador
-                    </span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="SENT">
-                  <div className="flex flex-col items-start">
-                    <span>Publicada</span>
-                    <span className="text-xs text-gray-500">
-                      Visible para el importador, lista para revisión
-                    </span>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor="terms">Términos y Condiciones</Label>
-            <Textarea
-              id="terms"
-              value={quotationData.terms}
-              onChange={(e) =>
-                setQuotationData((prev) => ({ ...prev, terms: e.target.value }))
-              }
-              placeholder="Términos y condiciones de la cotización..."
-              rows={3}
-            />
-          </div>
-          <div>
-            <Label htmlFor="notes">Notas Adicionales</Label>
-            <Textarea
-              id="notes"
-              value={quotationData.notes}
-              onChange={(e) =>
-                setQuotationData((prev) => ({ ...prev, notes: e.target.value }))
-              }
-              placeholder="Notas adicionales para el cliente..."
-              rows={2}
-            />
-          </div>
-          {totalInBs > 0 && (
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <p className="text-sm font-medium text-blue-900">
-                Total de la Cotización: ${totalInBs.toFixed(2)} Bs
-              </p>
-              <p className="text-xs text-blue-700 mt-1">
-                Estado:{" "}
-                {quotationData.status === "DRAFT"
-                  ? "Borrador (no visible para importador)"
-                  : "Publicada (visible para importador)"}
-              </p>
-              <p className="text-xs text-blue-700">
-                Válida hasta:{" "}
-                {format(new Date(quotationData.validUntil), "dd/MM/yyyy", {
-                  locale: es,
-                })}
-              </p>
-            </div>
-          )}
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleGenerate}
+              disabled={isGenerating || !isDateValid || !quotationData.amount}
+              className="flex-1"
+            >
+              {isGenerating ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : null}
+              {quotationData.status === "DRAFT"
+                ? "Guardar Borrador"
+                : "Generar y Publicar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {disabled && (
+        <div className="absolute -bottom-8 left-0 right-0 text-xs text-gray-500 text-center">
+          {disabledReason}
         </div>
-        <DialogFooter className="flex gap-2 pt-4 border-t">
-          <Button
-            variant="outline"
-            onClick={() => setIsOpen(false)}
-            className="flex-1"
-          >
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleGenerate}
-            disabled={
-              isGenerating || !isDateValid || !quotationData.valueToSendUSD
-            }
-            className="flex-1"
-          >
-            {isGenerating ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : null}
-            {quotationData.status === "DRAFT"
-              ? "Guardar Borrador"
-              : "Generar y Publicar"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      )}
+    </div>
   );
 }
 
@@ -1287,10 +1539,17 @@ function QuotationEditForm({
 }: {
   quotation: QuotationItem;
   onSave: (data: {
-    baseAmount: number;
-    fees: number;
-    taxes: number;
-    totalAmount: number;
+    amount: number;
+    currency: string;
+    exchangeRate: number;
+    amountInBs: number;
+    swiftBankUSD: number;
+    correspondentBankUSD: number;
+    swiftBankBs: number;
+    correspondentBankBs: number;
+    managementServiceBs: number;
+    managementServicePercentage: number;
+    totalInBs: number;
     validUntil: string;
     terms: string;
     notes: string;
@@ -1299,11 +1558,20 @@ function QuotationEditForm({
   onCancel: () => void;
 }) {
   const [formData, setFormData] = useState({
-    baseAmount: quotation.totalAmount?.toString() || "",
-    fees: "0",
-    taxes: "0",
-    validUntil: format(new Date(quotation.validUntil), "yyyy-MM-dd"),
-    terms: quotation.notes || "",
+    amount: quotation.amount?.toString() || "",
+    currency: quotation.currency || "USD",
+    exchangeRate: quotation.exchangeRate?.toString() || "",
+    amountInBs: quotation.amountInBs?.toString() || "",
+    swiftBankUSD: quotation.swiftBankUSD?.toString() || "",
+    correspondentBankUSD: quotation.correspondentBankUSD?.toString() || "",
+    swiftBankBs: quotation.swiftBankBs?.toString() || "",
+    correspondentBankBs: quotation.correspondentBankBs?.toString() || "",
+    managementServiceBs: quotation.managementServiceBs?.toString() || "",
+    managementServicePercentage:
+      quotation.managementServicePercentage?.toString() || "1.5",
+    totalInBs: quotation.totalInBs?.toString() || "",
+    validUntil: format(new Date(quotation.validUntil), "yyyy-MM-dd'T'HH:mm"),
+    terms: quotation.terms || "",
     notes: quotation.notes || "",
     status: quotation.status,
   });
@@ -1312,15 +1580,76 @@ function QuotationEditForm({
   const getMinimumDate = () => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const year = tomorrow.getFullYear();
-    const month = String(tomorrow.getMonth() + 1).padStart(2, "0");
-    const day = String(tomorrow.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
+    // Set time to 00:00 (start of day)
+    tomorrow.setHours(0, 0, 0, 0);
+    return tomorrow.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:mm
   };
+
+  // Calculate functions (same as in QuotationGenerator)
+  const calculateAmountInBs = useCallback(() => {
+    const amount = parseFloat(formData.amount) || 0;
+    const exchangeRate = parseFloat(formData.exchangeRate) || 0;
+    return amount * exchangeRate;
+  }, [formData.amount, formData.exchangeRate]);
+
+  const calculateSwiftBankBs = useCallback(() => {
+    const swiftBankUSD = parseFloat(formData.swiftBankUSD) || 0;
+    const exchangeRate = parseFloat(formData.exchangeRate) || 0;
+    return swiftBankUSD * exchangeRate;
+  }, [formData.swiftBankUSD, formData.exchangeRate]);
+
+  const calculateCorrespondentBankBs = useCallback(() => {
+    const correspondentBankUSD = parseFloat(formData.correspondentBankUSD) || 0;
+    const exchangeRate = parseFloat(formData.exchangeRate) || 0;
+    return correspondentBankUSD * exchangeRate;
+  }, [formData.correspondentBankUSD, formData.exchangeRate]);
+
+  const calculateManagementServiceBs = useCallback(() => {
+    const amountInBs = calculateAmountInBs();
+    const percentage = parseFloat(formData.managementServicePercentage) || 0;
+    return (amountInBs * percentage) / 100;
+  }, [calculateAmountInBs, formData.managementServicePercentage]);
+
+  const calculateTotalInBs = useCallback(() => {
+    const amountInBs = calculateAmountInBs();
+    const swiftBankBs = calculateSwiftBankBs();
+    const correspondentBankBs = calculateCorrespondentBankBs();
+    const managementServiceBs = calculateManagementServiceBs();
+    return amountInBs + swiftBankBs + correspondentBankBs + managementServiceBs;
+  }, [
+    calculateAmountInBs,
+    calculateSwiftBankBs,
+    calculateCorrespondentBankBs,
+    calculateManagementServiceBs,
+  ]);
+
+  // Update calculated fields when dependencies change
+  useEffect(() => {
+    const amountInBs = calculateAmountInBs();
+    const swiftBankBs = calculateSwiftBankBs();
+    const correspondentBankBs = calculateCorrespondentBankBs();
+    const managementServiceBs = calculateManagementServiceBs();
+    const totalInBs = calculateTotalInBs();
+
+    setFormData((prev) => ({
+      ...prev,
+      amountInBs: amountInBs.toFixed(2),
+      swiftBankBs: swiftBankBs.toFixed(2),
+      correspondentBankBs: correspondentBankBs.toFixed(2),
+      managementServiceBs: managementServiceBs.toFixed(2),
+      totalInBs: totalInBs.toFixed(2),
+    }));
+  }, [
+    calculateAmountInBs,
+    calculateSwiftBankBs,
+    calculateCorrespondentBankBs,
+    calculateManagementServiceBs,
+    calculateTotalInBs,
+  ]);
 
   const handleSave = () => {
     // Validate date
-    const selectedDate = new Date(formData.validUntil + "T00:00:00");
+    const selectedDate = new Date(formData.validUntil);
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(0, 0, 0, 0);
@@ -1329,16 +1658,30 @@ function QuotationEditForm({
       return; // Don't save if date is invalid
     }
 
-    const baseAmount = parseFloat(formData.baseAmount) || 0;
-    const fees = parseFloat(formData.fees) || 0;
-    const taxes = parseFloat(formData.taxes) || 0;
-    const totalAmount = baseAmount + fees + taxes;
+    const amount = parseFloat(formData.amount) || 0;
+    const exchangeRate = parseFloat(formData.exchangeRate) || 0;
+    const amountInBs = parseFloat(formData.amountInBs) || 0;
+    const swiftBankUSD = parseFloat(formData.swiftBankUSD) || 0;
+    const correspondentBankUSD = parseFloat(formData.correspondentBankUSD) || 0;
+    const swiftBankBs = parseFloat(formData.swiftBankBs) || 0;
+    const correspondentBankBs = parseFloat(formData.correspondentBankBs) || 0;
+    const managementServiceBs = parseFloat(formData.managementServiceBs) || 0;
+    const managementServicePercentage =
+      parseFloat(formData.managementServicePercentage) || 0;
+    const totalInBs = parseFloat(formData.totalInBs) || 0;
 
     onSave({
-      baseAmount,
-      fees,
-      taxes,
-      totalAmount,
+      amount,
+      currency: formData.currency,
+      exchangeRate,
+      amountInBs,
+      swiftBankUSD,
+      correspondentBankUSD,
+      swiftBankBs,
+      correspondentBankBs,
+      managementServiceBs,
+      managementServicePercentage,
+      totalInBs,
       validUntil: formData.validUntil,
       terms: formData.terms,
       notes: formData.notes,
@@ -1347,35 +1690,233 @@ function QuotationEditForm({
   };
 
   return (
-    <div className="space-y-4">
+    <div
+      className="space-y-4 max-h-[calc(85vh-180px)] overflow-y-auto pr-2"
+      data-quotation-edit-form
+    >
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="editBaseAmount">Monto Base (USD)*</Label>
+          <Label htmlFor="editAmount">Monto a Enviar*</Label>
           <Input
-            id="editBaseAmount"
+            id="editAmount"
             type="number"
             step="0.01"
-            value={formData.baseAmount}
+            value={formData.amount}
             onChange={(e) =>
-              setFormData((prev) => ({ ...prev, baseAmount: e.target.value }))
+              setFormData((prev) => ({ ...prev, amount: e.target.value }))
             }
+            placeholder="0.00"
           />
+        </div>
+        <div>
+          <Label htmlFor="editCurrency">Moneda*</Label>
+          <Select
+            value={formData.currency}
+            onValueChange={(value) =>
+              setFormData((prev) => ({ ...prev, currency: value }))
+            }
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="USD">Dólares (USD)</SelectItem>
+              <SelectItem value="EUR">Euros (EUR)</SelectItem>
+              <SelectItem value="CNY">Yuan Chino (CNY)</SelectItem>
+              <SelectItem value="JPY">Yen Japonés (JPY)</SelectItem>
+              <SelectItem value="USDT">Tether (USDT)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="editExchangeRate">Tipo de Cambio</Label>
+          <Input
+            id="editExchangeRate"
+            type="number"
+            step="0.0001"
+            value={formData.exchangeRate}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, exchangeRate: e.target.value }))
+            }
+            placeholder="0.0000"
+          />
+        </div>
+        <div>
+          <Label htmlFor="editAmountInBs">
+            Monto a Enviar en Bs (Auto-calculado)
+          </Label>
+          <Input
+            id="editAmountInBs"
+            type="number"
+            step="0.01"
+            value={formData.amountInBs}
+            readOnly
+            className="bg-gray-50 cursor-not-allowed"
+            placeholder="0.00"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Calculado automáticamente: Monto × Tipo de Cambio
+          </p>
+        </div>
+      </div>
+
+      {/* Gastos Financieros Section */}
+      <div className="border-t pt-4">
+        <h4 className="font-medium text-sm mb-3 text-blue-600">
+          Gastos Financieros
+        </h4>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="editSwiftBankUSD">SWIFT Banco (USD)</Label>
+            <Input
+              id="editSwiftBankUSD"
+              type="number"
+              step="0.01"
+              value={formData.swiftBankUSD}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  swiftBankUSD: e.target.value,
+                }))
+              }
+              placeholder="0.00"
+            />
+          </div>
+          <div>
+            <Label htmlFor="editSwiftBankBs">
+              SWIFT Banco (Bs) (Auto-calculado)
+            </Label>
+            <Input
+              id="editSwiftBankBs"
+              type="number"
+              step="0.01"
+              value={formData.swiftBankBs}
+              readOnly
+              className="bg-gray-50 cursor-not-allowed"
+              placeholder="0.00"
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4 mt-4">
+          <div>
+            <Label htmlFor="editCorrespondentBankUSD">
+              Com. Corresponsal (USD)
+            </Label>
+            <Input
+              id="editCorrespondentBankUSD"
+              type="number"
+              step="0.01"
+              value={formData.correspondentBankUSD}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  correspondentBankUSD: e.target.value,
+                }))
+              }
+              placeholder="0.00"
+            />
+          </div>
+          <div>
+            <Label htmlFor="editCorrespondentBankBs">
+              Com. Corresponsal (Bs) (Auto-calculado)
+            </Label>
+            <Input
+              id="editCorrespondentBankBs"
+              type="number"
+              step="0.01"
+              value={formData.correspondentBankBs}
+              readOnly
+              className="bg-gray-50 cursor-not-allowed"
+              placeholder="0.00"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Servicio de Gestión Section */}
+      <div className="border-t pt-4">
+        <h4 className="font-medium text-sm mb-3 text-green-600">
+          Servicio de Gestión
+        </h4>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="editManagementServicePercentage">
+              Porcentaje Servicio (%)*
+            </Label>
+            <Input
+              id="editManagementServicePercentage"
+              type="number"
+              step="0.01"
+              value={formData.managementServicePercentage}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  managementServicePercentage: e.target.value,
+                }))
+              }
+              placeholder="1.5"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Se aplica solo sobre el monto a enviar en Bs
+            </p>
+          </div>
+          <div>
+            <Label htmlFor="editManagementServiceBs">
+              Servicio de Gestión (Bs) (Auto-calculado)
+            </Label>
+            <Input
+              id="editManagementServiceBs"
+              type="number"
+              step="0.01"
+              value={formData.managementServiceBs}
+              readOnly
+              className="bg-gray-50 cursor-not-allowed"
+              placeholder="0.00"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Calculado automáticamente: Monto Bs × Porcentaje / 100
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="editTotalInBs">Total en Bs (Auto-calculado)</Label>
+          <Input
+            id="editTotalInBs"
+            type="number"
+            step="0.01"
+            value={formData.totalInBs}
+            readOnly
+            className="bg-gray-50 cursor-not-allowed font-semibold"
+            placeholder="0.00"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Calculado automáticamente: Valor Bs + Gasto Bs + Servicio Bs
+          </p>
         </div>
         <div>
           <Label htmlFor="editValidUntil">Válida hasta*</Label>
           <Input
             id="editValidUntil"
-            type="date"
+            type="datetime-local"
             min={getMinimumDate()}
             value={formData.validUntil}
             onChange={(e) =>
               setFormData((prev) => ({ ...prev, validUntil: e.target.value }))
             }
           />
+          <p className="text-xs text-gray-500 mt-1">
+            La fecha y hora deben ser al menos desde mañana
+          </p>
         </div>
       </div>
+
       <div>
-        <Label htmlFor="editStatus">Estado</Label>
+        <Label htmlFor="editStatus">Estado de la Cotización*</Label>
         <Select
           value={formData.status}
           onValueChange={(value) =>
@@ -1386,28 +1927,121 @@ function QuotationEditForm({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="DRAFT">Borrador</SelectItem>
-            <SelectItem value="SENT">Publicada</SelectItem>
+            <SelectItem value="DRAFT">
+              <div className="flex flex-col items-start">
+                <span>Borrador</span>
+                <span className="text-xs text-gray-500">
+                  Puede ser modificada, no visible para el importador
+                </span>
+              </div>
+            </SelectItem>
+            <SelectItem value="SENT">
+              <div className="flex flex-col items-start">
+                <span>Publicada</span>
+                <span className="text-xs text-gray-500">
+                  Visible para el importador, lista para revisión
+                </span>
+              </div>
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>
+
       <div>
-        <Label htmlFor="editNotes">Notas</Label>
+        <Label htmlFor="editTerms">Términos y Condiciones</Label>
+        <Textarea
+          id="editTerms"
+          value={formData.terms}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, terms: e.target.value }))
+          }
+          placeholder="Términos y condiciones de la cotización..."
+          rows={3}
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="editNotes">Notas Adicionales</Label>
         <Textarea
           id="editNotes"
           value={formData.notes}
           onChange={(e) =>
             setFormData((prev) => ({ ...prev, notes: e.target.value }))
           }
-          rows={3}
+          placeholder="Notas adicionales para el cliente..."
+          rows={2}
         />
       </div>
-      <div className="flex justify-end gap-3">
-        <Button variant="outline" onClick={onCancel}>
-          Cancelar
-        </Button>
-        <Button onClick={handleSave}>Guardar Cambios</Button>
-      </div>
+
+      {parseFloat(formData.totalInBs) > 0 && (
+        <div className="bg-blue-50 p-4 rounded-lg border">
+          <h4 className="font-medium text-sm mb-2 text-blue-900">
+            Resumen de Cotización
+          </h4>
+          <div className="space-y-1 text-xs text-blue-700">
+            <div className="flex justify-between">
+              <span>Monto a Enviar ({formData.currency}):</span>
+              <span>{parseFloat(formData.amount || "0").toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Monto a Enviar (Bs):</span>
+              <span>{parseFloat(formData.amountInBs || "0").toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>SWIFT Banco (Bs):</span>
+              <span>{parseFloat(formData.swiftBankBs || "0").toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Com. Corresponsal (Bs):</span>
+              <span>
+                {parseFloat(formData.correspondentBankBs || "0").toFixed(2)}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span>
+                Servicio de Gestión ({formData.managementServicePercentage}%):
+              </span>
+              <span>
+                {parseFloat(formData.managementServiceBs || "0").toFixed(2)}
+              </span>
+            </div>
+            <div className="border-t pt-1 mt-2">
+              <div className="flex justify-between font-medium text-blue-900">
+                <span>Total en Bs:</span>
+                <span>{parseFloat(formData.totalInBs || "0").toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+          <div className="mt-2 pt-2 border-t">
+            <p className="text-xs text-blue-700">
+              Estado:{" "}
+              {formData.status === "DRAFT"
+                ? "Borrador (no visible para importador)"
+                : "Publicada (visible para importador)"}
+            </p>
+            <p className="text-xs text-blue-700">
+              Válida hasta:{" "}
+              {format(
+                new Date(formData.validUntil),
+                "dd/MM/yyyy 'a las' HH:mm",
+                {
+                  locale: es,
+                }
+              )}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden save button for dialog footer to trigger */}
+      <button
+        type="button"
+        data-save-button
+        onClick={handleSave}
+        className="hidden"
+      >
+        Guardar Cambios
+      </button>
     </div>
   );
 }
@@ -1427,6 +2061,7 @@ export default function AdminSolicitudDetail() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [quotationToDelete, setQuotationToDelete] =
     useState<QuotationItem | null>(null);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   const { data, isLoading, refetch } = useRequest(requestId);
   const { updateRequest, isLoading: isUpdating } = useUpdateRequest();
@@ -1438,6 +2073,9 @@ export default function AdminSolicitudDetail() {
   const { checkExpiredQuotations, isChecking } = useQuotationExpiry();
 
   const request = data?.request;
+  const companyId = request?.company?.id;
+  const { data: userDocumentsData, isLoading: isLoadingUserDocuments } =
+    useUserDocuments(requestId, companyId || "");
   const history = historyData || [];
 
   const handleEditQuotation = (quotation: QuotationItem) => {
@@ -1480,10 +2118,17 @@ export default function AdminSolicitudDetail() {
   };
 
   const handleUpdateQuotation = async (updatedData: {
-    baseAmount: number;
-    fees: number;
-    taxes: number;
-    totalAmount: number;
+    amount: number;
+    currency: string;
+    exchangeRate: number;
+    amountInBs: number;
+    swiftBankUSD: number;
+    correspondentBankUSD: number;
+    swiftBankBs: number;
+    correspondentBankBs: number;
+    managementServiceBs: number;
+    managementServicePercentage: number;
+    totalInBs: number;
     validUntil: string;
     terms: string;
     notes: string;
@@ -1617,7 +2262,6 @@ export default function AdminSolicitudDetail() {
     );
   }
 
-  // Enhanced quotation analysis
   const allQuotations = request.quotations || [];
   const expiredQuotations = allQuotations.filter((q: QuotationItem) =>
     isQuotationExpired(q.validUntil)
@@ -1635,6 +2279,8 @@ export default function AdminSolicitudDetail() {
   const approvedQuotations = allQuotations.filter(
     (q: QuotationItem) => q.status === "ACCEPTED"
   );
+
+  const hasAcceptedQuotation = approvedQuotations.length > 0;
 
   // Priority logic: Rejected > Expired (when no active quotes) > Drafts
   const shouldShowRejectionAlert =
@@ -1675,6 +2321,58 @@ export default function AdminSolicitudDetail() {
           </div>
         </div>
 
+        {/* Approval Success Alert */}
+        {shouldShowApprovalAlert && (
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-green-900 mb-2">
+                    {approvedQuotations.length === 1
+                      ? "Cotización Aprobada"
+                      : `${approvedQuotations.length} Cotizaciones Aprobadas`}
+                  </h3>
+                  <p className="text-sm text-green-800 leading-relaxed mb-3">
+                    {approvedQuotations.length === 1
+                      ? "La cotización ha sido aprobada por el importador. El proceso puede continuar al siguiente paso."
+                      : "Las cotizaciones han sido aprobadas. El proceso puede continuar al siguiente paso."}
+                  </p>
+
+                  <div className="space-y-2">
+                    {approvedQuotations.map((q: QuotationItem) => (
+                      <div
+                        key={q.id}
+                        className="bg-white/50 rounded-lg p-3 border border-green-200"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium text-green-900">
+                              {q.code}
+                            </p>
+                            <p className="text-sm text-green-700">
+                              Monto Aprobado: ${q.amount?.toLocaleString()}{" "}
+                              {q.currency}
+                            </p>
+                          </div>
+                          <Badge className="bg-green-100 text-green-800 border-green-200">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Aprobada
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Rejection Alert - Highest Priority */}
         {shouldShowRejectionAlert && (
           <Card className="border-red-200 bg-red-50">
@@ -1702,8 +2400,7 @@ export default function AdminSolicitudDetail() {
                           <div>
                             <p className="font-medium text-red-900">{q.code}</p>
                             <p className="text-sm text-red-700">
-                              Monto: ${q.totalAmount?.toLocaleString()}{" "}
-                              {q.currency}
+                              Monto: ${q.amount?.toLocaleString()} {q.currency}
                             </p>
                           </div>
                           <div className="text-right">
@@ -1743,59 +2440,8 @@ export default function AdminSolicitudDetail() {
                       requestId={requestId}
                       onSuccess={handleManualStatusCheck}
                       variant="compact"
+                      disabled={hasAcceptedQuotation}
                     />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Approval Success Alert */}
-        {shouldShowApprovalAlert && (
-          <Card className="border-green-200 bg-green-50">
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-green-900 mb-2">
-                    {approvedQuotations.length === 1
-                      ? "Cotización Aprobada"
-                      : `${approvedQuotations.length} Cotizaciones Aprobadas`}
-                  </h3>
-                  <p className="text-sm text-green-800 leading-relaxed mb-3">
-                    {approvedQuotations.length === 1
-                      ? "La cotización ha sido aprobada por el importador. El proceso puede continuar al siguiente paso."
-                      : "Las cotizaciones han sido aprobadas. El proceso puede continuar al siguiente paso."}
-                  </p>
-
-                  <div className="space-y-2">
-                    {approvedQuotations.map((q: QuotationItem) => (
-                      <div
-                        key={q.id}
-                        className="bg-white/50 rounded-lg p-3 border border-green-200"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium text-green-900">
-                              {q.code}
-                            </p>
-                            <p className="text-sm text-green-700">
-                              Monto Aprobado: ${q.totalAmount?.toLocaleString()}{" "}
-                              {q.currency}
-                            </p>
-                          </div>
-                          <Badge className="bg-green-100 text-green-800 border-green-200">
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            Aprobada
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
                   </div>
                 </div>
               </div>
@@ -1832,21 +2478,19 @@ export default function AdminSolicitudDetail() {
                               {q.code}
                             </p>
                             <p className="text-sm text-amber-700">
-                              Monto: ${q.totalAmount?.toLocaleString()}{" "}
-                              {q.currency}
+                              Monto: ${q.amount?.toLocaleString()} {q.currency}
                             </p>
                           </div>
                           <div className="text-right">
                             <p className="text-sm font-medium text-amber-800">
                               Expiró el{" "}
-                              {format(new Date(q.validUntil), "dd/MM/yyyy", {
-                                locale: es,
-                              })}
-                            </p>
-                            <p className="text-xs text-amber-600">
-                              {format(new Date(q.validUntil), "HH:mm", {
-                                locale: es,
-                              })}
+                              {format(
+                                new Date(q.validUntil),
+                                "dd/MM/yyyy 'a las' HH:mm",
+                                {
+                                  locale: es,
+                                }
+                              )}
                             </p>
                           </div>
                         </div>
@@ -1870,6 +2514,7 @@ export default function AdminSolicitudDetail() {
                       requestId={requestId}
                       onSuccess={handleManualStatusCheck}
                       variant="compact"
+                      disabled={hasAcceptedQuotation}
                     />
                   </div>
                 </div>
@@ -1999,6 +2644,7 @@ export default function AdminSolicitudDetail() {
                 <QuotationGenerator
                   requestId={requestId}
                   onSuccess={handleManualStatusCheck}
+                  disabled={hasAcceptedQuotation}
                 />
 
                 <Dialog
@@ -2225,7 +2871,7 @@ export default function AdminSolicitudDetail() {
                         <div>
                           <p className="text-gray-600">Monto Total</p>
                           <p className="font-semibold">
-                            ${quotation.totalAmount?.toLocaleString()}{" "}
+                            ${quotation.amount?.toLocaleString()}{" "}
                             {quotation.currency}
                           </p>
                         </div>
@@ -2284,48 +2930,109 @@ export default function AdminSolicitudDetail() {
           </Card>
         )}
 
-        {/* History */}
+        {/* Documents */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>HISTORIAL</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoadingHistory ? (
-              <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                <span className="text-sm text-gray-500">
-                  Cargando historial...
-                </span>
+            <CardTitle>Documentos</CardTitle>
+            <div>
+              {/* Request Documents */}
+              <div className="mb-6">
+                <h4 className="text-md font-medium mb-3 text-blue-600">
+                  📋 Documentos de la Solicitud
+                </h4>
+                {request.documents && request.documents.length > 0 ? (
+                  <div className="space-y-3">
+                    {request.documents.map((document: DocumentItem) => (
+                      <DocumentCard
+                        key={document.id}
+                        document={document}
+                        requestId={request.id}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <Card>
+                    <CardContent className="py-4">
+                      <p className="text-sm text-gray-500 text-center">
+                        No hay documentos en esta solicitud
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
-            ) : (
-              <HistoryTimeline events={history} />
-            )}
-          </CardContent>
+
+              {/* User Documents */}
+              <div>
+                <h4 className="text-md font-medium mb-3 text-green-600">
+                  Documentos de la empresa
+                </h4>
+                {isLoadingUserDocuments ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <span className="text-sm text-gray-500">
+                      Cargando documentos del usuario...
+                    </span>
+                  </div>
+                ) : userDocumentsData?.documents &&
+                  userDocumentsData.documents.length > 0 ? (
+                  <div className="space-y-3">
+                    {userDocumentsData.documents.map((document: any) => (
+                      <DocumentCard
+                        key={document.id}
+                        document={document}
+                        requestId={request.id}
+                        compact={true}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <Card>
+                    <CardContent className="py-4">
+                      <p className="text-sm text-gray-500 text-center">
+                        No hay documentos adicionales del usuario
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+
+        {/* History */}
+        <Card className="mb-6">
+          <Collapsible open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+                <div className="flex items-center justify-between">
+                  <CardTitle>HISTORIAL</CardTitle>
+                  <ChevronDown
+                    className={`h-4 w-4 transition-transform ${
+                      isHistoryOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                </div>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent>
+                {isLoadingHistory ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <span className="text-sm text-gray-500">
+                      Cargando historial...
+                    </span>
+                  </div>
+                ) : (
+                  <HistoryTimeline events={history} />
+                )}
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
         </Card>
 
         {/* Documents and Notes */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div>
-            <h3 className="text-lg font-medium mb-4">DOCUMENTOS</h3>
-            {request.documents && request.documents.length > 0 ? (
-              request.documents.map((document: DocumentItem) => (
-                <DocumentCard
-                  key={document.id}
-                  document={document}
-                  requestId={request.id}
-                />
-              ))
-            ) : (
-              <Card>
-                <CardContent className="py-8">
-                  <p className="text-sm text-gray-500 text-center">
-                    No se han cargado documentos aún
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
           <InternalNotesCard requestId={request.id} />
         </div>
       </div>
@@ -2333,7 +3040,7 @@ export default function AdminSolicitudDetail() {
       {/* Edit Quotation Dialog */}
       {editingQuotation && (
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[800px] max-h-[85vh] overflow-hidden">
             <DialogHeader>
               <DialogTitle>
                 Editar Cotización {editingQuotation.code}
@@ -2347,6 +3054,34 @@ export default function AdminSolicitudDetail() {
               onSave={handleUpdateQuotation}
               onCancel={() => setIsEditDialogOpen(false)}
             />
+            <DialogFooter className="flex gap-2 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => setIsEditDialogOpen(false)}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={() => {
+                  // This will be handled by the QuotationEditForm's handleSave
+                  // We need to trigger the save from here
+                  const formElement = document.querySelector(
+                    "[data-quotation-edit-form]"
+                  );
+                  if (formElement) {
+                    const saveButton =
+                      formElement.querySelector("[data-save-button]");
+                    if (saveButton) {
+                      (saveButton as HTMLButtonElement).click();
+                    }
+                  }
+                }}
+                className="flex-1"
+              >
+                Guardar Cambios
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       )}
