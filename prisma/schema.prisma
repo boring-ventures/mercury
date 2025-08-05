@@ -11,7 +11,6 @@ datasource db {
 model Profile {
   id                 String         @id @default(cuid())
   userId             String         @unique
-  email              String?
   avatarUrl          String?
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
@@ -23,16 +22,17 @@ model Profile {
   phone              String?
   lastLogin          DateTime?
   companyId          String?
+  email              String?
   auditLogs          AuditLog[]
   assignedContracts  Contract[]     @relation("ContractAssignedTo")
   createdContracts   Contract[]     @relation("ContractCreatedBy")
   notifications      Notification[]
-  company            Company?       @relation(fields: [companyId], references: [id])
+  providers          Provider[]
   assignedQuotations Quotation[]    @relation("QuotationAssignedTo")
   createdQuotations  Quotation[]    @relation("QuotationCreatedBy")
   assignedRequests   Request[]      @relation("RequestAssignedTo")
   createdRequests    Request[]      @relation("RequestCreatedBy")
-  providers         Provider[]
+  company            Company?       @relation(fields: [companyId], references: [id])
 
   @@index([userId])
   @@index([role])
@@ -44,26 +44,26 @@ model Profile {
 model Company {
   id                  String               @id @default(cuid())
   name                String
-  nit                 String               @unique
-  companyType         CompanyType
   country             String
-  city                String
   activity            ActivityType
   contactName         String
   contactPosition     String
   email               String
   phone               String
-  bankingDetails      Json?
   status              UserStatus           @default(ACTIVE)
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
+  companyType         CompanyType
+  nit                 String               @unique
+  bankingDetails      Json?
+  city                String
   contracts           Contract[]
   documents           Document[]
   payments            Payment[]
-  users               Profile[]
   quotations          Quotation[]
   registrationRequest RegistrationRequest?
   requests            Request[]
+  users               Profile[]
 
   @@index([nit])
   @@index([status])
@@ -72,10 +72,7 @@ model Company {
 model RegistrationRequest {
   id                String             @id @default(cuid())
   companyName       String
-  nit               String
-  companyType       CompanyType
   country           String
-  city              String
   activity          ActivityType
   contactName       String
   contactPosition   String
@@ -90,6 +87,9 @@ model RegistrationRequest {
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   companyId         String?            @unique
+  city              String
+  companyType       CompanyType
+  nit               String
   documents         Document[]
   company           Company?           @relation(fields: [companyId], references: [id])
 }
@@ -98,14 +98,14 @@ model Provider {
   id             String    @id @default(cuid())
   name           String
   country        String
-  bankingDetails Json?
   email          String?
   phone          String?
-  userId         String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
-  requests       Request[]
+  bankingDetails Json?
+  userId         String?
   user           Profile?  @relation(fields: [userId], references: [id])
+  requests       Request[]
 
   @@index([userId])
 }
@@ -117,7 +117,6 @@ model Request {
   currency       Currency      @default(USDT)
   description    String
   status         RequestStatus @default(PENDING)
-  rejectionCount Int           @default(0)
   reviewNotes    String?
   reviewedAt     DateTime?
   createdAt      DateTime      @default(now())
@@ -126,6 +125,7 @@ model Request {
   companyId      String
   createdById    String
   assignedToId   String?
+  rejectionCount Int           @default(0)
   contracts      Contract[]
   documents      Document[]
   payments       Payment[]
@@ -175,38 +175,39 @@ model Document {
 }
 
 model Quotation {
-  id                    String          @id @default(cuid())
-  code                  String          @unique
-  amount                Decimal         @db.Decimal(15, 2)
-  currency              Currency        @default(USD)
-  description           String
-  validUntil            DateTime
-  status                QuotationStatus @default(DRAFT)
-  valueToSendUSD        Decimal         @default(0) @db.Decimal(15, 2)
-  exchangeRate          Decimal         @default(0) @db.Decimal(10, 4)
-  valueInBs             Decimal         @default(0) @db.Decimal(15, 2)
-  financialExpenseUSD   Decimal         @default(0) @db.Decimal(15, 2)
-  financialExpenseBs    Decimal         @default(0) @db.Decimal(15, 2)
-  managementServiceBs   Decimal         @default(0) @db.Decimal(15, 2)
-  managementServicePercentage Decimal    @default(0) @db.Decimal(5, 2)
-  totalInBs             Decimal         @default(0) @db.Decimal(15, 2)
-  terms                 String?
-  notes                 String?
-  rejectionReason       String?
-  createdAt             DateTime        @default(now())
-  updatedAt             DateTime        @updatedAt
-  sentAt                DateTime?
-  respondedAt           DateTime?
-  requestId             String
-  companyId             String
-  createdById           String
-  assignedToId          String?
-  contracts             Contract[]
-  documents             Document[]
-  assignedTo            Profile?        @relation("QuotationAssignedTo", fields: [assignedToId], references: [id])
-  company               Company         @relation(fields: [companyId], references: [id])
-  createdBy             Profile         @relation("QuotationCreatedBy", fields: [createdById], references: [id])
-  request               Request         @relation(fields: [requestId], references: [id])
+  id                          String          @id @default(cuid())
+  code                        String          @unique
+  amount                      Decimal         @db.Decimal(15, 2)
+  currency                    Currency        @default(USD)
+  description                 String
+  validUntil                  DateTime
+  status                      QuotationStatus @default(DRAFT)
+  terms                       String?
+  notes                       String?
+  createdAt                   DateTime        @default(now())
+  updatedAt                   DateTime        @updatedAt
+  sentAt                      DateTime?
+  respondedAt                 DateTime?
+  requestId                   String
+  companyId                   String
+  createdById                 String
+  assignedToId                String?
+  rejectionReason             String?
+  exchangeRate                Decimal         @default(0) @db.Decimal(10, 4)
+  managementServiceBs         Decimal         @default(0) @db.Decimal(15, 2)
+  managementServicePercentage Decimal         @default(0) @db.Decimal(5, 2)
+  totalInBs                   Decimal         @default(0) @db.Decimal(15, 2)
+  amountInBs                  Decimal         @default(0) @db.Decimal(15, 2)
+  correspondentBankBs         Decimal         @default(0) @db.Decimal(15, 2)
+  correspondentBankUSD        Decimal         @default(0) @db.Decimal(15, 2)
+  swiftBankBs                 Decimal         @default(0) @db.Decimal(15, 2)
+  swiftBankUSD                Decimal         @default(0) @db.Decimal(15, 2)
+  contracts                   Contract[]
+  documents                   Document[]
+  assignedTo                  Profile?        @relation("QuotationAssignedTo", fields: [assignedToId], references: [id])
+  company                     Company         @relation(fields: [companyId], references: [id])
+  createdBy                   Profile         @relation("QuotationCreatedBy", fields: [createdById], references: [id])
+  request                     Request         @relation(fields: [requestId], references: [id])
 
   @@index([code])
   @@index([status])
