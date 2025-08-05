@@ -226,17 +226,24 @@ interface QuotationType {
   id: string;
   code: string;
   status: string;
-  totalAmount: number;
-  baseAmount: number;
-  fees: number;
-  taxes: number;
+  amount: number;
   currency: string;
+  description: string;
   validUntil: string;
   createdAt: string;
   notes?: string;
   terms?: string;
-  description?: string;
   rejectionReason?: string;
+  // Additional fields from the schema
+  exchangeRate?: number;
+  amountInBs?: number;
+  swiftBankUSD?: number;
+  correspondentBankUSD?: number;
+  swiftBankBs?: number;
+  correspondentBankBs?: number;
+  managementServiceBs?: number;
+  managementServicePercentage?: number;
+  totalInBs?: number;
 }
 
 function DocumentViewerModal({
@@ -494,7 +501,24 @@ function QuotationCard({
     <div className="border rounded-lg p-6 bg-white shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <h4 className="font-semibold text-lg">Cotización {quotation.code}</h4>
+          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+            <DollarSign className="h-5 w-5 text-blue-600" />
+          </div>
+          <div>
+            <h4 className="font-semibold text-lg">
+              Cotización {quotation.code}
+            </h4>
+            <p className="text-sm text-gray-600">
+              Creada el{" "}
+              {format(
+                new Date(quotation.createdAt),
+                "dd/MM/yyyy 'a las' HH:mm",
+                { locale: es }
+              )}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
           <Badge className={getStatusColor(quotation.status)}>
             {getStatusLabel(quotation.status)}
           </Badge>
@@ -505,73 +529,149 @@ function QuotationCard({
             </Badge>
           )}
         </div>
-        <div className="text-sm text-gray-600">
-          <Calendar className="h-4 w-4 inline mr-1" />
-          {format(new Date(quotation.createdAt), "dd/MM/yyyy", { locale: es })}
-        </div>
       </div>
 
       {/* Amount Breakdown */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-        <div className="bg-gray-50 p-3 rounded-lg">
-          <p className="text-xs text-gray-600 mb-1">Monto Base</p>
-          <p className="font-semibold">
-            ${quotation.baseAmount?.toLocaleString()} {quotation.currency}
-          </p>
-        </div>
-        <div className="bg-gray-50 p-3 rounded-lg">
-          <p className="text-xs text-gray-600 mb-1">Comisiones</p>
-          <p className="font-semibold">
-            ${quotation.fees?.toLocaleString()} {quotation.currency}
-          </p>
-        </div>
-        <div className="bg-gray-50 p-3 rounded-lg">
-          <p className="text-xs text-gray-600 mb-1">Impuestos</p>
-          <p className="font-semibold">
-            ${quotation.taxes?.toLocaleString()} {quotation.currency}
-          </p>
-        </div>
-        <div className="bg-blue-50 p-3 rounded-lg">
-          <p className="text-xs text-blue-600 mb-1">Total</p>
-          <p className="font-bold text-lg text-blue-900">
-            ${quotation.totalAmount?.toLocaleString()} {quotation.currency}
-          </p>
+      <div className="mb-6">
+        <h5 className="font-medium text-gray-900 mb-3">Desglose de Costos</h5>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-gray-50 p-4 rounded-lg border">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-gray-600">Monto Principal</p>
+              <DollarSign className="h-3 w-3 text-gray-400" />
+            </div>
+            <p className="font-semibold text-lg">
+              ${quotation.amount?.toLocaleString()} {quotation.currency}
+            </p>
+          </div>
+          <div className="bg-gray-50 p-4 rounded-lg border">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-gray-600">SWIFT Bank</p>
+              <DollarSign className="h-3 w-3 text-gray-400" />
+            </div>
+            <p className="font-semibold text-lg">
+              ${quotation.swiftBankUSD?.toLocaleString() || 0}{" "}
+              {quotation.currency}
+            </p>
+          </div>
+          <div className="bg-gray-50 p-4 rounded-lg border">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-gray-600">Banco Corresponsal</p>
+              <DollarSign className="h-3 w-3 text-gray-400" />
+            </div>
+            <p className="font-semibold text-lg">
+              ${quotation.correspondentBankUSD?.toLocaleString() || 0}{" "}
+              {quotation.currency}
+            </p>
+          </div>
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-blue-600 font-medium">Total</p>
+              <DollarSign className="h-3 w-3 text-blue-500" />
+            </div>
+            <p className="font-bold text-xl text-blue-900">
+              $
+              {quotation.totalInBs?.toLocaleString() ||
+                quotation.amount?.toLocaleString()}{" "}
+              {quotation.currency}
+            </p>
+          </div>
         </div>
       </div>
 
       {/* Valid Until */}
-      <div className="mb-4">
-        <p className="text-sm text-gray-600">
-          <Clock className="h-4 w-4 inline mr-1" />
-          Válida hasta:{" "}
-          {format(new Date(quotation.validUntil), "dd/MM/yyyy 'a las' HH:mm", {
-            locale: es,
-          })}
-        </p>
+      <div className="mb-6">
+        <div
+          className={`p-4 rounded-lg border ${
+            isExpired
+              ? "bg-red-50 border-red-200"
+              : new Date(quotation.validUntil) <
+                  new Date(Date.now() + 24 * 60 * 60 * 1000) // Less than 24 hours
+                ? "bg-yellow-50 border-yellow-200"
+                : "bg-green-50 border-green-200"
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <Clock
+              className={`h-4 w-4 ${
+                isExpired
+                  ? "text-red-500"
+                  : new Date(quotation.validUntil) <
+                      new Date(Date.now() + 24 * 60 * 60 * 1000)
+                    ? "text-yellow-500"
+                    : "text-green-500"
+              }`}
+            />
+            <div>
+              <p
+                className={`text-sm font-medium ${
+                  isExpired
+                    ? "text-red-800"
+                    : new Date(quotation.validUntil) <
+                        new Date(Date.now() + 24 * 60 * 60 * 1000)
+                      ? "text-yellow-800"
+                      : "text-green-800"
+                }`}
+              >
+                {isExpired ? "Cotización Expirada" : "Válida hasta"}
+              </p>
+              <p
+                className={`text-sm ${
+                  isExpired
+                    ? "text-red-600"
+                    : new Date(quotation.validUntil) <
+                        new Date(Date.now() + 24 * 60 * 60 * 1000)
+                      ? "text-yellow-700"
+                      : "text-green-700"
+                }`}
+              >
+                {format(
+                  new Date(quotation.validUntil),
+                  "dd/MM/yyyy 'a las' HH:mm",
+                  {
+                    locale: es,
+                  }
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Terms and Notes */}
-      {quotation.terms && (
-        <div className="mb-4">
-          <p className="text-sm font-medium text-gray-700 mb-2">
-            Términos y Condiciones:
-          </p>
-          <div className="bg-gray-50 p-3 rounded-lg">
-            <p className="text-sm text-gray-800 whitespace-pre-wrap">
-              {quotation.terms}
-            </p>
-          </div>
-        </div>
-      )}
+      {(quotation.terms || quotation.notes) && (
+        <div className="mb-6 space-y-4">
+          {quotation.terms && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <FileText className="h-4 w-4 text-blue-600" />
+                <p className="text-sm font-medium text-gray-700">
+                  Términos y Condiciones
+                </p>
+              </div>
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                  {quotation.terms}
+                </p>
+              </div>
+            </div>
+          )}
 
-      {quotation.notes && (
-        <div className="mb-4">
-          <p className="text-sm font-medium text-gray-700 mb-2">Notas:</p>
-          <div className="bg-gray-50 p-3 rounded-lg">
-            <p className="text-sm text-gray-800 whitespace-pre-wrap">
-              {quotation.notes}
-            </p>
-          </div>
+          {quotation.notes && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <MessageSquare className="h-4 w-4 text-green-600" />
+                <p className="text-sm font-medium text-gray-700">
+                  Notas Adicionales
+                </p>
+              </div>
+              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                  {quotation.notes}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -761,10 +861,10 @@ export default function ImportadorSolicitudDetail() {
 
   const request = data?.request;
 
-  // Only show published quotations to importador (filter out drafts)
+  // Show all quotations to importador except DRAFT status (which are admin-only)
   const visibleQuotations =
     request?.quotations?.filter(
-      (quotation: QuotationType) => quotation.status === "SENT"
+      (quotation: QuotationType) => quotation.status !== "DRAFT"
     ) || [];
 
   const handleQuotationUpdate = () => {
@@ -941,9 +1041,63 @@ export default function ImportadorSolicitudDetail() {
                         Información Bancaria
                       </p>
                       <div className="bg-gray-50 p-3 rounded-lg">
-                        <pre className="text-sm whitespace-pre-wrap">
-                          {request.provider.bankingDetails}
-                        </pre>
+                        <div className="text-sm space-y-2">
+                          {typeof request.provider.bankingDetails ===
+                          "string" ? (
+                            <pre className="whitespace-pre-wrap">
+                              {request.provider.bankingDetails}
+                            </pre>
+                          ) : (
+                            <div className="space-y-2">
+                              {request.provider.bankingDetails.bankName && (
+                                <div>
+                                  <span className="font-medium">Banco:</span>{" "}
+                                  {request.provider.bankingDetails.bankName}
+                                </div>
+                              )}
+                              {request.provider.bankingDetails.swiftCode && (
+                                <div>
+                                  <span className="font-medium">
+                                    Código SWIFT:
+                                  </span>{" "}
+                                  {request.provider.bankingDetails.swiftCode}
+                                </div>
+                              )}
+                              {request.provider.bankingDetails.bankAddress && (
+                                <div>
+                                  <span className="font-medium">
+                                    Dirección del Banco:
+                                  </span>{" "}
+                                  {request.provider.bankingDetails.bankAddress}
+                                </div>
+                              )}
+                              {request.provider.bankingDetails
+                                .accountNumber && (
+                                <div>
+                                  <span className="font-medium">
+                                    Número de Cuenta:
+                                  </span>{" "}
+                                  {
+                                    request.provider.bankingDetails
+                                      .accountNumber
+                                  }
+                                </div>
+                              )}
+                              {request.provider.bankingDetails
+                                .beneficiaryName && (
+                                <div>
+                                  <span className="font-medium">
+                                    Nombre del Beneficiario:
+                                  </span>{" "}
+                                  {
+                                    request.provider.bankingDetails
+                                      .beneficiaryName
+                                  }
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -957,16 +1111,59 @@ export default function ImportadorSolicitudDetail() {
                     <CardTitle className="flex items-center gap-2">
                       <DollarSign className="h-5 w-5" />
                       Cotizaciones Recibidas
+                      <Badge variant="secondary" className="ml-2">
+                        {visibleQuotations.length} cotización
+                        {visibleQuotations.length !== 1 ? "es" : ""}
+                      </Badge>
                     </CardTitle>
+                    <p className="text-sm text-gray-600">
+                      Revisa las cotizaciones enviadas por el administrador y
+                      toma una decisión.
+                    </p>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {visibleQuotations.map((quotation: QuotationType) => (
-                      <QuotationCard
-                        key={quotation.id}
-                        quotation={quotation}
-                        onUpdate={handleQuotationUpdate}
-                      />
-                    ))}
+                    {visibleQuotations.map(
+                      (quotation: QuotationType, index: number) => (
+                        <div key={quotation.id}>
+                          {index > 0 && <div className="border-t my-6" />}
+                          <QuotationCard
+                            quotation={quotation}
+                            onUpdate={handleQuotationUpdate}
+                          />
+                        </div>
+                      )
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* No Quotations Message */}
+              {visibleQuotations.length === 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <DollarSign className="h-5 w-5" />
+                      Cotizaciones
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8">
+                      <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        Esperando Cotización
+                      </h3>
+                      <p className="text-gray-600 mb-4">
+                        El administrador está revisando tu solicitud y
+                        preparando una cotización.
+                      </p>
+                      <div className="bg-blue-50 p-4 rounded-lg">
+                        <p className="text-sm text-blue-800">
+                          <Clock className="h-4 w-4 inline mr-2" />
+                          Recibirás una notificación cuando la cotización esté
+                          lista.
+                        </p>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               )}

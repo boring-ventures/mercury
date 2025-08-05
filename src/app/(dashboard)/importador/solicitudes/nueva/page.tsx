@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { useCreateRequest } from "@/hooks/use-requests";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useProviders } from "@/hooks/use-providers";
 import { toast } from "@/components/ui/use-toast";
 import { uploadDocument } from "@/lib/supabase/upload-documents";
 
@@ -48,6 +49,7 @@ interface DocumentFile {
 export default function NuevaSolicitud() {
   const router = useRouter();
   const { isLoading: userLoading } = useCurrentUser();
+  const { data: providersData, isLoading: providersLoading } = useProviders();
 
   // Custom success handler for redirecting after successful creation
   const { createRequest, isLoading } = useCreateRequest({
@@ -96,6 +98,34 @@ export default function NuevaSolicitud() {
       ...prev,
       [field]: value,
     }));
+  };
+
+  const handleProviderSelect = (providerId: string) => {
+    const selectedProvider = providersData?.providers.find(
+      (p) => p.id === providerId
+    );
+    if (!selectedProvider) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      providerName: selectedProvider.name,
+      providerCountry: selectedProvider.country,
+      providerBankName: selectedProvider.bankingDetails?.bankName || "",
+      providerAccountNumber:
+        selectedProvider.bankingDetails?.accountNumber || "",
+      providerSwiftCode: selectedProvider.bankingDetails?.swiftCode || "",
+      providerBankAddress: selectedProvider.bankingDetails?.bankAddress || "",
+      providerBeneficiaryName:
+        selectedProvider.bankingDetails?.beneficiaryName || "",
+      providerEmail: selectedProvider.email || "",
+      providerPhone: selectedProvider.phone || "",
+    }));
+
+    toast({
+      title: "Proveedor cargado",
+      description: `Se han cargado los datos de ${selectedProvider.name}`,
+      variant: "default",
+    });
   };
 
   const uploadFile = async (
@@ -393,7 +423,7 @@ export default function NuevaSolicitud() {
   );
 
   // Show loading state while user data is being fetched
-  if (userLoading) {
+  if (userLoading || providersLoading) {
     return (
       <ImportadorLayout>
         <div className="flex items-center justify-center h-64">
@@ -488,6 +518,34 @@ export default function NuevaSolicitud() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Cargar Proveedor Existente */}
+            {providersData?.providers && providersData.providers.length > 0 && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="font-medium text-blue-900 mb-3">
+                  🏢 Cargar Proveedor Existente
+                </h4>
+                <div className="flex items-center gap-3">
+                  <Select onValueChange={handleProviderSelect}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Seleccionar proveedor existente..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {providersData.providers.map((provider) => (
+                        <SelectItem key={provider.id} value={provider.id}>
+                          {provider.name} - {provider.country}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {providersLoading && (
+                    <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                  )}
+                </div>
+                <p className="text-xs text-blue-700 mt-2">
+                  Selecciona un proveedor para cargar automáticamente sus datos
+                </p>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="proveedor-pais">País del Proveedor *</Label>
