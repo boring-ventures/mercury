@@ -14,11 +14,14 @@ export async function POST(
     const body = await request.json();
 
     const {
-      valueToSendUSD,
+      amount,
+      currency,
       exchangeRate,
-      valueInBs,
-      financialExpenseUSD,
-      financialExpenseBs,
+      amountInBs,
+      swiftBankUSD,
+      correspondentBankUSD,
+      swiftBankBs,
+      correspondentBankBs,
       managementServiceBs,
       managementServicePercentage,
       totalInBs,
@@ -29,9 +32,9 @@ export async function POST(
     } = body;
 
     // Validate required fields
-    if (!valueToSendUSD || !validUntil) {
+    if (!amount || !validUntil) {
       return NextResponse.json(
-        { error: "Value to send USD and valid until date are required" },
+        { error: "Amount to send and valid until date are required" },
         { status: 400 }
       );
     }
@@ -71,11 +74,26 @@ export async function POST(
       include: {
         company: true,
         createdBy: true,
+        quotations: {
+          where: { status: "ACCEPTED" },
+          select: { id: true },
+        },
       },
     });
 
     if (!requestData) {
       return NextResponse.json({ error: "Request not found" }, { status: 404 });
+    }
+
+    // Check if there's already an accepted quotation
+    if (requestData.quotations.length > 0) {
+      return NextResponse.json(
+        {
+          error:
+            "No se pueden crear nuevas cotizaciones cuando ya hay una cotización aceptada para esta solicitud",
+        },
+        { status: 400 }
+      );
     }
 
     // Generate quotation code
@@ -103,16 +121,17 @@ export async function POST(
     const quotation = await prisma.quotation.create({
       data: {
         code: quotationCode,
-        amount: parseFloat(valueToSendUSD),
-        currency: "USD",
+        amount: parseFloat(amount),
+        currency: currency || "USD",
         description: `Cotización para solicitud ${requestData.code}`,
         validUntil: new Date(validUntil),
         status: status || "SENT",
-        valueToSendUSD: parseFloat(valueToSendUSD),
         exchangeRate: parseFloat(exchangeRate) || 0,
-        valueInBs: parseFloat(valueInBs) || 0,
-        financialExpenseUSD: parseFloat(financialExpenseUSD) || 0,
-        financialExpenseBs: parseFloat(financialExpenseBs) || 0,
+        amountInBs: parseFloat(amountInBs) || 0,
+        swiftBankUSD: parseFloat(swiftBankUSD) || 0,
+        correspondentBankUSD: parseFloat(correspondentBankUSD) || 0,
+        swiftBankBs: parseFloat(swiftBankBs) || 0,
+        correspondentBankBs: parseFloat(correspondentBankBs) || 0,
         managementServiceBs: parseFloat(managementServiceBs) || 0,
         managementServicePercentage:
           parseFloat(managementServicePercentage) || 0,

@@ -55,12 +55,12 @@ export const adminSidebarData: SidebarData = {
         },
         {
           title: "Cotizaciones",
-          url: "/admin/cotizaciones",
+          url: "/admin/quotations",
           icon: FileText,
         },
         {
           title: "Contratos",
-          url: "/admin/contratos",
+          url: "/admin/contracts",
           icon: Building2,
         },
         {
@@ -80,7 +80,7 @@ export const adminSidebarData: SidebarData = {
         },
         {
           title: "Empresas",
-          url: "/admin/empresas",
+          url: "/admin/companies",
           icon: Building2,
         },
         {
@@ -90,7 +90,7 @@ export const adminSidebarData: SidebarData = {
         },
         {
           title: "Proveedores",
-          url: "/admin/proveedores",
+          url: "/admin/providers",
           icon: Ship,
         },
       ],

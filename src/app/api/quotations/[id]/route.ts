@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import prisma from "@/lib/prisma";
 import { createSystemNotification } from "@/lib/notifications";
-import { RequestStatus, QuotationStatus } from "@prisma/client";
+import { RequestStatus, QuotationStatus, Currency } from "@prisma/client";
 
 // API route for updating quotation status (approve/reject)
 export async function PUT(
@@ -368,7 +368,23 @@ export async function PATCH(
   try {
     const { id: quotationId } = await params;
     const body = await request.json();
-    const { amount, validUntil, terms, notes, status } = body;
+    const {
+      amount,
+      currency,
+      exchangeRate,
+      amountInBs,
+      swiftBankUSD,
+      correspondentBankUSD,
+      swiftBankBs,
+      correspondentBankBs,
+      managementServiceBs,
+      managementServicePercentage,
+      totalInBs,
+      validUntil,
+      terms,
+      notes,
+      status,
+    } = body;
 
     // Get authenticated admin user
     const authResult = await getAuthenticatedAdminUser();
@@ -427,6 +443,16 @@ export async function PATCH(
     // Prepare update data
     const updateData: {
       amount: number;
+      currency: Currency;
+      exchangeRate: number;
+      amountInBs: number;
+      swiftBankUSD: number;
+      correspondentBankUSD: number;
+      swiftBankBs: number;
+      correspondentBankBs: number;
+      managementServiceBs: number;
+      managementServicePercentage: number;
+      totalInBs: number;
       validUntil: Date;
       status: QuotationStatus;
       terms?: string;
@@ -434,7 +460,17 @@ export async function PATCH(
       sentAt?: Date;
     } = {
       amount: parseFloat(amount),
-      validUntil: new Date(validUntil + "T23:59:59"), // Set to end of day
+      currency: (currency || "USD") as Currency,
+      exchangeRate: parseFloat(exchangeRate) || 0,
+      amountInBs: parseFloat(amountInBs) || 0,
+      swiftBankUSD: parseFloat(swiftBankUSD) || 0,
+      correspondentBankUSD: parseFloat(correspondentBankUSD) || 0,
+      swiftBankBs: parseFloat(swiftBankBs) || 0,
+      correspondentBankBs: parseFloat(correspondentBankBs) || 0,
+      managementServiceBs: parseFloat(managementServiceBs) || 0,
+      managementServicePercentage: parseFloat(managementServicePercentage) || 0,
+      totalInBs: parseFloat(totalInBs) || 0,
+      validUntil: new Date(validUntil), // Now handles datetime string correctly
       status: status as QuotationStatus,
     };
 
