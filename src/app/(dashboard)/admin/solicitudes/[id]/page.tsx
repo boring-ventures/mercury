@@ -596,7 +596,7 @@ function QuotationGenerator({
 
   const [quotationData, setQuotationData] = useState({
     amount: "",
-    currency: "USD",
+    currency: "USD", // Fixed to USD
     exchangeRate: "",
     amountInBs: "",
     swiftBankUSD: "",
@@ -612,6 +612,14 @@ function QuotationGenerator({
     status: "DRAFT",
   });
 
+  const [binancePrice, setBinancePrice] = useState<{
+    price: number;
+    available: number;
+    coverage: number;
+    offers: number;
+    offers_used?: any[];
+  } | null>(null);
+  const [isBinanceCollapsed, setIsBinanceCollapsed] = useState(true);
   const [isLoadingExchangeRate, setIsLoadingExchangeRate] = useState(false);
 
   // Validate if the selected date is valid (at least tomorrow)
@@ -727,6 +735,20 @@ function QuotationGenerator({
     calculateTotalInBs();
   }, [calculateTotalInBs]);
 
+  // Fetch Binance price when amount changes
+  useEffect(() => {
+    const amount = parseFloat(quotationData.amount);
+    if (amount > 0) {
+      const timeoutId = setTimeout(() => {
+        fetchBinancePrice(amount);
+      }, 1000); // 1 second debounce
+
+      return () => clearTimeout(timeoutId);
+    } else {
+      setBinancePrice(null);
+    }
+  }, [quotationData.amount]);
+
   // Function to fetch exchange rate from Binance P2P API
   const fetchExchangeRate = async () => {
     setIsLoadingExchangeRate(true);
@@ -752,6 +774,63 @@ function QuotationGenerator({
         title: "Error al obtener tipo de cambio",
         description:
           "No se pudo obtener el precio desde Binance P2P. Intenta de nuevo.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingExchangeRate(false);
+    }
+  };
+
+  // Function to fetch Binance price for specific amount
+  const fetchBinancePrice = async (amount: number) => {
+    if (!amount || amount <= 0) {
+      setBinancePrice(null);
+      return;
+    }
+
+    setIsLoadingExchangeRate(true);
+    try {
+      const response = await fetch(
+        `/api/binance/exchange-rate?amount=${amount}`
+      );
+      const data = await response.json();
+
+      if (data.success && data.data) {
+        setBinancePrice({
+          price: data.data.usdt_bob,
+          available: data.data.available_amount,
+          coverage: data.data.coverage_percentage,
+          offers: data.data.offers_count,
+          offers_used: data.data.offers_used || [],
+        });
+
+        // Update exchange rate with the fetched price
+        setQuotationData((prev: any) => ({
+          ...prev,
+          exchangeRate: data.data.usdt_bob.toString(),
+        }));
+
+        // Ensure collapsible stays closed when data is fetched
+        setIsBinanceCollapsed(false);
+
+        toast({
+          title: "Precio actualizado",
+          description: `Precio promedio: ${data.data.usdt_bob.toFixed(2)} BOB/USDT (${data.data.offers_count} ofertas)`,
+        });
+      } else {
+        setBinancePrice(null);
+        toast({
+          title: "Error",
+          description: data.error || "No se pudo obtener el precio",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching Binance price:", error);
+      setBinancePrice(null);
+      toast({
+        title: "Error",
+        description: "No se pudo obtener el precio desde Binance P2P",
         variant: "destructive",
       });
     } finally {
@@ -923,30 +1002,16 @@ function QuotationGenerator({
                 />
               </div>
               <div>
-                <Label htmlFor="currency">Moneda*</Label>
-                <Select
-                  value={quotationData.currency}
-                  onValueChange={(value) =>
-                    setQuotationData((prev) => ({ ...prev, currency: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="USD">Dólares (USD)</SelectItem>
-                    <SelectItem value="EUR">Euros (EUR)</SelectItem>
-                    <SelectItem value="CNY">Yuan Chino (CNY)</SelectItem>
-                    <SelectItem value="JPY">Yen Japonés (JPY)</SelectItem>
-                    <SelectItem value="USDT">Tether (USDT)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="exchangeRate">Tipo de Cambio</Label>
+                <Label htmlFor="currency">Moneda / Tipo de Cambio</Label>
                 <div className="flex gap-2">
+                  <div className="flex-1">
+                    <Input
+                      id="currency"
+                      value="USD"
+                      readOnly
+                      className="bg-gray-50 cursor-not-allowed"
+                    />
+                  </div>
                   <Input
                     id="exchangeRate"
                     type="number"
@@ -965,8 +1030,19 @@ function QuotationGenerator({
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={fetchExchangeRate}
-                    disabled={isLoadingExchangeRate}
+                    onClick={() => {
+                      const amount = parseFloat(quotationData.amount);
+                      if (amount > 0) {
+                        fetchBinancePrice(amount);
+                      } else {
+                        toast({
+                          title: "Error",
+                          description: "Ingrese un monto válido primero",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                    disabled={isLoadingExchangeRate || !quotationData.amount}
                     className="whitespace-nowrap"
                   >
                     {isLoadingExchangeRate ? (
@@ -986,6 +1062,133 @@ function QuotationGenerator({
                   Obtén el precio promedio desde Binance P2P
                 </p>
               </div>
+            </div>
+
+            {/* Binance P2P Price Display - Collapsible */}
+            {quotationData.amount &&
+              parseFloat(quotationData.amount) > 0 &&
+              binancePrice && (
+                <Collapsible
+                  open={isBinanceCollapsed}
+                  onOpenChange={setIsBinanceCollapsed}
+                >
+                  <CollapsibleTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 hover:from-blue-100 hover:to-indigo-100"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Banknote className="h-4 w-4" />
+                        <span className="font-medium text-blue-900">
+                          Precio Binance P2P: {binancePrice.price.toFixed(2)}{" "}
+                          BOB/USDT
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-green-100 text-green-800 border-green-200">
+                          {binancePrice.offers} ofertas
+                        </Badge>
+                        <ChevronDown
+                          className={`h-4 w-4 transition-transform ${isBinanceCollapsed ? "rotate-180" : ""}`}
+                        />
+                      </div>
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="mt-2 bg-white border border-blue-200 rounded-lg p-4">
+                      <div className="space-y-4">
+                        {/* Summary */}
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <p className="text-blue-700 font-medium">
+                              Precio Promedio:
+                            </p>
+                            <p className="text-lg font-bold text-blue-900">
+                              {binancePrice.price.toFixed(2)} BOB/USDT
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-blue-700 font-medium">
+                              Disponible:
+                            </p>
+                            <p className="text-lg font-bold text-blue-900">
+                              {binancePrice.available.toLocaleString()} USDT
+                            </p>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <p className="text-blue-700 font-medium">
+                              Cobertura:
+                            </p>
+                            <p className="font-medium text-blue-900">
+                              {binancePrice.coverage}%
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-blue-700 font-medium">
+                              Ofertas Usadas:
+                            </p>
+                            <p className="font-medium text-blue-900">
+                              {binancePrice.offers} ofertas
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Offers Details */}
+                        {binancePrice.offers_used &&
+                          binancePrice.offers_used.length > 0 && (
+                            <div className="border-t pt-4">
+                              <h5 className="font-medium text-blue-900 mb-3">
+                                Detalle de Ofertas:
+                              </h5>
+                              <div className="space-y-2 max-h-40 overflow-y-auto">
+                                {binancePrice.offers_used.map(
+                                  (offer: any, index: number) => (
+                                    <div
+                                      key={index}
+                                      className="flex items-center justify-between p-2 bg-gray-50 rounded text-xs"
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-medium">
+                                          {offer.advertiser}
+                                        </span>
+                                        <Badge
+                                          variant="outline"
+                                          className="text-xs"
+                                        >
+                                          Grado {offer.userGrade}
+                                        </Badge>
+                                      </div>
+                                      <div className="text-right">
+                                        <div className="font-medium">
+                                          {offer.price} BOB/USDT
+                                        </div>
+                                        <div className="text-gray-600">
+                                          {offer.availableAmount.toLocaleString()}{" "}
+                                          USDT
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                        <div className="border-t pt-2">
+                          <p className="text-xs text-blue-600">
+                            💡 Precio calculado con {binancePrice.offers}{" "}
+                            ofertas de Binance P2P
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
+
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="amountInBs">
                   Monto a Enviar en Bs (Auto-calculado)
@@ -1040,6 +1243,9 @@ function QuotationGenerator({
                     className="bg-gray-50 cursor-not-allowed"
                     placeholder="0.00"
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Calculado automáticamente: SWIFT USD × Tipo de Cambio
+                  </p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4 mt-4">
@@ -1074,56 +1280,34 @@ function QuotationGenerator({
                     className="bg-gray-50 cursor-not-allowed"
                     placeholder="0.00"
                   />
-                </div>
-              </div>
-            </div>
-            {/* Servicio de Gestión Section */}
-            <div className="border-t pt-4">
-              <h4 className="font-medium text-sm mb-3 text-green-600">
-                Servicio de Gestión
-              </h4>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="managementServicePercentage">
-                    Porcentaje Servicio (%)*
-                  </Label>
-                  <Input
-                    id="managementServicePercentage"
-                    type="number"
-                    step="0.01"
-                    value={quotationData.managementServicePercentage}
-                    onChange={(e) =>
-                      setQuotationData((prev) => ({
-                        ...prev,
-                        managementServicePercentage: e.target.value,
-                      }))
-                    }
-                    placeholder="1.5"
-                  />
                   <p className="text-xs text-gray-500 mt-1">
-                    Se aplica solo sobre el monto a enviar en Bs
-                  </p>
-                </div>
-                <div>
-                  <Label htmlFor="managementServiceBs">
-                    Servicio de Gestión (Bs) (Auto-calculado)
-                  </Label>
-                  <Input
-                    id="managementServiceBs"
-                    type="number"
-                    step="0.01"
-                    value={quotationData.managementServiceBs}
-                    readOnly
-                    className="bg-gray-50 cursor-not-allowed"
-                    placeholder="0.00"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Calculado automáticamente: Monto Bs × Porcentaje / 100
+                    Calculado automáticamente: Com. USD × Tipo de Cambio
                   </p>
                 </div>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="managementServicePercentage">
+                  Porcentaje Servicio (%)*
+                </Label>
+                <Input
+                  id="managementServicePercentage"
+                  type="number"
+                  step="0.01"
+                  value={quotationData.managementServicePercentage}
+                  onChange={(e) =>
+                    setQuotationData((prev) => ({
+                      ...prev,
+                      managementServicePercentage: e.target.value,
+                    }))
+                  }
+                  placeholder="1.5"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Se aplica solo sobre el monto a enviar en Bs
+                </p>
+              </div>
               <div>
                 <Label htmlFor="totalInBs">Total en Bs (Auto-calculado)</Label>
                 <Input
@@ -1139,78 +1323,47 @@ function QuotationGenerator({
                   Calculado automáticamente: Valor Bs + Gasto Bs + Servicio Bs
                 </p>
               </div>
-              <div>
-                <Label htmlFor="validUntil">Válida hasta*</Label>
-                <Input
-                  id="validUntil"
-                  type="datetime-local"
-                  min={getMinimumDate()}
-                  value={quotationData.validUntil}
-                  onChange={(e) =>
-                    setQuotationData((prev) => ({
-                      ...prev,
-                      validUntil: e.target.value,
-                    }))
-                  }
-                  className={
-                    !isDateValid ? "border-red-500 focus:border-red-500" : ""
-                  }
-                />
-                <div className="mt-1">
-                  {!isDateValid ? (
-                    <p className="text-xs text-red-600 font-medium">
-                      ⚠️ La fecha y hora deben ser al menos desde mañana (
-                      {format(
-                        new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
-                        "dd/MM/yyyy 'a las' HH:mm",
-                        { locale: es }
-                      )}
-                      )
-                    </p>
-                  ) : (
-                    <p className="text-xs text-gray-500">
-                      La fecha y hora deben ser al menos desde mañana (
-                      {format(
-                        new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
-                        "dd/MM/yyyy 'a las' HH:mm",
-                        { locale: es }
-                      )}
-                      )
-                    </p>
-                  )}
-                </div>
-              </div>
             </div>
             <div>
-              <Label htmlFor="status">Estado de la Cotización*</Label>
-              <Select
-                value={quotationData.status}
-                onValueChange={(value) =>
-                  setQuotationData((prev) => ({ ...prev, status: value }))
+              <Label htmlFor="validUntil">Válida hasta*</Label>
+              <Input
+                id="validUntil"
+                type="datetime-local"
+                min={getMinimumDate()}
+                value={quotationData.validUntil}
+                onChange={(e) =>
+                  setQuotationData((prev) => ({
+                    ...prev,
+                    validUntil: e.target.value,
+                  }))
                 }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="DRAFT">
-                    <div className="flex flex-col items-start">
-                      <span>Borrador</span>
-                      <span className="text-xs text-gray-500">
-                        Puede ser modificada, no visible para el importador
-                      </span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="SENT">
-                    <div className="flex flex-col items-start">
-                      <span>Publicada</span>
-                      <span className="text-xs text-gray-500">
-                        Visible para el importador, lista para revisión
-                      </span>
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+                className={
+                  !isDateValid ? "border-red-500 focus:border-red-500" : ""
+                }
+              />
+              <div className="mt-1">
+                {!isDateValid ? (
+                  <p className="text-xs text-red-600 font-medium">
+                    ⚠️ La fecha y hora deben ser al menos desde mañana (
+                    {format(
+                      new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
+                      "dd/MM/yyyy 'a las' HH:mm",
+                      { locale: es }
+                    )}
+                    )
+                  </p>
+                ) : (
+                  <p className="text-xs text-gray-500">
+                    La fecha y hora deben ser al menos desde mañana (
+                    {format(
+                      new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
+                      "dd/MM/yyyy 'a las' HH:mm",
+                      { locale: es }
+                    )}
+                    )
+                  </p>
+                )}
+              </div>
             </div>
             <div>
               <Label htmlFor="terms">Términos y Condiciones</Label>
@@ -1576,6 +1729,16 @@ function QuotationEditForm({
     status: quotation.status,
   });
 
+  const [binancePrice, setBinancePrice] = useState<{
+    price: number;
+    available: number;
+    coverage: number;
+    offers: number;
+    offers_used?: any[];
+  } | null>(null);
+  const [isBinanceCollapsed, setIsBinanceCollapsed] = useState(false);
+  const [isLoadingExchangeRate, setIsLoadingExchangeRate] = useState(false);
+
   // Get tomorrow's date as minimum (to ensure it's always future)
   const getMinimumDate = () => {
     const tomorrow = new Date();
@@ -1647,6 +1810,62 @@ function QuotationEditForm({
     calculateTotalInBs,
   ]);
 
+  // Function to fetch Binance price for specific amount
+  const fetchBinancePrice = async (amount: number) => {
+    if (!amount || amount <= 0) {
+      setBinancePrice(null);
+      return;
+    }
+
+    setIsLoadingExchangeRate(true);
+    try {
+      const response = await fetch(
+        `/api/binance/exchange-rate?amount=${amount}`
+      );
+      const data = await response.json();
+
+      if (data.success && data.data) {
+        setBinancePrice({
+          price: data.data.usdt_bob,
+          available: data.data.available_amount,
+          coverage: data.data.coverage_percentage,
+          offers: data.data.offers_count,
+          offers_used: data.data.offers_used || [],
+        });
+
+        // Update exchange rate with the fetched price
+        setFormData((prev) => ({
+          ...prev,
+          exchangeRate: data.data.usdt_bob.toString(),
+        }));
+
+        // Ensure collapsible stays closed when data is fetched
+        setIsBinanceCollapsed(false);
+      } else {
+        setBinancePrice(null);
+      }
+    } catch (error) {
+      console.error("Error fetching Binance price:", error);
+      setBinancePrice(null);
+    } finally {
+      setIsLoadingExchangeRate(false);
+    }
+  };
+
+  // Remove the automatic trigger useEffect
+  // useEffect(() => {
+  //   const amount = parseFloat(quotationData.amount);
+  //   if (amount > 0) {
+  //     const timeoutId = setTimeout(() => {
+  //       fetchBinancePrice(amount);
+  //     }, 1000); // 1 second debounce
+
+  //     return () => clearTimeout(timeoutId);
+  //   } else {
+  //     setBinancePrice(null);
+  //   }
+  // }, [quotationData.amount]);
+
   const handleSave = () => {
     // Validate date
     const selectedDate = new Date(formData.validUntil);
@@ -1709,26 +1928,130 @@ function QuotationEditForm({
           />
         </div>
         <div>
-          <Label htmlFor="editCurrency">Moneda*</Label>
-          <Select
-            value={formData.currency}
-            onValueChange={(value) =>
-              setFormData((prev) => ({ ...prev, currency: value }))
-            }
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="USD">Dólares (USD)</SelectItem>
-              <SelectItem value="EUR">Euros (EUR)</SelectItem>
-              <SelectItem value="CNY">Yuan Chino (CNY)</SelectItem>
-              <SelectItem value="JPY">Yen Japonés (JPY)</SelectItem>
-              <SelectItem value="USDT">Tether (USDT)</SelectItem>
-            </SelectContent>
-          </Select>
+          <Label htmlFor="editCurrency">Moneda / Tipo de Cambio</Label>
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <Input
+                id="editCurrency"
+                value="USD"
+                readOnly
+                className="bg-gray-50 cursor-not-allowed"
+              />
+            </div>
+            <Input
+              id="editExchangeRate"
+              type="number"
+              step="0.0001"
+              value={formData.exchangeRate}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  exchangeRate: e.target.value,
+                }))
+              }
+              placeholder="0.0000"
+              className="flex-1"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const amount = parseFloat(formData.amount);
+                if (amount > 0) {
+                  fetchBinancePrice(amount);
+                }
+              }}
+              disabled={isLoadingExchangeRate || !formData.amount}
+              className="whitespace-nowrap"
+            >
+              {isLoadingExchangeRate ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                  Cargando...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-1" />
+                  Obtener
+                </>
+              )}
+            </Button>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Obtén el precio promedio desde Binance P2P
+          </p>
         </div>
       </div>
+
+      {/* Binance P2P Price Display */}
+      {formData.amount && parseFloat(formData.amount) > 0 && (
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="font-medium text-blue-900 flex items-center gap-2">
+              <Banknote className="h-4 w-4" />
+              Precio Binance P2P
+            </h4>
+            {binancePrice ? (
+              <Badge className="bg-green-100 text-green-800 border-green-200">
+                Disponible
+              </Badge>
+            ) : (
+              <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+                Consultando...
+              </Badge>
+            )}
+          </div>
+
+          {binancePrice ? (
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-blue-700 font-medium">Precio Promedio:</p>
+                  <p className="text-lg font-bold text-blue-900">
+                    {binancePrice.price.toFixed(2)} BOB/USDT
+                  </p>
+                </div>
+                <div>
+                  <p className="text-blue-700 font-medium">Disponible:</p>
+                  <p className="text-lg font-bold text-blue-900">
+                    {binancePrice.available.toLocaleString()} USDT
+                  </p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-blue-700 font-medium">Cobertura:</p>
+                  <p className="font-medium text-blue-900">
+                    {binancePrice.coverage}%
+                  </p>
+                </div>
+                <div>
+                  <p className="text-blue-700 font-medium">Ofertas:</p>
+                  <p className="font-medium text-blue-900">
+                    {binancePrice.offers} ofertas
+                  </p>
+                </div>
+              </div>
+              <div className="mt-2 pt-2 border-t border-blue-200">
+                <p className="text-xs text-blue-600">
+                  💡 Este precio se actualiza automáticamente según el monto
+                  ingresado
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="h-4 w-4 animate-spin text-blue-500 mr-2" />
+              <span className="text-sm text-blue-600">
+                Consultando precio para{" "}
+                {parseFloat(formData.amount).toLocaleString()} USDT...
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="editExchangeRate">Tipo de Cambio</Label>
@@ -1797,6 +2120,9 @@ function QuotationEditForm({
               className="bg-gray-50 cursor-not-allowed"
               placeholder="0.00"
             />
+            <p className="text-xs text-gray-500 mt-1">
+              Calculado automáticamente: SWIFT USD × Tipo de Cambio
+            </p>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4 mt-4">
@@ -1831,6 +2157,9 @@ function QuotationEditForm({
               className="bg-gray-50 cursor-not-allowed"
               placeholder="0.00"
             />
+            <p className="text-xs text-gray-500 mt-1">
+              Calculado automáticamente: Com. USD × Tipo de Cambio
+            </p>
           </div>
         </div>
       </div>
@@ -2032,6 +2361,152 @@ function QuotationEditForm({
           </div>
         </div>
       )}
+
+      {/* Binance P2P Price Display - Collapsible */}
+      {formData.amount && parseFloat(formData.amount) > 0 && binancePrice && (
+        <Collapsible
+          open={isBinanceCollapsed}
+          onOpenChange={setIsBinanceCollapsed}
+        >
+          <CollapsibleTrigger asChild>
+            <Button
+              variant="outline"
+              className="w-full justify-between bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 hover:from-blue-100 hover:to-indigo-100"
+            >
+              <div className="flex items-center gap-2">
+                <Banknote className="h-4 w-4" />
+                <span className="font-medium text-blue-900">
+                  Precio Binance P2P: {binancePrice.price.toFixed(2)} BOB/USDT
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge className="bg-green-100 text-green-800 border-green-200">
+                  {binancePrice.offers} ofertas
+                </Badge>
+                <ChevronDown
+                  className={`h-4 w-4 transition-transform ${isBinanceCollapsed ? "rotate-180" : ""}`}
+                />
+              </div>
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="mt-2 bg-white border border-blue-200 rounded-lg p-4">
+              <div className="space-y-4">
+                {/* Summary */}
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-blue-700 font-medium">
+                      Precio Promedio:
+                    </p>
+                    <p className="text-lg font-bold text-blue-900">
+                      {binancePrice.price.toFixed(2)} BOB/USDT
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-blue-700 font-medium">Disponible:</p>
+                    <p className="text-lg font-bold text-blue-900">
+                      {binancePrice.available.toLocaleString()} USDT
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-blue-700 font-medium">Cobertura:</p>
+                    <p className="font-medium text-blue-900">
+                      {binancePrice.coverage}%
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-blue-700 font-medium">Ofertas Usadas:</p>
+                    <p className="font-medium text-blue-900">
+                      {binancePrice.offers} ofertas
+                    </p>
+                  </div>
+                </div>
+
+                {/* Offers Details */}
+                {binancePrice.offers_used &&
+                  binancePrice.offers_used.length > 0 && (
+                    <div className="border-t pt-4">
+                      <h5 className="font-medium text-blue-900 mb-3">
+                        Detalle de Ofertas:
+                      </h5>
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {binancePrice.offers_used.map(
+                          (offer: any, index: number) => (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between p-2 bg-gray-50 rounded text-xs"
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">
+                                  {offer.advertiser}
+                                </span>
+                                <Badge variant="outline" className="text-xs">
+                                  Grado {offer.userGrade}
+                                </Badge>
+                              </div>
+                              <div className="text-right">
+                                <div className="font-medium">
+                                  {offer.price} BOB/USDT
+                                </div>
+                                <div className="text-gray-600">
+                                  {offer.availableAmount.toLocaleString()} USDT
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                <div className="border-t pt-2">
+                  <p className="text-xs text-blue-600">
+                    💡 Precio calculado con {binancePrice.offers} ofertas de
+                    Binance P2P
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      )}
+
+      <div className="grid grid-cols-2 gap-4 mt-4">
+        <div>
+          <Label htmlFor="editCorrespondentBankUSD">
+            Com. Corresponsal (USD)
+          </Label>
+          <Input
+            id="editCorrespondentBankUSD"
+            type="number"
+            step="0.01"
+            value={formData.correspondentBankUSD}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                correspondentBankUSD: e.target.value,
+              }))
+            }
+            placeholder="0.00"
+          />
+        </div>
+        <div>
+          <Label htmlFor="editCorrespondentBankBs">
+            Com. Corresponsal (Bs) (Auto-calculado)
+          </Label>
+          <Input
+            id="editCorrespondentBankBs"
+            type="number"
+            step="0.01"
+            value={formData.correspondentBankBs}
+            readOnly
+            className="bg-gray-50 cursor-not-allowed"
+            placeholder="0.00"
+          />
+        </div>
+      </div>
 
       {/* Hidden save button for dialog footer to trigger */}
       <button

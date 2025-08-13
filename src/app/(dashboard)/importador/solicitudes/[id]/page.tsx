@@ -932,6 +932,188 @@ function QuotationCard({
   );
 }
 
+function QuotationActionButtons({
+  quotation,
+  onUpdate,
+}: {
+  quotation: QuotationType;
+  onUpdate: () => void;
+}) {
+  const { toast } = useToast();
+  const { updateQuotation, isLoading } = useUpdateQuotation();
+  const [notes, setNotes] = useState("");
+  const [showApproveDialog, setShowApproveDialog] = useState(false);
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
+
+  const handleApprove = async () => {
+    try {
+      await updateQuotation({
+        quotationId: quotation.id,
+        action: "ACCEPTED",
+        notes: notes || undefined,
+      });
+      setShowApproveDialog(false);
+      setNotes("");
+      onUpdate();
+    } catch {
+      // Error handling is done in the hook
+    }
+  };
+
+  const handleReject = async () => {
+    if (!notes.trim()) {
+      toast({
+        title: "Nota requerida",
+        description: "Debe proporcionar una razón para rechazar la cotización",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await updateQuotation({
+        quotationId: quotation.id,
+        action: "REJECTED",
+        notes,
+      });
+      setShowRejectDialog(false);
+      setNotes("");
+      onUpdate();
+    } catch {
+      // Error handling is done in the hook
+    }
+  };
+
+  return (
+    <div className="flex flex-col sm:flex-row gap-3">
+      {/* Approve Dialog */}
+      <Dialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
+        <DialogTrigger asChild>
+          <Button
+            className="flex-1 bg-green-600 hover:bg-green-700"
+            disabled={isLoading}
+          >
+            <Check className="h-4 w-4 mr-2" />
+            Aprobar Cotización
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Aprobar Cotización</DialogTitle>
+            <DialogDescription>
+              ¿Está seguro que desea aprobar esta cotización? Esta acción moverá
+              la solicitud al siguiente paso del proceso.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="modal-approve-notes">
+                Notas adicionales (opcional)
+              </Label>
+              <Textarea
+                id="modal-approve-notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Comentarios adicionales sobre la aprobación..."
+                className="mt-2"
+              />
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowApproveDialog(false);
+                setNotes("");
+              }}
+              disabled={isLoading}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleApprove}
+              disabled={isLoading}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Aprobando...
+                </>
+              ) : (
+                <>
+                  <Check className="h-4 w-4 mr-2" />
+                  Confirmar Aprobación
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Dialog */}
+      <AlertDialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+        <AlertDialogTrigger asChild>
+          <Button variant="destructive" className="flex-1" disabled={isLoading}>
+            <X className="h-4 w-4 mr-2" />
+            Rechazar Cotización
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Rechazar Cotización</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Está seguro que desea rechazar esta cotización? Debe proporcionar
+              una razón para el rechazo.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="modal-reject-notes">Motivo del rechazo *</Label>
+              <Textarea
+                id="modal-reject-notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Explique por qué está rechazando esta cotización..."
+                className="mt-2"
+                required
+              />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setShowRejectDialog(false);
+                setNotes("");
+              }}
+              disabled={isLoading}
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleReject}
+              disabled={isLoading || !notes.trim()}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Rechazando...
+                </>
+              ) : (
+                <>
+                  <X className="h-4 w-4 mr-2" />
+                  Confirmar Rechazo
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
 export default function ImportadorSolicitudDetail() {
   const params = useParams();
   const router = useRouter();
@@ -1297,24 +1479,465 @@ export default function ImportadorSolicitudDetail() {
                                 {nextAction.text}
                               </Button>
                             </DialogTrigger>
-                            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                            <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
                               <DialogHeader>
                                 <DialogTitle className="flex items-center gap-2">
                                   <DollarSign className="h-5 w-5" />
                                   Revisar Cotización {visibleQuotations[0].code}
                                 </DialogTitle>
                                 <DialogDescription>
-                                  Revise los detalles de la cotización y decida
-                                  si aprobarla o rechazarla.
+                                  Revise los detalles completos de la cotización
+                                  y decida si aprobarla o rechazarla.
                                 </DialogDescription>
                               </DialogHeader>
 
-                              {/* Use the existing QuotationCard component */}
-                              <div className="py-4">
-                                <QuotationCard
-                                  quotation={visibleQuotations[0]}
-                                  onUpdate={handleQuotationUpdate}
-                                />
+                              <div className="py-6 space-y-6">
+                                {/* Basic Information Section */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                  <Card>
+                                    <CardHeader className="pb-3">
+                                      <CardTitle className="text-sm font-medium text-gray-600">
+                                        Estado de la Cotización
+                                      </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                      <Badge
+                                        className={(() => {
+                                          switch (visibleQuotations[0].status) {
+                                            case "DRAFT":
+                                              return "bg-orange-100 text-orange-800";
+                                            case "SENT":
+                                              return "bg-blue-100 text-blue-800";
+                                            case "ACCEPTED":
+                                              return "bg-green-100 text-green-800";
+                                            case "REJECTED":
+                                              return "bg-red-100 text-red-800";
+                                            case "EXPIRED":
+                                              return "bg-gray-100 text-gray-800";
+                                            default:
+                                              return "bg-gray-100 text-gray-800";
+                                          }
+                                        })()}
+                                      >
+                                        {(() => {
+                                          switch (visibleQuotations[0].status) {
+                                            case "DRAFT":
+                                              return "Borrador";
+                                            case "SENT":
+                                              return "Pendiente";
+                                            case "ACCEPTED":
+                                              return "Aprobada";
+                                            case "REJECTED":
+                                              return "Rechazada";
+                                            case "EXPIRED":
+                                              return "Expirada";
+                                            default:
+                                              return visibleQuotations[0]
+                                                .status;
+                                          }
+                                        })()}
+                                      </Badge>
+                                    </CardContent>
+                                  </Card>
+
+                                  <Card>
+                                    <CardHeader className="pb-3">
+                                      <CardTitle className="text-sm font-medium text-gray-600">
+                                        Fecha de Creación
+                                      </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                      <p className="text-sm font-medium">
+                                        {format(
+                                          new Date(
+                                            visibleQuotations[0].createdAt
+                                          ),
+                                          "dd/MM/yyyy 'a las' HH:mm",
+                                          { locale: es }
+                                        )}
+                                      </p>
+                                    </CardContent>
+                                  </Card>
+
+                                  <Card>
+                                    <CardHeader className="pb-3">
+                                      <CardTitle className="text-sm font-medium text-gray-600">
+                                        Válida Hasta
+                                      </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                      <p
+                                        className={`text-sm font-medium ${
+                                          new Date() >
+                                          new Date(
+                                            visibleQuotations[0].validUntil
+                                          )
+                                            ? "text-red-600"
+                                            : new Date(
+                                                  visibleQuotations[0].validUntil
+                                                ) <
+                                                new Date(
+                                                  Date.now() +
+                                                    24 * 60 * 60 * 1000
+                                                )
+                                              ? "text-yellow-600"
+                                              : "text-green-600"
+                                        }`}
+                                      >
+                                        {format(
+                                          new Date(
+                                            visibleQuotations[0].validUntil
+                                          ),
+                                          "dd/MM/yyyy 'a las' HH:mm",
+                                          { locale: es }
+                                        )}
+                                      </p>
+                                    </CardContent>
+                                  </Card>
+                                </div>
+
+                                {/* Description Section */}
+                                {visibleQuotations[0].description && (
+                                  <Card>
+                                    <CardHeader>
+                                      <CardTitle className="flex items-center gap-2">
+                                        <FileText className="h-4 w-4" />
+                                        Descripción de la Cotización
+                                      </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                      <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                                        {visibleQuotations[0].description}
+                                      </p>
+                                    </CardContent>
+                                  </Card>
+                                )}
+
+                                {/* Exchange Rate Information */}
+                                {visibleQuotations[0].exchangeRate && (
+                                  <Card>
+                                    <CardHeader>
+                                      <CardTitle className="flex items-center gap-2">
+                                        <DollarSign className="h-4 w-4" />
+                                        Información de Tipo de Cambio
+                                      </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="bg-blue-50 p-4 rounded-lg border">
+                                          <p className="text-xs text-blue-600 mb-1">
+                                            Tipo de Cambio USD/BOB
+                                          </p>
+                                          <p className="font-semibold text-lg text-blue-900">
+                                            {Number(
+                                              visibleQuotations[0].exchangeRate
+                                            )?.toFixed(4)}{" "}
+                                            BOB
+                                          </p>
+                                        </div>
+                                        {visibleQuotations[0].amountInBs && (
+                                          <div className="bg-green-50 p-4 rounded-lg border">
+                                            <p className="text-xs text-green-600 mb-1">
+                                              Monto Principal en BOB
+                                            </p>
+                                            <p className="font-semibold text-lg text-green-900">
+                                              {Number(
+                                                visibleQuotations[0].amountInBs
+                                              )?.toLocaleString()}{" "}
+                                              BOB
+                                            </p>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </CardContent>
+                                  </Card>
+                                )}
+
+                                {/* Cost Breakdown Section - Enhanced */}
+                                <Card>
+                                  <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                      <DollarSign className="h-4 w-4" />
+                                      Desglose Detallado de Costos
+                                    </CardTitle>
+                                  </CardHeader>
+                                  <CardContent>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                                      {/* USD Costs */}
+                                      <div className="space-y-3">
+                                        <h4 className="font-medium text-gray-900 text-sm border-b pb-1">
+                                          Costos en USD
+                                        </h4>
+
+                                        <div className="bg-gray-50 p-3 rounded-lg border">
+                                          <p className="text-xs text-gray-600">
+                                            Monto Principal
+                                          </p>
+                                          <p className="font-semibold text-lg">
+                                            $
+                                            {Number(
+                                              visibleQuotations[0].amount
+                                            )?.toLocaleString()}{" "}
+                                            USD
+                                          </p>
+                                        </div>
+
+                                        {visibleQuotations[0].swiftBankUSD !==
+                                          undefined && (
+                                          <div className="bg-gray-50 p-3 rounded-lg border">
+                                            <p className="text-xs text-gray-600">
+                                              SWIFT Bank
+                                            </p>
+                                            <p className="font-semibold">
+                                              $
+                                              {Number(
+                                                visibleQuotations[0]
+                                                  .swiftBankUSD
+                                              )?.toLocaleString()}{" "}
+                                              USD
+                                            </p>
+                                          </div>
+                                        )}
+
+                                        {visibleQuotations[0]
+                                          .correspondentBankUSD !==
+                                          undefined && (
+                                          <div className="bg-gray-50 p-3 rounded-lg border">
+                                            <p className="text-xs text-gray-600">
+                                              Banco Corresponsal
+                                            </p>
+                                            <p className="font-semibold">
+                                              $
+                                              {Number(
+                                                visibleQuotations[0]
+                                                  .correspondentBankUSD
+                                              )?.toLocaleString()}{" "}
+                                              USD
+                                            </p>
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      {/* BOB Costs */}
+                                      {(visibleQuotations[0].amountInBs ||
+                                        visibleQuotations[0].swiftBankBs ||
+                                        visibleQuotations[0]
+                                          .correspondentBankBs) && (
+                                        <div className="space-y-3">
+                                          <h4 className="font-medium text-gray-900 text-sm border-b pb-1">
+                                            Costos en BOB
+                                          </h4>
+
+                                          {visibleQuotations[0].amountInBs && (
+                                            <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                                              <p className="text-xs text-green-600">
+                                                Monto Principal
+                                              </p>
+                                              <p className="font-semibold text-green-900">
+                                                {Number(
+                                                  visibleQuotations[0]
+                                                    .amountInBs
+                                                )?.toLocaleString()}{" "}
+                                                BOB
+                                              </p>
+                                            </div>
+                                          )}
+
+                                          {visibleQuotations[0].swiftBankBs && (
+                                            <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                                              <p className="text-xs text-green-600">
+                                                SWIFT Bank
+                                              </p>
+                                              <p className="font-semibold text-green-900">
+                                                {Number(
+                                                  visibleQuotations[0]
+                                                    .swiftBankBs
+                                                )?.toLocaleString()}{" "}
+                                                BOB
+                                              </p>
+                                            </div>
+                                          )}
+
+                                          {visibleQuotations[0]
+                                            .correspondentBankBs && (
+                                            <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                                              <p className="text-xs text-green-600">
+                                                Banco Corresponsal
+                                              </p>
+                                              <p className="font-semibold text-green-900">
+                                                {Number(
+                                                  visibleQuotations[0]
+                                                    .correspondentBankBs
+                                                )?.toLocaleString()}{" "}
+                                                BOB
+                                              </p>
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
+
+                                      {/* Management Services */}
+                                      {(visibleQuotations[0]
+                                        .managementServiceBs ||
+                                        visibleQuotations[0]
+                                          .managementServicePercentage) && (
+                                        <div className="space-y-3">
+                                          <h4 className="font-medium text-gray-900 text-sm border-b pb-1">
+                                            Servicios de Gestión
+                                          </h4>
+
+                                          {visibleQuotations[0]
+                                            .managementServicePercentage && (
+                                            <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                                              <p className="text-xs text-purple-600">
+                                                Porcentaje de Servicio
+                                              </p>
+                                              <p className="font-semibold text-purple-900">
+                                                {Number(
+                                                  visibleQuotations[0]
+                                                    .managementServicePercentage
+                                                )?.toFixed(2)}
+                                                %
+                                              </p>
+                                            </div>
+                                          )}
+
+                                          {visibleQuotations[0]
+                                            .managementServiceBs && (
+                                            <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                                              <p className="text-xs text-purple-600">
+                                                Servicio de Gestión
+                                              </p>
+                                              <p className="font-semibold text-purple-900">
+                                                {Number(
+                                                  visibleQuotations[0]
+                                                    .managementServiceBs
+                                                )?.toLocaleString()}{" "}
+                                                BOB
+                                              </p>
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Total Section */}
+                                    {visibleQuotations[0].totalInBs && (
+                                      <div className="border-t pt-4">
+                                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                          <div className="flex items-center justify-between">
+                                            <div>
+                                              <p className="text-sm text-blue-600 font-medium">
+                                                Total a Pagar
+                                              </p>
+                                              <p className="text-xs text-blue-500">
+                                                Incluye todos los costos y
+                                                servicios
+                                              </p>
+                                            </div>
+                                            <p className="font-bold text-2xl text-blue-900">
+                                              {Number(
+                                                visibleQuotations[0].totalInBs
+                                              )?.toLocaleString()}{" "}
+                                              BOB
+                                            </p>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </CardContent>
+                                </Card>
+
+                                {/* Terms and Notes */}
+                                {(visibleQuotations[0].terms ||
+                                  visibleQuotations[0].notes ||
+                                  visibleQuotations[0].rejectionReason) && (
+                                  <Card>
+                                    <CardHeader>
+                                      <CardTitle className="flex items-center gap-2">
+                                        <MessageSquare className="h-4 w-4" />
+                                        Términos y Observaciones
+                                      </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                      {visibleQuotations[0].terms && (
+                                        <div>
+                                          <p className="text-sm font-medium text-gray-700 mb-2">
+                                            Términos y Condiciones
+                                          </p>
+                                          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                            <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                                              {visibleQuotations[0].terms}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {visibleQuotations[0].notes && (
+                                        <div>
+                                          <p className="text-sm font-medium text-gray-700 mb-2">
+                                            Notas Adicionales
+                                          </p>
+                                          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                                            <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                                              {visibleQuotations[0].notes}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {visibleQuotations[0].rejectionReason && (
+                                        <div>
+                                          <p className="text-sm font-medium text-red-700 mb-2">
+                                            Razón de Rechazo
+                                          </p>
+                                          <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                                            <p className="text-sm text-red-800 whitespace-pre-wrap leading-relaxed">
+                                              {
+                                                visibleQuotations[0]
+                                                  .rejectionReason
+                                              }
+                                            </p>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </CardContent>
+                                  </Card>
+                                )}
+
+                                {/* Action Buttons - Only show if quotation can be responded to */}
+                                {(() => {
+                                  const isExpired =
+                                    new Date() >
+                                    new Date(visibleQuotations[0].validUntil);
+                                  const canRespond =
+                                    (visibleQuotations[0].status === "SENT" ||
+                                      visibleQuotations[0].status ===
+                                        "DRAFT") &&
+                                    !isExpired;
+
+                                  return (
+                                    canRespond && (
+                                      <Card>
+                                        <CardHeader>
+                                          <CardTitle>
+                                            Acciones Disponibles
+                                          </CardTitle>
+                                          <p className="text-sm text-gray-600">
+                                            Decida si aprobar o rechazar esta
+                                            cotización
+                                          </p>
+                                        </CardHeader>
+                                        <CardContent>
+                                          <QuotationActionButtons
+                                            quotation={visibleQuotations[0]}
+                                            onUpdate={handleQuotationUpdate}
+                                          />
+                                        </CardContent>
+                                      </Card>
+                                    )
+                                  );
+                                })()}
                               </div>
                             </DialogContent>
                           </Dialog>

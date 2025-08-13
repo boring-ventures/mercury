@@ -548,6 +548,20 @@ export default function NuevaSolicitud() {
             )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
+                <Label htmlFor="proveedor-empresa">
+                  Nombre de la Empresa Beneficiaria*
+                </Label>
+                <Input
+                  id="proveedor-empresa"
+                  placeholder="Ej: Shanghai Trading Co., Ltd."
+                  required
+                  value={formData.providerName}
+                  onChange={(e) =>
+                    handleInputChange("providerName", e.target.value)
+                  }
+                />
+              </div>
+              <div>
                 <Label htmlFor="proveedor-pais">País del Proveedor *</Label>
                 <Select
                   value={formData.providerCountry}
@@ -575,25 +589,13 @@ export default function NuevaSolicitud() {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label htmlFor="proveedor-empresa">
-                  Nombre de la Empresa *
-                </Label>
-                <Input
-                  id="proveedor-empresa"
-                  placeholder="Ej: Shanghai Trading Co., Ltd."
-                  required
-                  value={formData.providerName}
-                  onChange={(e) =>
-                    handleInputChange("providerName", e.target.value)
-                  }
-                />
-              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="provider-bank-name">Nombre del Banco *</Label>
+                <Label htmlFor="provider-bank-name">
+                  Nombre del Banco del Beneficiario *
+                </Label>
                 <Input
                   id="provider-bank-name"
                   placeholder="Ej: Bank of China"
@@ -606,7 +608,7 @@ export default function NuevaSolicitud() {
               </div>
               <div>
                 <Label htmlFor="provider-account-number">
-                  Número de Cuenta *
+                  Número de Cuenta del Beneficiario *
                 </Label>
                 <Input
                   id="provider-account-number"
