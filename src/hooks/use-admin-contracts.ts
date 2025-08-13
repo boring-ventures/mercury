@@ -123,3 +123,60 @@ export function useContractStatusConfig() {
 
   return { getStatusConfig };
 }
+
+export interface AdminContractDetail {
+  id: string;
+  code: string;
+  title: string;
+  description: string;
+  status: string;
+  amount: number;
+  currency: string;
+  startDate: string;
+  endDate: string;
+  signedAt: string | null;
+  terms: string;
+  conditions: string | null;
+  createdAt: string;
+  request: {
+    id: string;
+    code: string;
+    description: string;
+    amount: number;
+    currency: string;
+    company: {
+      name: string;
+      country: string;
+      email: string;
+      phone: string;
+    };
+  } | null;
+  quotation: {
+    id: string;
+    code: string;
+    amount: number;
+    currency: string;
+  } | null;
+  createdBy: {
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  company: {
+    name: string;
+    country: string;
+  };
+}
+
+export function useAdminContract(id?: string) {
+  return useQuery<{ contract: AdminContractDetail }>({
+    queryKey: ["admin-contract", id],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/contracts/${id}`);
+      if (!res.ok) throw new Error("Failed to fetch contract");
+      return res.json();
+    },
+    enabled: Boolean(id),
+    staleTime: 5 * 60 * 1000,
+  });
+}

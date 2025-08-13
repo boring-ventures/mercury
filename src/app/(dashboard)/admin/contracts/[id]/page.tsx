@@ -29,6 +29,8 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useParams } from "next/navigation";
+import { Loader } from "@/components/ui/loader";
+import { useAdminContract } from "@/hooks/use-admin-contracts";
 
 function StatusBadge({ status }: { status: string }) {
   const getStatusConfig = (status: string) => {
@@ -116,52 +118,72 @@ function isExpired(endDate: string): boolean {
 export default function AdminContractDetail() {
   const params = useParams();
   const contractId = params.id as string;
+  const { data, isLoading, error } = useAdminContract(contractId);
+  const contract = data?.contract;
 
-  // Mock data - replace with actual API call
-  const contract = {
-    id: contractId,
-    code: "CON-001",
-    title: "Contrato de Importación - Maquinaria Industrial",
-    description:
-      "Contrato para la importación de maquinaria industrial desde China",
-    status: "ACTIVE",
-    amount: 150000,
-    currency: "USD",
-    startDate: "2025-01-01",
-    endDate: "2025-12-31",
-    signedAt: "2025-01-05T10:00:00Z",
-    terms: "Pago en cuotas, entrega en 60 días, garantía de 1 año",
-    conditions: "Condiciones especiales aplican para este contrato",
-    createdAt: "2025-01-03T14:30:00Z",
-    request: {
-      id: "req-1",
-      code: "SH-001",
-      description: "Importación de maquinaria industrial",
-      amount: 150000,
-      currency: "USD",
-      company: {
-        name: "Empresa A",
-        country: "Bolivia",
-        email: "contacto@empresaa.com",
-        phone: "+591 2 123456",
-      },
-    },
-    quotation: {
-      id: "cot-1",
-      code: "COT-001",
-      amount: 150000,
-      currency: "USD",
-    },
-    createdBy: {
-      firstName: "Juan",
-      lastName: "Pérez",
-      email: "juan.perez@mercury.com",
-    },
-    company: {
-      name: "Empresa A",
-      country: "Bolivia",
-    },
+  const [isActivating, setIsActivating] = useState(false);
+  const handleActivate = async () => {
+    try {
+      setIsActivating(true);
+      const res = await fetch("/api/admin/contracts", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: contractId, status: "ACTIVE" }),
+      });
+      if (!res.ok) throw new Error("Failed to activate contract");
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsActivating(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Link href="/admin/contracts">
+              <Button variant="outline" size="sm">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Volver
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Contrato</h1>
+              <p className="text-muted-foreground">Cargando detalles...</p>
+            </div>
+          </div>
+          <Loader />
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !contract) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Link href="/admin/contracts">
+              <Button variant="outline" size="sm">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Volver
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Contrato</h1>
+              <p className="text-muted-foreground">
+                No se pudo cargar el contrato
+              </p>
+            </div>
+          </div>
+          <AlertCircle className="h-6 w-6 text-destructive" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -312,21 +334,25 @@ export default function AdminContractDetail() {
                 <label className="text-sm font-medium text-muted-foreground">
                   Código
                 </label>
-                <p className="text-sm font-medium">{contract.request.code}</p>
+                <p className="text-sm font-medium">
+                  {contract.request?.code || "—"}
+                </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">
                   Descripción
                 </label>
-                <p className="text-sm">{contract.request.description}</p>
+                <p className="text-sm">
+                  {contract.request?.description || "—"}
+                </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">
                   Monto
                 </label>
                 <p className="text-sm">
-                  {contract.request.amount.toLocaleString()}{" "}
-                  {contract.request.currency}
+                  {contract.request?.amount.toLocaleString()}{" "}
+                  {contract.request?.currency}
                 </p>
               </div>
             </CardContent>
@@ -345,15 +371,17 @@ export default function AdminContractDetail() {
                 <label className="text-sm font-medium text-muted-foreground">
                   Código
                 </label>
-                <p className="text-sm font-medium">{contract.quotation.code}</p>
+                <p className="text-sm font-medium">
+                  {contract.quotation?.code}
+                </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">
                   Monto
                 </label>
                 <p className="text-sm">
-                  {contract.quotation.amount.toLocaleString()}{" "}
-                  {contract.quotation.currency}
+                  {contract.quotation?.amount.toLocaleString()}{" "}
+                  {contract.quotation?.currency}
                 </p>
               </div>
             </CardContent>
@@ -384,13 +412,13 @@ export default function AdminContractDetail() {
                 <label className="text-sm font-medium text-muted-foreground">
                   Email
                 </label>
-                <p className="text-sm">{contract.request.company.email}</p>
+                <p className="text-sm">{contract.request?.company.email}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">
                   Teléfono
                 </label>
-                <p className="text-sm">{contract.request.company.phone}</p>
+                <p className="text-sm">{contract.request?.company.phone}</p>
               </div>
             </CardContent>
           </Card>
@@ -437,9 +465,29 @@ export default function AdminContractDetail() {
               <CardTitle>Acciones</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Button className="w-full" variant="outline">
+              <Button
+                className="w-full"
+                variant="outline"
+                onClick={async () => {
+                  try {
+                    const res = await fetch(
+                      `/api/contracts/${contractId}/docx`
+                    );
+                    if (!res.ok) throw new Error("No se pudo generar el DOCX");
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `contrato-${contract?.code || contractId}.docx`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  } catch (e) {
+                    console.error(e);
+                  }
+                }}
+              >
                 <Download className="h-4 w-4 mr-2" />
-                Descargar PDF
+                Descargar DOCX
               </Button>
               <Button className="w-full" variant="outline">
                 <Edit className="h-4 w-4 mr-2" />
@@ -448,6 +496,14 @@ export default function AdminContractDetail() {
               <Button className="w-full" variant="outline" disabled>
                 <Trash2 className="h-4 w-4 mr-2" />
                 Eliminar
+              </Button>
+              <Button
+                className="w-full"
+                onClick={handleActivate}
+                disabled={isActivating}
+              >
+                <Play className="h-4 w-4 mr-2" />
+                {isActivating ? "Activando..." : "Activar contrato"}
               </Button>
             </CardContent>
           </Card>
