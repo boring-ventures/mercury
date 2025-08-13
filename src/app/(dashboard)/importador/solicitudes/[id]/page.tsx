@@ -497,6 +497,17 @@ function QuotationCard({
     }
   };
 
+  const computedAmountInBs =
+    quotation.amountInBs !== undefined && quotation.amountInBs !== null
+      ? quotation.amountInBs
+      : quotation.exchangeRate
+        ? Math.round((quotation.amount || 0) * (quotation.exchangeRate || 0))
+        : undefined;
+  const computedTotalInBs =
+    quotation.totalInBs !== undefined && quotation.totalInBs !== null
+      ? quotation.totalInBs
+      : computedAmountInBs;
+
   return (
     <div className="border rounded-lg p-6 bg-white shadow-sm">
       <div className="flex items-center justify-between mb-4">
@@ -533,49 +544,120 @@ function QuotationCard({
 
       {/* Amount Breakdown */}
       <div className="mb-6">
-        <h5 className="font-medium text-gray-900 mb-3">Desglose de Costos</h5>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-gray-50 p-4 rounded-lg border">
-            <div className="flex items-center justify-between mb-2">
+        <h5 className="font-medium text-gray-900 mb-3">
+          Resumen de Cotización
+        </h5>
+        {/* Summary */}
+        <div className="bg-gray-50 border rounded-lg p-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white border rounded-md p-3">
               <p className="text-xs text-gray-600">Monto Principal</p>
-              <DollarSign className="h-3 w-3 text-gray-400" />
+              <p className="text-xl font-semibold">
+                ${quotation.amount?.toLocaleString()} {quotation.currency}
+              </p>
             </div>
-            <p className="font-semibold text-lg">
-              ${quotation.amount?.toLocaleString()} {quotation.currency}
-            </p>
+            {quotation.exchangeRate ? (
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                <p className="text-xs text-blue-700">Tipo de cambio</p>
+                <p className="text-xl font-extrabold text-blue-900">
+                  1 USD = {quotation.exchangeRate} Bs
+                </p>
+              </div>
+            ) : null}
+            {computedAmountInBs ? (
+              <div className="bg-white border rounded-md p-3">
+                <p className="text-xs text-gray-600">Monto convertido</p>
+                <p className="text-2xl font-extrabold text-gray-900">
+                  {computedAmountInBs.toLocaleString()} Bs
+                </p>
+              </div>
+            ) : null}
           </div>
-          <div className="bg-gray-50 p-4 rounded-lg border">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs text-gray-600">SWIFT Bank</p>
-              <DollarSign className="h-3 w-3 text-gray-400" />
+          <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-600">
+            <span className="px-2 py-1 bg-white border rounded">
+              Válida hasta:{" "}
+              {format(new Date(quotation.validUntil), "dd/MM/yyyy HH:mm", {
+                locale: es,
+              })}
+            </span>
+          </div>
+        </div>
+
+        {/* Detailed breakdown */}
+        <h5 className="font-medium text-gray-900 mb-3">Desglose de Costos</h5>
+        <div className="bg-white border rounded-lg p-4">
+          <div className="flex items-center justify-between text-xs text-gray-500 pb-2 border-b">
+            <span className="font-medium text-gray-700">Concepto</span>
+            <div className="flex items-center gap-8">
+              <span className="w-24 text-right">USD</span>
+              <span className="w-24 text-right">Bs</span>
             </div>
-            <p className="font-semibold text-lg">
-              ${quotation.swiftBankUSD?.toLocaleString() || 0}{" "}
-              {quotation.currency}
-            </p>
           </div>
-          <div className="bg-gray-50 p-4 rounded-lg border">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs text-gray-600">Banco Corresponsal</p>
-              <DollarSign className="h-3 w-3 text-gray-400" />
+          <div className="divide-y">
+            <div className="flex items-center justify-between py-3">
+              <span className="text-sm text-gray-700">SWIFT</span>
+              <div className="flex items-center gap-8">
+                <span className="w-24 text-right font-semibold">
+                  {quotation.swiftBankUSD
+                    ? `$${quotation.swiftBankUSD.toLocaleString()} ${quotation.currency}`
+                    : "—"}
+                </span>
+                <span className="w-24 text-right font-semibold">
+                  {quotation.swiftBankBs
+                    ? `${quotation.swiftBankBs.toLocaleString()} Bs`
+                    : "—"}
+                </span>
+              </div>
             </div>
-            <p className="font-semibold text-lg">
-              ${quotation.correspondentBankUSD?.toLocaleString() || 0}{" "}
-              {quotation.currency}
-            </p>
-          </div>
-          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs text-blue-600 font-medium">Total</p>
-              <DollarSign className="h-3 w-3 text-blue-500" />
+            <div className="flex items-center justify-between py-3">
+              <span className="text-sm text-gray-700">Banco Corresponsal</span>
+              <div className="flex items-center gap-8">
+                <span className="w-24 text-right font-semibold">
+                  {quotation.correspondentBankUSD
+                    ? `$${quotation.correspondentBankUSD.toLocaleString()} ${quotation.currency}`
+                    : "—"}
+                </span>
+                <span className="w-24 text-right font-semibold">
+                  {quotation.correspondentBankBs
+                    ? `${quotation.correspondentBankBs.toLocaleString()} Bs`
+                    : "—"}
+                </span>
+              </div>
             </div>
-            <p className="font-bold text-xl text-blue-900">
-              $
-              {quotation.totalInBs?.toLocaleString() ||
-                quotation.amount?.toLocaleString()}{" "}
-              {quotation.currency}
-            </p>
           </div>
+        </div>
+        {/* Management service (local only) */}
+        <div className="bg-white border rounded-lg p-4 mt-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-700">
+              Servicio de Gestión
+            </span>
+            <div className="flex items-center gap-2">
+              {quotation.managementServicePercentage ? (
+                <span className="text-[11px] px-2 py-0.5 bg-gray-50 border rounded">
+                  {quotation.managementServicePercentage}%
+                </span>
+              ) : null}
+              <span className="text-base font-semibold">
+                {quotation.managementServiceBs
+                  ? `${quotation.managementServiceBs.toLocaleString()} Bs`
+                  : "—"}
+              </span>
+            </div>
+          </div>
+        </div>
+        {/* Final total row */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+          <p className="text-sm font-medium text-blue-800 mb-1">
+            Total a pagar (estimado)
+          </p>
+          <p className="text-3xl font-extrabold text-blue-900">
+            {(computedTotalInBs || 0).toLocaleString()} Bs
+          </p>
+          <p className="text-xs text-blue-800 mt-2">
+            El total incluye los cargos indicados y puede variar por ajustes
+            bancarios.
+          </p>
         </div>
       </div>
 
