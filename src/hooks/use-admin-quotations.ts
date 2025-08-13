@@ -117,3 +117,60 @@ export function useQuotationStatusConfig() {
 
   return { getStatusConfig };
 }
+
+export interface AdminQuotationDetail {
+  id: string;
+  code: string;
+  status: string;
+  amount: number;
+  currency: string;
+  exchangeRate: number;
+  amountInBs: number;
+  swiftBankUSD: number | string;
+  correspondentBankUSD: number | string;
+  swiftBankBs: number | string;
+  correspondentBankBs: number | string;
+  managementServiceBs: number;
+  managementServicePercentage: number;
+  totalInBs: number;
+  validUntil: string;
+  terms: string | null;
+  notes: string | null;
+  rejectionReason: string | null;
+  createdAt: string;
+  request: {
+    id: string;
+    code: string;
+    description: string;
+    amount: number;
+    currency: string;
+    company: {
+      name: string;
+      country: string;
+      email: string;
+      phone: string;
+    };
+  };
+  createdBy: {
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  company: {
+    name: string;
+    country: string;
+  };
+}
+
+export function useAdminQuotation(id?: string) {
+  return useQuery<{ quotation: AdminQuotationDetail }>({
+    queryKey: ["admin-quotation", id],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/quotations/${id}`);
+      if (!res.ok) throw new Error("Failed to fetch quotation");
+      return res.json();
+    },
+    enabled: Boolean(id),
+    staleTime: 5 * 60 * 1000,
+  });
+}

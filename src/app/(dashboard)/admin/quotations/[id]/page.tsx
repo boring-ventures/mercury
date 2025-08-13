@@ -26,6 +26,9 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useParams } from "next/navigation";
+import { Loader } from "@/components/ui/loader";
+// AlertCircle imported above in icon set
+import { useAdminQuotation } from "@/hooks/use-admin-quotations";
 
 function StatusBadge({ status }: { status: string }) {
   const getStatusConfig = (status: string) => {
@@ -109,51 +112,73 @@ function isExpired(validUntil: string): boolean {
 export default function AdminQuotationDetail() {
   const params = useParams();
   const quotationId = params.id as string;
+  const { data, isLoading, error } = useAdminQuotation(quotationId);
+  const quotation = data?.quotation;
 
-  // Mock data - replace with actual API call
-  const quotation = {
-    id: quotationId,
-    code: "COT-001",
-    status: "SENT",
-    amount: 50000,
-    currency: "USD",
-    exchangeRate: 6.9,
-    amountInBs: 345000,
-    swiftBankUSD: "CHASUS33",
-    correspondentBankUSD: "Bank of America",
-    swiftBankBs: "BANCOBOL",
-    correspondentBankBs: "Banco de Bolivia",
-    managementServiceBs: 5000,
-    managementServicePercentage: 1.45,
-    totalInBs: 350000,
-    validUntil: "2025-01-15",
-    terms: "Pago al contado, entrega en 30 días",
-    notes: "Cotización válida hasta la fecha indicada",
-    rejectionReason: null,
-    createdAt: "2025-01-10T10:00:00Z",
-    request: {
-      id: "req-1",
-      code: "SH-001",
-      description: "Importación de maquinaria industrial",
-      amount: 50000,
-      currency: "USD",
-      company: {
-        name: "Empresa A",
-        country: "Bolivia",
-        email: "contacto@empresaa.com",
-        phone: "+591 2 123456",
-      },
-    },
-    createdBy: {
-      firstName: "Juan",
-      lastName: "Pérez",
-      email: "juan.perez@mercury.com",
-    },
-    company: {
-      name: "Empresa A",
-      country: "Bolivia",
-    },
+  const [isCreatingContract, setIsCreatingContract] = useState(false);
+  const handleCreateContract = async () => {
+    try {
+      setIsCreatingContract(true);
+      const res = await fetch("/api/admin/contracts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quotationId }),
+      });
+      if (!res.ok) throw new Error("Failed to create contract");
+      const data = await res.json();
+      window.location.href = `/admin/contracts/${data.contract.id}`;
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsCreatingContract(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Link href="/admin/quotations">
+              <Button variant="outline" size="sm">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Volver
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Cotización</h1>
+              <p className="text-muted-foreground">Cargando detalles...</p>
+            </div>
+          </div>
+          <Loader />
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !quotation) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Link href="/admin/quotations">
+              <Button variant="outline" size="sm">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Volver
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Cotización</h1>
+              <p className="text-muted-foreground">
+                No se pudo cargar la cotización
+              </p>
+            </div>
+          </div>
+          <AlertCircle className="h-6 w-6 text-destructive" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -256,25 +281,29 @@ export default function AdminQuotationDetail() {
                   <label className="text-sm font-medium text-muted-foreground">
                     SWIFT Bank USD
                   </label>
-                  <p className="text-sm">{quotation.swiftBankUSD}</p>
+                  <p className="text-sm">{String(quotation.swiftBankUSD)}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">
                     Banco Corresponsal USD
                   </label>
-                  <p className="text-sm">{quotation.correspondentBankUSD}</p>
+                  <p className="text-sm">
+                    {String(quotation.correspondentBankUSD)}
+                  </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">
                     SWIFT Bank Bs
                   </label>
-                  <p className="text-sm">{quotation.swiftBankBs}</p>
+                  <p className="text-sm">{String(quotation.swiftBankBs)}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">
                     Banco Corresponsal Bs
                   </label>
-                  <p className="text-sm">{quotation.correspondentBankBs}</p>
+                  <p className="text-sm">
+                    {String(quotation.correspondentBankBs)}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -302,7 +331,7 @@ export default function AdminQuotationDetail() {
               )}
               {quotation.rejectionReason && (
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground text-destructive">
+                  <label className="text-sm font-medium text-destructive">
                     Motivo de Rechazo
                   </label>
                   <p className="text-sm mt-1 text-destructive">
@@ -438,6 +467,14 @@ export default function AdminQuotationDetail() {
               <Button className="w-full" variant="outline" disabled>
                 <Trash2 className="h-4 w-4 mr-2" />
                 Eliminar
+              </Button>
+              <Button
+                className="w-full"
+                onClick={handleCreateContract}
+                disabled={isCreatingContract || quotation.status !== "ACCEPTED"}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                {isCreatingContract ? "Creando contrato..." : "Crear contrato"}
               </Button>
             </CardContent>
           </Card>
