@@ -61,6 +61,8 @@ import {
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/components/ui/use-toast";
+import { ContractDataForm } from "@/components/importador/contract-data-form";
+import { ContractPreviewModal } from "@/components/importador/contract-preview-modal";
 
 // Updated workflow steps (removed Pago Inicial)
 const WORKFLOW_STEPS = [
@@ -419,6 +421,8 @@ function QuotationCard({
   const [notes, setNotes] = useState("");
   const [showApproveDialog, setShowApproveDialog] = useState(false);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [showContractPreview, setShowContractPreview] = useState(false);
+  const [generatedContract, setGeneratedContract] = useState<any>(null);
 
   const isExpired = new Date() > new Date(quotation.validUntil);
   const canRespond =
@@ -900,11 +904,60 @@ function QuotationCard({
       )}
 
       {quotation.status === "ACCEPTED" && (
-        <div className="flex items-center gap-2 pt-4 border-t text-green-700">
-          <CheckCircle className="h-4 w-4" />
-          <span className="text-sm font-medium">
-            Cotización aprobada - Procediendo al siguiente paso
-          </span>
+        <div className="pt-4 border-t">
+          <div className="flex items-center gap-2 text-green-700 mb-4">
+            <CheckCircle className="h-4 w-4" />
+            <span className="text-sm font-medium">
+              Cotización aprobada - Procediendo al siguiente paso
+            </span>
+          </div>
+
+          {/* Contract Generation Section */}
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <h4 className="font-medium text-green-900 mb-2">
+              Generar Contrato de Servicio
+            </h4>
+            <p className="text-sm text-green-700 mb-4">
+              Ahora puede generar el contrato de servicio completando los datos
+              requeridos.
+            </p>
+
+            <ContractDataForm
+              quotation={{
+                id: quotation.id,
+                code: quotation.code,
+                amount: quotation.amount,
+                currency: quotation.currency,
+                description: quotation.description,
+                validUntil: quotation.validUntil,
+              }}
+              company={{
+                name: quotation.request?.company?.name || "",
+                nit: quotation.request?.company?.nit || "",
+                city: quotation.request?.company?.city || "",
+                contactName: quotation.request?.company?.contactName || "",
+                contactPosition:
+                  quotation.request?.company?.contactPosition || "",
+              }}
+              onContractGenerated={(contractId) => {
+                // Fetch the generated contract and show preview
+                fetch(`/api/contracts/${contractId}`)
+                  .then((res) => res.json())
+                  .then((contract) => {
+                    setGeneratedContract(contract);
+                    setShowContractPreview(true);
+                  })
+                  .catch((error) => {
+                    console.error("Error fetching contract:", error);
+                    toast({
+                      title: "Error",
+                      description: "Error al cargar el contrato generado",
+                      variant: "destructive",
+                    });
+                  });
+              }}
+            />
+          </div>
         </div>
       )}
 
@@ -927,6 +980,35 @@ function QuotationCard({
             )}
           </div>
         </div>
+      )}
+
+      {/* Contract Preview Modal */}
+      {generatedContract && (
+        <ContractPreviewModal
+          contract={generatedContract}
+          company={{
+            name: quotation.request?.company?.name || "",
+            nit: quotation.request?.company?.nit || "",
+            city: quotation.request?.company?.city || "",
+            contactName: quotation.request?.company?.contactName || "",
+            contactPosition: quotation.request?.company?.contactPosition || "",
+          }}
+          quotation={{
+            code: quotation.code,
+            amount: quotation.amount,
+            currency: quotation.currency,
+          }}
+          isOpen={showContractPreview}
+          onClose={() => {
+            setShowContractPreview(false);
+            setGeneratedContract(null);
+          }}
+          onContractAccepted={() => {
+            onUpdate();
+            setShowContractPreview(false);
+            setGeneratedContract(null);
+          }}
+        />
       )}
     </div>
   );

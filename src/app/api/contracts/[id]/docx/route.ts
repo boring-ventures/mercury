@@ -108,6 +108,10 @@ export async function GET(
 
     const banking =
       (company as unknown as { bankingDetails?: any })?.bankingDetails || {};
+
+    // Get additional contract data if available
+    const additionalData = (contract as any)?.additionalData || {};
+
     const data = {
       contract: {
         code: contract.code,
@@ -128,13 +132,24 @@ export async function GET(
         address: (company as any)?.bankingDetails?.address || "",
         city: company?.city || "",
         representative: {
-          name: (company as any)?.contactName || "",
-          ci: "",
-          role: (company as any)?.contactPosition || "",
-          notary: { name: "" },
-          testimonioNumber: "",
-          testimonioDate: "",
-          power: { number: "", date: "" },
+          name:
+            additionalData.representative?.name ||
+            (company as any)?.contactName ||
+            "",
+          ci: additionalData.representative?.ci || "",
+          role:
+            additionalData.representative?.role ||
+            (company as any)?.contactPosition ||
+            "",
+          notary: {
+            name: additionalData.notary?.name || "",
+          },
+          testimonioNumber: additionalData.notary?.testimonioNumber || "",
+          testimonioDate: additionalData.notary?.testimonioDate || "",
+          power: {
+            number: additionalData.power?.number || "",
+            date: additionalData.power?.date || "",
+          },
         },
       },
       provider: provider
@@ -171,14 +186,35 @@ export async function GET(
         fee: Number((contract.quotation as any)?.managementServiceBs || 0),
         feeWords: "",
       },
-      beneficiary: { name: "" },
-      reference: { name: "", date: "" },
+      beneficiary: {
+        name: additionalData.additional?.beneficiaryName || "",
+      },
+      reference: {
+        name: additionalData.additional?.referenceName || "",
+        date: additionalData.additional?.referenceDate || "",
+      },
       bank: {
-        name: banking.bankName || banking.name || "",
-        holder: banking.accountHolder || banking.holder || company?.name || "",
-        accountNumber: banking.accountNumber || banking.account || "",
+        name:
+          additionalData.banking?.bankName ||
+          banking.bankName ||
+          banking.name ||
+          "",
+        holder:
+          additionalData.banking?.accountHolder ||
+          banking.accountHolder ||
+          banking.holder ||
+          company?.name ||
+          "",
+        accountNumber:
+          additionalData.banking?.accountNumber ||
+          banking.accountNumber ||
+          banking.account ||
+          "",
         currency: banking.currency || "bolivianos",
-        type: banking.type || "Cuenta corriente",
+        type:
+          additionalData.banking?.accountType ||
+          banking.type ||
+          "Cuenta corriente",
       },
       items: [] as Array<{
         description: string;
