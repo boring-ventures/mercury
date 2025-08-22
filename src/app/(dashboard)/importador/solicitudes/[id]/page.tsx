@@ -246,6 +246,25 @@ interface QuotationType {
   managementServiceBs?: number;
   managementServicePercentage?: number;
   totalInBs?: number;
+  // Request relationship
+  request?: {
+    id: string;
+    code: string;
+    description: string;
+    amount: number;
+    currency: string;
+    company: {
+      id: string;
+      name: string;
+      nit: string;
+      city: string;
+      contactName: string;
+      contactPosition: string;
+      email: string;
+      phone: string;
+      country: string;
+    };
+  };
 }
 
 function DocumentViewerModal({
