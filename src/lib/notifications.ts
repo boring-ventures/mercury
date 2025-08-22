@@ -60,6 +60,17 @@ export const NOTIFICATION_TEMPLATES: SystemNotificationTemplates = {
     message: "Su solicitud de registro ha sido rechazada",
     type: NotificationType.ERROR,
   },
+  CONTRACT_GENERATED: {
+    title: "📄 Nuevo Contrato Generado",
+    message:
+      "Un importador ha generado un nuevo contrato desde una cotización aceptada",
+    type: NotificationType.INFO,
+  },
+  CONTRACT_ACCEPTED: {
+    title: "✅ Contrato Aceptado",
+    message: "Un importador ha aceptado y firmado el contrato generado",
+    type: NotificationType.SUCCESS,
+  },
 };
 
 // Create a single notification

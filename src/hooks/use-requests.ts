@@ -363,6 +363,9 @@ export function useRequestWorkflow() {
     const hasActiveContract =
       hasContract &&
       request.contracts?.some((c: WorkflowContract) => c.status === "ACTIVE");
+    const hasDraftContract =
+      hasContract &&
+      request.contracts?.some((c: WorkflowContract) => c.status === "DRAFT");
 
     // Check if has payments to provider
     const hasProviderPayment = request.payments && request.payments.length > 0;
@@ -380,7 +383,7 @@ export function useRequestWorkflow() {
       step = 5; // Factura Final
     else if (hasProviderPaymentCompleted)
       step = 4; // Pago a Proveedor
-    else if (hasActiveContract)
+    else if (hasActiveContract || hasDraftContract)
       step = 3; // Contrato
     else if (hasActiveQuotation)
       step = 2; // Cotización

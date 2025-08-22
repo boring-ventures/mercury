@@ -871,3 +871,121 @@ export const generateContractActivatedEmail = (
   </body>
 </html>`;
 };
+
+interface ContractGeneratedAdminData {
+  contractCode: string;
+  quotationCode: string;
+  requestCode: string;
+  companyName: string;
+  amount: number;
+  currency: string;
+  importerName: string;
+  generatedAt: string;
+}
+
+export const generateContractGeneratedAdminEmail = (
+  data: ContractGeneratedAdminData
+): string => {
+  return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nuevo Contrato Generado</title>
+  <style>
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;color:#111827;background:#fff;margin:0;padding:0}
+    .container{max-width:640px;margin:0 auto;padding:24px}
+    .card{border:1px solid #e5e7eb;border-radius:12px;padding:24px;background:#fafafa}
+    .title{font-size:20px;font-weight:700;margin:0 0 8px;color:#059669}
+    .muted{color:#6b7280;font-size:14px;margin:0 0 16px}
+    .row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f3f4f6}
+    .label{color:#6b7280;font-size:13px}
+    .value{font-weight:600;font-size:14px}
+    .btn{display:inline-block;margin-top:16px;background:#059669;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:700}
+    .highlight{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:16px;margin:16px 0}
+  </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="card">
+        <p class="title">🆕 Nuevo Contrato Generado</p>
+        <p class="muted">Un importador ha generado un nuevo contrato desde una cotización aceptada.</p>
+        
+        <div class="highlight">
+          <p style="margin:0;font-weight:600;color:#059669">El importador ha completado los datos requeridos y generado el contrato automáticamente.</p>
+        </div>
+        
+        <div class="row"><span class="label">Empresa</span><span class="value">${data.companyName}</span></div>
+        <div class="row"><span class="label">Importador</span><span class="value">${data.importerName}</span></div>
+        <div class="row"><span class="label">Solicitud</span><span class="value">${data.requestCode}</span></div>
+        <div class="row"><span class="label">Cotización</span><span class="value">${data.quotationCode}</span></div>
+        <div class="row"><span class="label">Contrato</span><span class="value">${data.contractCode}</span></div>
+        <div class="row"><span class="label">Monto</span><span class="value">$${data.amount.toLocaleString()} ${data.currency}</span></div>
+        <div class="row"><span class="label">Generado el</span><span class="value">${formatDate(data.generatedAt)}</span></div>
+        
+        <a class="btn" href="/admin/contracts">Revisar Contratos</a>
+      </div>
+    </div>
+  </body>
+</html>`;
+};
+
+interface ContractAcceptedAdminData {
+  contractCode: string;
+  quotationCode: string;
+  requestCode: string;
+  companyName: string;
+  amount: number;
+  currency: string;
+  importerName: string;
+  acceptedAt: string;
+}
+
+export const generateContractAcceptedAdminEmail = (
+  data: ContractAcceptedAdminData
+): string => {
+  return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contrato Aceptado</title>
+  <style>
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;color:#111827;background:#fff;margin:0;padding:0}
+    .container{max-width:640px;margin:0 auto;padding:24px}
+    .card{border:1px solid #e5e7eb;border-radius:12px;padding:24px;background:#fafafa}
+    .title{font-size:20px;font-weight:700;margin:0 0 8px;color:#059669}
+    .muted{color:#6b7280;font-size:14px;margin:0 0 16px}
+    .row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f3f4f6}
+    .label{color:#6b7280;font-size:13px}
+    .value{font-weight:600;font-size:14px}
+    .btn{display:inline-block;margin-top:16px;background:#059669;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:700}
+    .highlight{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:16px;margin:16px 0}
+  </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="card">
+        <p class="title">✅ Contrato Aceptado</p>
+        <p class="muted">Un importador ha aceptado y firmado el contrato generado.</p>
+        
+        <div class="highlight">
+          <p style="margin:0;font-weight:600;color:#059669">El contrato está ahora activo y listo para proceder con el siguiente paso del proceso.</p>
+        </div>
+        
+        <div class="row"><span class="label">Empresa</span><span class="value">${data.companyName}</span></div>
+        <div class="row"><span class="label">Importador</span><span class="value">${data.importerName}</span></div>
+        <div class="row"><span class="label">Solicitud</span><span class="value">${data.requestCode}</span></div>
+        <div class="row"><span class="label">Cotización</span><span class="value">${data.quotationCode}</span></div>
+        <div class="row"><span class="label">Contrato</span><span class="value">${data.contractCode}</span></div>
+        <div class="row"><span class="label">Monto</span><span class="value">$${data.amount.toLocaleString()} ${data.currency}</span></div>
+        <div class="row"><span class="label">Aceptado el</span><span class="value">${formatDate(data.acceptedAt)}</span></div>
+        
+        <a class="btn" href="/admin/contracts">Revisar Contratos</a>
+      </div>
+    </div>
+  </body>
+</html>`;
+};

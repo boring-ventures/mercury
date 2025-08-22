@@ -216,32 +216,33 @@ model Quotation {
 }
 
 model Contract {
-  id           String         @id @default(cuid())
-  code         String         @unique
-  title        String
-  description  String
-  amount       Decimal        @db.Decimal(15, 2)
-  currency     Currency       @default(USD)
-  status       ContractStatus @default(DRAFT)
-  startDate    DateTime
-  endDate      DateTime
-  terms        String
-  conditions   String?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  signedAt     DateTime?
-  requestId    String?
-  quotationId  String?
-  companyId    String
-  createdById  String
-  assignedToId String?
-  assignedTo   Profile?       @relation("ContractAssignedTo", fields: [assignedToId], references: [id])
-  company      Company        @relation(fields: [companyId], references: [id])
-  createdBy    Profile        @relation("ContractCreatedBy", fields: [createdById], references: [id])
-  quotation    Quotation?     @relation(fields: [quotationId], references: [id])
-  request      Request?       @relation(fields: [requestId], references: [id])
-  documents    Document[]
-  payments     Payment[]
+  id             String         @id @default(cuid())
+  code           String         @unique
+  title          String
+  description    String
+  amount         Decimal        @db.Decimal(15, 2)
+  currency       Currency       @default(USD)
+  status         ContractStatus @default(DRAFT)
+  startDate      DateTime
+  endDate        DateTime
+  terms          String
+  conditions     String?
+  additionalData Json?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  signedAt       DateTime?
+  requestId      String?
+  quotationId    String?
+  companyId      String
+  createdById    String
+  assignedToId   String?
+  assignedTo     Profile?       @relation("ContractAssignedTo", fields: [assignedToId], references: [id])
+  company        Company        @relation(fields: [companyId], references: [id])
+  createdBy      Profile        @relation("ContractCreatedBy", fields: [createdById], references: [id])
+  quotation      Quotation?     @relation(fields: [quotationId], references: [id])
+  request        Request?       @relation(fields: [requestId], references: [id])
+  documents      Document[]
+  payments       Payment[]
 
   @@index([code])
   @@index([status])
