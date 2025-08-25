@@ -156,12 +156,12 @@ export async function GET(request: Request) {
         // If this is the first page and no offers found, it means the amount is too large
         if (page === 1) {
           console.log(
-            `No offers found for ${targetAmount.toLocaleString()} USDT`
+            `No offers found for {formatCurrency(targetAmount, "USD")}T`
           );
           return NextResponse.json(
             {
               success: false,
-              error: `No P2P offers found for ${targetAmount.toLocaleString()} USDT. The requested amount may be too large for the current market. Try a smaller amount or check back later.`,
+              error: `No P2P offers found for {formatCurrency(targetAmount, "USD")}T. The requested amount may be too large for the current market. Try a smaller amount or check back later.`,
               targetAmount: targetAmount,
             },
             { status: 404 }
@@ -524,7 +524,7 @@ export async function GET(request: Request) {
     if (allOffers.length === 0) {
       console.error("No offers found in any page.");
       throw new Error(
-        `No P2P offers found for ${targetAmount.toLocaleString()} USDT. The requested amount may be too large for the current market. Try a smaller amount or check back later.`
+        `No P2P offers found for {formatCurrency(targetAmount, "USD")}T. The requested amount may be too large for the current market. Try a smaller amount or check back later.`
       );
     }
 

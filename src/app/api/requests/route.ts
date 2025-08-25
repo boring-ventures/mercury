@@ -135,6 +135,30 @@ export async function GET(request: NextRequest) {
               id: true,
               name: true,
               country: true,
+              nit: true,
+              city: true,
+              contactName: true,
+              contactPosition: true,
+              email: true,
+              phone: true,
+              bankingDetails: true,
+              documents: {
+                select: {
+                  id: true,
+                  type: true,
+                  documentInfo: true,
+                },
+                where: {
+                  type: {
+                    in: [
+                      "CARNET_IDENTIDAD",
+                      "NIT",
+                      "MATRICULA_COMERCIO",
+                      "PODER_REPRESENTANTE",
+                    ],
+                  },
+                },
+              },
             },
           },
           provider: {
@@ -142,6 +166,9 @@ export async function GET(request: NextRequest) {
               id: true,
               name: true,
               country: true,
+              email: true,
+              phone: true,
+              bankingDetails: true,
             },
           },
           createdBy: {
@@ -192,6 +219,23 @@ export async function GET(request: NextRequest) {
               id: true,
               status: true,
               type: true,
+            },
+          },
+          documents: {
+            select: {
+              id: true,
+              type: true,
+              documentInfo: true,
+            },
+            where: {
+              type: {
+                in: [
+                  "CARNET_IDENTIDAD",
+                  "NIT",
+                  "MATRICULA_COMERCIO",
+                  "PODER_REPRESENTANTE",
+                ],
+              },
             },
           },
           _count: {

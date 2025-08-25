@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -242,7 +243,7 @@ export default function AdminContractDetail() {
                     Monto
                   </label>
                   <p className="text-lg font-medium">
-                    {contract.amount.toLocaleString()} {contract.currency}
+                    {formatCurrency(contract.amount, contract.currency)}
                   </p>
                 </div>
                 <div>
@@ -351,8 +352,10 @@ export default function AdminContractDetail() {
                   Monto
                 </label>
                 <p className="text-sm">
-                  {contract.request?.amount.toLocaleString()}{" "}
-                  {contract.request?.currency}
+                  {formatCurrency(
+                    contract.request?.amount,
+                    contract.request?.currency
+                  )}
                 </p>
               </div>
             </CardContent>
@@ -380,8 +383,10 @@ export default function AdminContractDetail() {
                   Monto
                 </label>
                 <p className="text-sm">
-                  {contract.quotation?.amount.toLocaleString()}{" "}
-                  {contract.quotation?.currency}
+                  {formatCurrency(
+                    contract.quotation?.amount,
+                    contract.quotation?.currency
+                  )}
                 </p>
               </div>
             </CardContent>

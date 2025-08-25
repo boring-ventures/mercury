@@ -822,6 +822,65 @@ export const generateQuotationAcceptedAdminEmail = (
 </html>`;
 };
 
+interface QuotationRejectedAdminData {
+  companyName: string;
+  requestCode: string;
+  quotationCode: string;
+  amount: number | string;
+  currency: string;
+  rejectedAt: string;
+  reason: string;
+  link: string;
+}
+
+export const generateQuotationRejectedAdminEmail = (
+  data: QuotationRejectedAdminData
+): string => {
+  return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cotización Rechazada</title>
+  <style>
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;color:#111827;background:#fff;margin:0;padding:0}
+    .container{max-width:640px;margin:0 auto;padding:24px}
+    .card{border:1px solid #e5e7eb;border-radius:12px;padding:24px;background:#fafafa}
+    .title{font-size:20px;font-weight:700;margin:0 0 8px;color:#dc2626}
+    .muted{color:#6b7280;font-size:14px;margin:0 0 16px}
+    .row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f3f4f6}
+    .label{color:#6b7280;font-size:13px}
+    .value{font-weight:600;font-size:14px}
+    .btn{display:inline-block;margin-top:16px;background:#dc2626;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:700}
+    .reason-box{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin:16px 0}
+    .reason-title{color:#dc2626;font-weight:600;font-size:14px;margin:0 0 8px}
+    .reason-text{color:#7f1d1d;font-size:14px;margin:0;line-height:1.5}
+  </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="card">
+        <p class="title">❌ Cotización rechazada por el importador</p>
+        <p class="muted">Revise los detalles y considere enviar una nueva propuesta.</p>
+        
+        <div class="reason-box">
+          <p class="reason-title">Motivo del rechazo:</p>
+          <p class="reason-text">${data.reason}</p>
+        </div>
+        
+        <div class="row"><span class="label">Empresa</span><span class="value">${data.companyName}</span></div>
+        <div class="row"><span class="label">Solicitud</span><span class="value">${data.requestCode}</span></div>
+        <div class="row"><span class="label">Cotización</span><span class="value">${data.quotationCode}</span></div>
+        <div class="row"><span class="label">Monto</span><span class="value">${data.amount} ${data.currency}</span></div>
+        <div class="row"><span class="label">Fecha</span><span class="value">${formatDate(data.rejectedAt)}</span></div>
+        <a class="btn" href="${data.link}">Revisar en panel</a>
+      </div>
+    </div>
+  </body>
+</html>`;
+};
+
 interface ContractActivatedData {
   companyName: string;
   contractCode: string;

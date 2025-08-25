@@ -68,6 +68,8 @@ import {
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/components/ui/use-toast";
+import { formatCurrency, formatExchangeRate } from "@/lib/utils";
+import ContractPreviewForm from "@/components/importador/contract-preview-form";
 
 // Updated workflow steps (removed Pago Inicial)
 const WORKFLOW_STEPS = [
@@ -128,6 +130,29 @@ interface ImportadorSolicitudItem {
   createdAt: string;
   description: string;
   rejectionCount?: number;
+  company?: {
+    name?: string;
+    nit?: string;
+    city?: string;
+    contactName?: string;
+    contactPosition?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    bankingDetails?: any;
+    documents?: Array<{
+      id: string;
+      type: string;
+      documentInfo?: string;
+    }>;
+  };
+  provider?: {
+    name?: string;
+    country?: string;
+    bankingDetails?: any;
+    email?: string;
+    phone?: string;
+  };
   quotations?: Array<{
     id: string;
     code: string;
@@ -155,6 +180,11 @@ interface ImportadorSolicitudItem {
   payments?: Array<{
     type: string;
     status: string;
+  }>;
+  documents?: Array<{
+    id: string;
+    type: string;
+    documentInfo?: string;
   }>;
 }
 
@@ -204,9 +234,21 @@ function WorkflowSteps({
               >
                 {step.name}
               </p>
-              <p className="text-xs text-gray-500 max-w-20">
+              <p
+                className={`text-xs max-w-20 ${isCurrent ? "text-blue-600 font-medium" : "text-gray-500"}`}
+              >
                 {step.description}
               </p>
+              {isCurrent && (
+                <div className="mt-1">
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-blue-50 text-blue-700 border-blue-200"
+                  >
+                    Paso Actual
+                  </Badge>
+                </div>
+              )}
             </div>
           </div>
         );
@@ -390,13 +432,13 @@ function QuotationReviewModal({
               <div className="text-center">
                 <p className="text-xs text-blue-600 mb-1">Monto Principal</p>
                 <p className="font-bold text-lg text-blue-900">
-                  ${quotation.amount?.toLocaleString()} {quotation.currency}
+                  {formatCurrency(quotation.amount, quotation.currency)}
                 </p>
               </div>
               <div className="text-center">
                 <p className="text-xs text-blue-600 mb-1">Total en Bs</p>
                 <p className="font-bold text-lg text-blue-900">
-                  ${quotation.totalInBs?.toLocaleString()} Bs
+                  {formatCurrency(quotation.totalInBs, "Bs")}
                 </p>
               </div>
               <div className="text-center">
@@ -431,13 +473,13 @@ function QuotationReviewModal({
             <div className="bg-gray-50 p-3 rounded-lg">
               <p className="text-xs text-gray-600 mb-1">Monto Principal</p>
               <p className="font-semibold">
-                ${quotation.amount?.toLocaleString()} {quotation.currency}
+                {formatCurrency(quotation.amount, quotation.currency)}
               </p>
             </div>
             <div className="bg-gray-50 p-3 rounded-lg">
               <p className="text-xs text-gray-600 mb-1">Servicio de Gestión</p>
               <p className="font-semibold">
-                ${quotation.managementServiceBs?.toLocaleString()} Bs
+                {formatCurrency(quotation.managementServiceBs, "Bs")}
                 {quotation.managementServicePercentage && (
                   <span className="text-xs text-gray-500 block">
                     ({quotation.managementServicePercentage}%)
@@ -448,13 +490,13 @@ function QuotationReviewModal({
             <div className="bg-gray-50 p-3 rounded-lg">
               <p className="text-xs text-gray-600 mb-1">Banco Corresponsal</p>
               <p className="font-semibold">
-                ${quotation.correspondentBankUSD?.toLocaleString()} USD
+                {formatCurrency(quotation.correspondentBankUSD, "USD")}
               </p>
             </div>
             <div className="bg-blue-50 p-3 rounded-lg">
               <p className="text-xs text-blue-600 mb-1">Total en Bs</p>
               <p className="font-bold text-lg text-blue-900">
-                ${quotation.totalInBs?.toLocaleString()} Bs
+                {formatCurrency(quotation.totalInBs, "Bs")}
               </p>
             </div>
           </div>
@@ -470,7 +512,7 @@ function QuotationReviewModal({
               </div>
               <p className="font-semibold text-green-900">
                 {quotation.exchangeRate
-                  ? `1 USD = ${quotation.exchangeRate} Bs`
+                  ? `1 USD = ${formatExchangeRate(quotation.exchangeRate)} Bs`
                   : "No disponible"}
               </p>
             </div>
@@ -482,7 +524,7 @@ function QuotationReviewModal({
                 </p>
               </div>
               <p className="font-semibold text-purple-900">
-                ${quotation.amountInBs?.toLocaleString()} Bs
+                {formatCurrency(quotation.amountInBs, "Bs")}
               </p>
             </div>
           </div>
@@ -501,7 +543,7 @@ function QuotationReviewModal({
                   Banco Corresponsal (Bs)
                 </p>
                 <p className="font-semibold">
-                  ${quotation.correspondentBankBs?.toLocaleString()} Bs
+                  {formatCurrency(quotation.correspondentBankBs, "Bs")}
                 </p>
               </div>
               <div>
@@ -509,19 +551,19 @@ function QuotationReviewModal({
                   Banco Corresponsal (USD)
                 </p>
                 <p className="font-semibold">
-                  ${quotation.correspondentBankUSD?.toLocaleString()} USD
+                  {formatCurrency(quotation.correspondentBankUSD, "USD")}
                 </p>
               </div>
               <div>
                 <p className="text-sm text-gray-600 mb-1">SWIFT Bank (Bs)</p>
                 <p className="font-semibold">
-                  ${quotation.swiftBankBs?.toLocaleString()} Bs
+                  {formatCurrency(quotation.swiftBankBs, "Bs")}
                 </p>
               </div>
               <div>
                 <p className="text-sm text-gray-600 mb-1">SWIFT Bank (USD)</p>
                 <p className="font-semibold">
-                  ${quotation.swiftBankUSD?.toLocaleString()} USD
+                  {formatCurrency(quotation.swiftBankUSD, "USD")}
                 </p>
               </div>
             </div>
@@ -622,11 +664,30 @@ function QuotationReviewModal({
           )}
 
           {quotation.status === "ACCEPTED" && (
-            <div className="flex items-center gap-2 pt-4 border-t text-green-700">
-              <CheckCircle className="h-4 w-4" />
-              <span className="text-sm font-medium">
-                Cotización aprobada - Procediendo al siguiente paso
-              </span>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                <div>
+                  <h4 className="font-medium text-green-900">
+                    ¡Cotización Aprobada!
+                  </h4>
+                  <p className="text-sm text-green-800 mt-1">
+                    La cotización ha sido aprobada exitosamente. El siguiente
+                    paso es completar los datos del contrato.
+                  </p>
+                  <div className="mt-3 p-3 bg-white rounded border border-green-200">
+                    <p className="text-xs text-green-700 font-medium mb-2">
+                      Próximo paso:
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-4 w-4 text-green-600" />
+                      <span className="text-sm text-green-800">
+                        Completar datos del contrato de servicio
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -649,6 +710,24 @@ function QuotationReviewModal({
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
+              {/* Terms Acceptance Message */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <Check className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs font-medium text-blue-900 mb-1">
+                      Aceptación de Términos
+                    </p>
+                    <p className="text-xs text-blue-800">
+                      Al aprobar esta cotización, confirma que acepta todos los
+                      términos y condiciones establecidos, incluyendo los costos
+                      detallados, el tipo de cambio aplicado y las condiciones
+                      de servicio.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <Label htmlFor="approve-notes">
                   Notas adicionales (opcional)
@@ -728,6 +807,23 @@ function QuotationReviewModal({
               </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="space-y-4 py-4">
+              {/* Terms Acceptance Message */}
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <X className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs font-medium text-red-900 mb-1">
+                      Confirmación de Rechazo
+                    </p>
+                    <p className="text-xs text-red-800">
+                      Al rechazar esta cotización, confirma que no acepta los
+                      términos y condiciones ofrecidos. Debe proporcionar una
+                      razón válida para el rechazo.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {solicitud.rejectionCount !== undefined &&
                 solicitud.rejectionCount > 0 && (
                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
@@ -821,6 +917,13 @@ function SolicitudCard({ solicitud }: { solicitud: ImportadorSolicitudItem }) {
     solicitud.quotations &&
     solicitud.quotations.length > 0;
 
+  // Check if this is a contract step (quotation approved)
+  const isContractStep =
+    currentStep === 3 &&
+    solicitud.quotations &&
+    solicitud.quotations.length > 0 &&
+    solicitud.quotations.some((q) => q.status === "ACCEPTED");
+
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-4">
@@ -848,7 +951,7 @@ function SolicitudCard({ solicitud }: { solicitud: ImportadorSolicitudItem }) {
           <div className="flex items-center gap-2">
             <DollarSign className="h-4 w-4 text-gray-600" />
             <span className="font-medium">
-              ${solicitud.amount?.toLocaleString()} {solicitud.currency}
+              {formatCurrency(solicitud.amount, solicitud.currency)}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -865,6 +968,24 @@ function SolicitudCard({ solicitud }: { solicitud: ImportadorSolicitudItem }) {
             {solicitud.description}
           </p>
         </div>
+
+        {/* Success Message for Approved Quotation */}
+        {isContractStep && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+            <div className="flex items-start gap-2">
+              <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-green-900">
+                  ¡Cotización Aprobada!
+                </p>
+                <p className="text-xs text-green-700 mt-1">
+                  Ahora puede completar los datos del contrato para continuar
+                  con el proceso.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Workflow Steps */}
         <WorkflowSteps
@@ -889,6 +1010,47 @@ function SolicitudCard({ solicitud }: { solicitud: ImportadorSolicitudItem }) {
               solicitud={solicitud}
               onUpdate={() => {
                 // This will trigger a refetch when quotation is updated
+                window.location.reload(); // Simple approach for now
+              }}
+            />
+          ) : isContractStep ? (
+            <ContractPreviewForm
+              solicitudId={solicitud.code || solicitud.id}
+              quotation={{
+                id: solicitud.quotations![0].id,
+                code: solicitud.quotations![0].code,
+                amount: solicitud.quotations![0].amount,
+                currency: solicitud.quotations![0].currency,
+                totalInBs: solicitud.quotations![0].totalInBs || 0,
+                terms: solicitud.quotations![0].terms,
+                notes: solicitud.quotations![0].notes,
+                createdAt: solicitud.quotations![0].createdAt,
+              }}
+              company={{
+                name: solicitud.company?.name,
+                nit: solicitud.company?.nit,
+                city: solicitud.company?.city,
+                contactName: solicitud.company?.contactName,
+                contactPosition: solicitud.company?.contactPosition,
+                email: solicitud.company?.email,
+                phone: solicitud.company?.phone,
+                address: solicitud.company?.address,
+                bankingDetails: solicitud.company?.bankingDetails,
+                documents: solicitud.company?.documents,
+              }}
+              request={{
+                description: solicitud.description,
+                provider: {
+                  name: solicitud.provider?.name,
+                  country: solicitud.provider?.country,
+                  bankingDetails: solicitud.provider?.bankingDetails,
+                  email: solicitud.provider?.email,
+                  phone: solicitud.provider?.phone,
+                },
+                documents: solicitud.documents,
+              }}
+              onContractCreated={() => {
+                // This will trigger a refetch when contract is created
                 window.location.reload(); // Simple approach for now
               }}
             />

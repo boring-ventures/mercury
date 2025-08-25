@@ -35,6 +35,7 @@ import {
   useQuotationStatusConfig,
   type QuotationFilters,
 } from "@/hooks/use-admin-quotations";
+import { formatCurrency } from "@/lib/utils";
 
 const STATUS_FILTERS = [
   { value: "todos", label: "Todos" },
@@ -296,10 +297,10 @@ export default function AdminQuotations() {
                 <div className="flex items-center space-x-4">
                   <div className="text-right">
                     <div className="font-medium">
-                      {quotation.amount.toLocaleString()} {quotation.currency}
+                      {formatCurrency(quotation.amount, quotation.currency)}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {quotation.totalInBs.toLocaleString()} Bs
+                      {formatCurrency(quotation.totalInBs, "Bs")}
                     </div>
                   </div>
 

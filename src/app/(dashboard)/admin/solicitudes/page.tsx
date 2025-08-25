@@ -32,6 +32,7 @@ import {
 } from "@/hooks/use-requests";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { formatCurrency } from "@/lib/utils";
 
 const STATUS_FILTERS = [
   { value: "todos", label: "Todos" },
@@ -331,7 +332,7 @@ export default function AdminSolicitudes() {
                           {request.provider?.country || "N/A"}
                         </td>
                         <td className="py-3 px-4">
-                          ${request.amount?.toLocaleString()} {request.currency}
+                          {formatCurrency(request.amount, request.currency)}
                         </td>
                         <td className="py-3 px-4">
                           {request.rejectionCount ? (

@@ -25,6 +25,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { formatCurrency } from "@/lib/utils";
 
 interface ContractPreviewModalProps {
   contract: {
@@ -216,7 +217,7 @@ export function ContractPreviewModal({
                   <div>
                     <p className="text-xs text-gray-600">Monto del Contrato</p>
                     <p className="font-medium">
-                      ${contract.amount.toLocaleString()} {contract.currency}
+                      {formatCurrency(contract.amount, contract.currency)}
                     </p>
                   </div>
                 </div>
@@ -286,7 +287,7 @@ export function ContractPreviewModal({
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Monto:</span>
                       <span className="font-medium">
-                        ${quotation.amount.toLocaleString()}{" "}
+                        {formatCurrency(quotation.amount, quotation.currency)}{" "}
                         {quotation.currency}
                       </span>
                     </div>

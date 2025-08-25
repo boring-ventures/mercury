@@ -50,6 +50,10 @@ import {
   Check,
   X,
   AlertTriangle,
+  TrendingUp,
+  Banknote,
+  Calculator,
+  Info,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -61,7 +65,12 @@ import {
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/components/ui/use-toast";
-import { ContractDataForm } from "@/components/importador/contract-data-form";
+import {
+  formatCurrency,
+  formatExchangeRate,
+  formatPercentage,
+} from "@/lib/utils";
+import ContractPreviewForm from "@/components/importador/contract-preview-form";
 import { ContractPreviewModal } from "@/components/importador/contract-preview-modal";
 
 // Updated workflow steps (removed Pago Inicial)
@@ -263,6 +272,13 @@ interface QuotationType {
       email: string;
       phone: string;
       country: string;
+    };
+    provider?: {
+      name?: string;
+      country?: string;
+      bankingDetails?: any;
+      email?: string;
+      phone?: string;
     };
   };
 }
@@ -575,23 +591,23 @@ function QuotationCard({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white border rounded-md p-3">
               <p className="text-xs text-gray-600">Monto Principal</p>
-              <p className="text-xl font-semibold">
-                ${quotation.amount?.toLocaleString()} {quotation.currency}
+              <p className="text-lg font-semibold">
+                {formatCurrency(quotation.amount, quotation.currency)}
               </p>
             </div>
             {quotation.exchangeRate ? (
               <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
                 <p className="text-xs text-blue-700">Tipo de cambio</p>
-                <p className="text-xl font-extrabold text-blue-900">
-                  1 USD = {quotation.exchangeRate} Bs
+                <p className="text-lg font-semibold text-blue-900">
+                  1 USD = {formatExchangeRate(quotation.exchangeRate)} Bs
                 </p>
               </div>
             ) : null}
             {computedAmountInBs ? (
               <div className="bg-white border rounded-md p-3">
                 <p className="text-xs text-gray-600">Monto convertido</p>
-                <p className="text-2xl font-extrabold text-gray-900">
-                  {computedAmountInBs.toLocaleString()} Bs
+                <p className="text-lg font-semibold text-gray-900">
+                  {formatCurrency(computedAmountInBs, "Bs")}
                 </p>
               </div>
             ) : null}
@@ -612,22 +628,22 @@ function QuotationCard({
           <div className="flex items-center justify-between text-xs text-gray-500 pb-2 border-b">
             <span className="font-medium text-gray-700">Concepto</span>
             <div className="flex items-center gap-8">
-              <span className="w-24 text-right">USD</span>
-              <span className="w-24 text-right">Bs</span>
+              <span className="w-28 text-right whitespace-nowrap">USD</span>
+              <span className="w-28 text-right whitespace-nowrap">Bs</span>
             </div>
           </div>
           <div className="divide-y">
             <div className="flex items-center justify-between py-3">
               <span className="text-sm text-gray-700">SWIFT</span>
               <div className="flex items-center gap-8">
-                <span className="w-24 text-right font-semibold">
+                <span className="w-28 text-right font-semibold text-lg">
                   {quotation.swiftBankUSD
-                    ? `$${quotation.swiftBankUSD.toLocaleString()} ${quotation.currency}`
+                    ? formatCurrency(quotation.swiftBankUSD, quotation.currency)
                     : "—"}
                 </span>
-                <span className="w-24 text-right font-semibold">
+                <span className="w-28 text-right font-semibold text-lg">
                   {quotation.swiftBankBs
-                    ? `${quotation.swiftBankBs.toLocaleString()} Bs`
+                    ? formatCurrency(quotation.swiftBankBs, "Bs")
                     : "—"}
                 </span>
               </div>
@@ -635,14 +651,17 @@ function QuotationCard({
             <div className="flex items-center justify-between py-3">
               <span className="text-sm text-gray-700">Banco Corresponsal</span>
               <div className="flex items-center gap-8">
-                <span className="w-24 text-right font-semibold">
+                <span className="w-28 text-right font-semibold text-lg">
                   {quotation.correspondentBankUSD
-                    ? `$${quotation.correspondentBankUSD.toLocaleString()} ${quotation.currency}`
+                    ? formatCurrency(
+                        quotation.correspondentBankUSD,
+                        quotation.currency
+                      )
                     : "—"}
                 </span>
-                <span className="w-24 text-right font-semibold">
+                <span className="w-28 text-right font-semibold text-lg">
                   {quotation.correspondentBankBs
-                    ? `${quotation.correspondentBankBs.toLocaleString()} Bs`
+                    ? formatCurrency(quotation.correspondentBankBs, "Bs")
                     : "—"}
                 </span>
               </div>
@@ -658,12 +677,12 @@ function QuotationCard({
             <div className="flex items-center gap-2">
               {quotation.managementServicePercentage ? (
                 <span className="text-[11px] px-2 py-0.5 bg-gray-50 border rounded">
-                  {quotation.managementServicePercentage}%
+                  {formatPercentage(quotation.managementServicePercentage)}%
                 </span>
               ) : null}
-              <span className="text-base font-semibold">
+              <span className="text-lg font-semibold">
                 {quotation.managementServiceBs
-                  ? `${quotation.managementServiceBs.toLocaleString()} Bs`
+                  ? formatCurrency(quotation.managementServiceBs, "Bs")
                   : "—"}
               </span>
             </div>
@@ -675,7 +694,7 @@ function QuotationCard({
             Total a pagar (estimado)
           </p>
           <p className="text-3xl font-extrabold text-blue-900">
-            {(computedTotalInBs || 0).toLocaleString()} Bs
+            {formatCurrency(computedTotalInBs || 0, "Bs")}
           </p>
           <p className="text-xs text-blue-800 mt-2">
             El total incluye los cargos indicados y puede variar por ajustes
@@ -807,6 +826,24 @@ function QuotationCard({
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
+                  {/* Terms Acceptance Message */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <Check className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs font-medium text-blue-900 mb-1">
+                          Aceptación de Términos
+                        </p>
+                        <p className="text-xs text-blue-800">
+                          Al aprobar esta cotización, confirma que acepta todos
+                          los términos y condiciones establecidos, incluyendo
+                          los costos detallados, el tipo de cambio aplicado y
+                          las condiciones de servicio.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   <div>
                     <Label htmlFor="approve-notes">
                       Notas adicionales (opcional)
@@ -869,23 +906,49 @@ function QuotationCard({
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Rechazar Cotización</AlertDialogTitle>
+                  <AlertDialogTitle className="flex items-center gap-2">
+                    <X className="h-5 w-5 text-red-600" />
+                    Rechazar Cotización
+                  </AlertDialogTitle>
                   <AlertDialogDescription>
                     ¿Está seguro que desea rechazar esta cotización? Debe
-                    proporcionar una razón para el rechazo.
+                    proporcionar una razón detallada para el rechazo.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <div className="space-y-4 py-4">
+                  {/* Terms Acceptance Message */}
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <X className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs font-medium text-red-900 mb-1">
+                          Confirmación de Rechazo
+                        </p>
+                        <p className="text-xs text-red-800">
+                          Al rechazar esta cotización, confirma que no acepta
+                          los términos y condiciones ofrecidos. Debe
+                          proporcionar una razón válida para el rechazo.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   <div>
-                    <Label htmlFor="reject-notes">Motivo del rechazo *</Label>
+                    <Label htmlFor="reject-notes" className="font-medium">
+                      Motivo del rechazo *
+                    </Label>
                     <Textarea
                       id="reject-notes"
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                       placeholder="Explique por qué está rechazando esta cotización..."
                       className="mt-2"
+                      rows={4}
                       required
                     />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Mínimo 10 caracteres requeridos
+                    </p>
                   </div>
                 </div>
                 <AlertDialogFooter>
@@ -941,39 +1004,43 @@ function QuotationCard({
               requeridos.
             </p>
 
-            <ContractDataForm
+            <ContractPreviewForm
+              solicitudId={
+                quotation.request?.code || quotation.request?.id || ""
+              }
               quotation={{
                 id: quotation.id,
                 code: quotation.code,
                 amount: quotation.amount,
                 currency: quotation.currency,
-                description: quotation.description,
-                validUntil: quotation.validUntil,
+                totalInBs: quotation.totalInBs || 0,
+                terms: quotation.terms,
+                notes: quotation.notes,
+                createdAt: quotation.createdAt,
               }}
               company={{
-                name: quotation.request?.company?.name || "",
-                nit: quotation.request?.company?.nit || "",
-                city: quotation.request?.company?.city || "",
-                contactName: quotation.request?.company?.contactName || "",
-                contactPosition:
-                  quotation.request?.company?.contactPosition || "",
+                name: quotation.request?.company?.name,
+                nit: quotation.request?.company?.nit,
+                city: quotation.request?.company?.city,
+                contactName: quotation.request?.company?.contactName,
+                contactPosition: quotation.request?.company?.contactPosition,
+                email: quotation.request?.company?.email,
+                phone: quotation.request?.company?.phone,
+                address: quotation.request?.company?.city, // Using city as address for now
               }}
-              onContractGenerated={(contractId) => {
-                // Fetch the generated contract and show preview
-                fetch(`/api/contracts/${contractId}`)
-                  .then((res) => res.json())
-                  .then((contract) => {
-                    setGeneratedContract(contract);
-                    setShowContractPreview(true);
-                  })
-                  .catch((error) => {
-                    console.error("Error fetching contract:", error);
-                    toast({
-                      title: "Error",
-                      description: "Error al cargar el contrato generado",
-                      variant: "destructive",
-                    });
-                  });
+              request={{
+                description: quotation.request?.description,
+                provider: {
+                  name: quotation.request?.provider?.name,
+                  country: quotation.request?.provider?.country,
+                  bankingDetails: quotation.request?.provider?.bankingDetails,
+                  email: quotation.request?.provider?.email,
+                  phone: quotation.request?.provider?.phone,
+                },
+              }}
+              onContractCreated={() => {
+                // Refresh the data after contract creation
+                onUpdate();
               }}
             />
           </div>
@@ -1107,6 +1174,24 @@ function QuotationActionButtons({
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            {/* Terms Acceptance Message */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <Check className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-xs font-medium text-blue-900 mb-1">
+                    Aceptación de Términos
+                  </p>
+                  <p className="text-xs text-blue-800">
+                    Al aprobar esta cotización, confirma que acepta todos los
+                    términos y condiciones establecidos, incluyendo los costos
+                    detallados, el tipo de cambio aplicado y las condiciones de
+                    servicio.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div>
               <Label htmlFor="modal-approve-notes">
                 Notas adicionales (opcional)
@@ -1162,23 +1247,49 @@ function QuotationActionButtons({
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Rechazar Cotización</AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <X className="h-5 w-5 text-red-600" />
+              Rechazar Cotización
+            </AlertDialogTitle>
             <AlertDialogDescription>
               ¿Está seguro que desea rechazar esta cotización? Debe proporcionar
-              una razón para el rechazo.
+              una razón detallada para el rechazo.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-4 py-4">
+            {/* Terms Acceptance Message */}
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <X className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-xs font-medium text-red-900 mb-1">
+                    Confirmación de Rechazo
+                  </p>
+                  <p className="text-xs text-red-800">
+                    Al rechazar esta cotización, confirma que no acepta los
+                    términos y condiciones ofrecidos. Debe proporcionar una
+                    razón válida para el rechazo.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div>
-              <Label htmlFor="modal-reject-notes">Motivo del rechazo *</Label>
+              <Label htmlFor="modal-reject-notes" className="font-medium">
+                Motivo del rechazo *
+              </Label>
               <Textarea
                 id="modal-reject-notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Explique por qué está rechazando esta cotización..."
                 className="mt-2"
+                rows={4}
                 required
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Mínimo 10 caracteres requeridos
+              </p>
             </div>
           </div>
           <AlertDialogFooter>
@@ -1226,6 +1337,16 @@ export default function ImportadorSolicitudDetail() {
 
   const request = data?.request;
 
+  // Add state for modal dialogs
+  const [showApproveDialog, setShowApproveDialog] = useState(false);
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [notes, setNotes] = useState("");
+  const [isActionLoading, setIsActionLoading] = useState(false);
+
+  // Get the update quotation mutation
+  const { updateQuotation, isLoading: isUpdateLoading } = useUpdateQuotation();
+  const { toast } = useToast();
+
   // Show all quotations to importador except DRAFT status (which are admin-only)
   const visibleQuotations =
     request?.quotations?.filter(
@@ -1234,6 +1355,78 @@ export default function ImportadorSolicitudDetail() {
 
   const handleQuotationUpdate = () => {
     refetch(); // Refresh the request data
+  };
+
+  // Handle approve quotation
+  const handleApprove = async () => {
+    if (!visibleQuotations[0]) return;
+
+    setIsActionLoading(true);
+    try {
+      await updateQuotation({
+        quotationId: visibleQuotations[0].id,
+        action: "ACCEPTED",
+        notes: notes.trim() || undefined,
+      });
+
+      toast({
+        title: "Cotización aprobada",
+        description: "La cotización ha sido aprobada exitosamente.",
+      });
+
+      setShowApproveDialog(false);
+      setNotes("");
+      refetch(); // Refresh the data
+    } catch (error) {
+      console.error("Error approving quotation:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo aprobar la cotización. Intente nuevamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  // Handle reject quotation
+  const handleReject = async () => {
+    if (!visibleQuotations[0] || !notes.trim() || notes.trim().length < 10) {
+      toast({
+        title: "Error",
+        description:
+          "Debe proporcionar una razón válida para el rechazo (mínimo 10 caracteres).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsActionLoading(true);
+    try {
+      await updateQuotation({
+        quotationId: visibleQuotations[0].id,
+        action: "REJECTED",
+        notes: notes.trim(),
+      });
+
+      toast({
+        title: "Cotización rechazada",
+        description: "La cotización ha sido rechazada exitosamente.",
+      });
+
+      setShowRejectDialog(false);
+      setNotes("");
+      refetch(); // Refresh the data
+    } catch (error) {
+      console.error("Error rejecting quotation:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo rechazar la cotización. Intente nuevamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsActionLoading(false);
+    }
   };
 
   if (isLoading) {
@@ -1328,7 +1521,7 @@ export default function ImportadorSolicitudDetail() {
                       <div>
                         <p className="text-sm text-gray-600">Monto Total</p>
                         <p className="font-semibold text-lg">
-                          ${request.amount?.toLocaleString()} {request.currency}
+                          {formatCurrency(request.amount, request.currency)}
                         </p>
                       </div>
                     </div>
@@ -1575,33 +1768,87 @@ export default function ImportadorSolicitudDetail() {
                         {currentStep === 2 && visibleQuotations.length > 0 ? (
                           <Dialog>
                             <DialogTrigger asChild>
-                              <Button className="w-full">
+                              <Button
+                                className="w-full"
+                                style={{
+                                  backgroundColor: "#f97316", // Orange for quotation review
+                                }}
+                              >
                                 <ArrowRight className="h-4 w-4 mr-2" />
                                 {nextAction.text}
                               </Button>
                             </DialogTrigger>
-                            <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+                            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                               <DialogHeader>
                                 <DialogTitle className="flex items-center gap-2">
                                   <DollarSign className="h-5 w-5" />
                                   Revisar Cotización {visibleQuotations[0].code}
                                 </DialogTitle>
                                 <DialogDescription>
-                                  Revise los detalles completos de la cotización
-                                  y decida si aprobarla o rechazarla.
+                                  Revise los detalles de la cotización y decida
+                                  si aprobarla o rechazarla.
                                 </DialogDescription>
                               </DialogHeader>
 
-                              <div className="py-6 space-y-6">
-                                {/* Basic Information Section */}
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                  <Card>
-                                    <CardHeader className="pb-3">
-                                      <CardTitle className="text-sm font-medium text-gray-600">
-                                        Estado de la Cotización
-                                      </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
+                              <div className="space-y-6 py-4">
+                                {/* Rejection Count Warning */}
+                                {request.rejectionCount !== undefined &&
+                                  request.rejectionCount > 0 && (
+                                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                                      <div className="flex items-start gap-3">
+                                        <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+                                        <div>
+                                          <h4 className="font-medium text-amber-900">
+                                            Advertencia de Propuestas
+                                          </h4>
+                                          <p className="text-sm text-amber-800 mt-1">
+                                            Esta solicitud ha rechazado{" "}
+                                            <strong>
+                                              {request.rejectionCount}
+                                            </strong>{" "}
+                                            de 3 propuestas permitidas.
+                                            {request.rejectionCount >= 2 && (
+                                              <span className="block mt-1 font-medium">
+                                                ⚠️ Si rechaza esta propuesta, la
+                                                solicitud será cancelada
+                                                automáticamente.
+                                              </span>
+                                            )}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                {/* Quotation Summary */}
+                                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
+                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="text-center">
+                                      <p className="text-xs text-blue-600 mb-1">
+                                        Monto Principal
+                                      </p>
+                                      <p className="font-bold text-lg text-blue-900">
+                                        {formatCurrency(
+                                          visibleQuotations[0].amount,
+                                          visibleQuotations[0].currency
+                                        )}
+                                      </p>
+                                    </div>
+                                    <div className="text-center">
+                                      <p className="text-xs text-blue-600 mb-1">
+                                        Total en Bs
+                                      </p>
+                                      <p className="font-bold text-lg text-blue-900">
+                                        {formatCurrency(
+                                          visibleQuotations[0].totalInBs,
+                                          "Bs"
+                                        )}
+                                      </p>
+                                    </div>
+                                    <div className="text-center">
+                                      <p className="text-xs text-blue-600 mb-1">
+                                        Estado
+                                      </p>
                                       <Badge
                                         className={(() => {
                                           switch (visibleQuotations[0].status) {
@@ -1638,375 +1885,263 @@ export default function ImportadorSolicitudDetail() {
                                           }
                                         })()}
                                       </Badge>
-                                    </CardContent>
-                                  </Card>
-
-                                  <Card>
-                                    <CardHeader className="pb-3">
-                                      <CardTitle className="text-sm font-medium text-gray-600">
-                                        Fecha de Creación
-                                      </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                      <p className="text-sm font-medium">
-                                        {format(
-                                          new Date(
-                                            visibleQuotations[0].createdAt
-                                          ),
-                                          "dd/MM/yyyy 'a las' HH:mm",
-                                          { locale: es }
-                                        )}
-                                      </p>
-                                    </CardContent>
-                                  </Card>
-
-                                  <Card>
-                                    <CardHeader className="pb-3">
-                                      <CardTitle className="text-sm font-medium text-gray-600">
-                                        Válida Hasta
-                                      </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                      <p
-                                        className={`text-sm font-medium ${
-                                          new Date() >
-                                          new Date(
-                                            visibleQuotations[0].validUntil
-                                          )
-                                            ? "text-red-600"
-                                            : new Date(
-                                                  visibleQuotations[0].validUntil
-                                                ) <
-                                                new Date(
-                                                  Date.now() +
-                                                    24 * 60 * 60 * 1000
-                                                )
-                                              ? "text-yellow-600"
-                                              : "text-green-600"
-                                        }`}
-                                      >
-                                        {format(
-                                          new Date(
-                                            visibleQuotations[0].validUntil
-                                          ),
-                                          "dd/MM/yyyy 'a las' HH:mm",
-                                          { locale: es }
-                                        )}
-                                      </p>
-                                    </CardContent>
-                                  </Card>
+                                    </div>
+                                  </div>
                                 </div>
 
-                                {/* Description Section */}
-                                {visibleQuotations[0].description && (
-                                  <Card>
-                                    <CardHeader>
-                                      <CardTitle className="flex items-center gap-2">
-                                        <FileText className="h-4 w-4" />
-                                        Descripción de la Cotización
-                                      </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                      <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                                        {visibleQuotations[0].description}
-                                      </p>
-                                    </CardContent>
-                                  </Card>
-                                )}
-
-                                {/* Exchange Rate Information */}
-                                {visibleQuotations[0].exchangeRate && (
-                                  <Card>
-                                    <CardHeader>
-                                      <CardTitle className="flex items-center gap-2">
-                                        <DollarSign className="h-4 w-4" />
-                                        Información de Tipo de Cambio
-                                      </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="bg-blue-50 p-4 rounded-lg border">
-                                          <p className="text-xs text-blue-600 mb-1">
-                                            Tipo de Cambio USD/BOB
-                                          </p>
-                                          <p className="font-semibold text-lg text-blue-900">
-                                            {Number(
-                                              visibleQuotations[0].exchangeRate
-                                            )?.toFixed(4)}{" "}
-                                            BOB
-                                          </p>
-                                        </div>
-                                        {visibleQuotations[0].amountInBs && (
-                                          <div className="bg-green-50 p-4 rounded-lg border">
-                                            <p className="text-xs text-green-600 mb-1">
-                                              Monto Principal en BOB
-                                            </p>
-                                            <p className="font-semibold text-lg text-green-900">
-                                              {Number(
-                                                visibleQuotations[0].amountInBs
-                                              )?.toLocaleString()}{" "}
-                                              BOB
-                                            </p>
-                                          </div>
-                                        )}
-                                      </div>
-                                    </CardContent>
-                                  </Card>
-                                )}
-
-                                {/* Cost Breakdown Section - Enhanced */}
-                                <Card>
-                                  <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                      <DollarSign className="h-4 w-4" />
-                                      Desglose Detallado de Costos
-                                    </CardTitle>
-                                  </CardHeader>
-                                  <CardContent>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                                      {/* USD Costs */}
-                                      <div className="space-y-3">
-                                        <h4 className="font-medium text-gray-900 text-sm border-b pb-1">
-                                          Costos en USD
-                                        </h4>
-
-                                        <div className="bg-gray-50 p-3 rounded-lg border">
-                                          <p className="text-xs text-gray-600">
-                                            Monto Principal
-                                          </p>
-                                          <p className="font-semibold text-lg">
-                                            $
-                                            {Number(
-                                              visibleQuotations[0].amount
-                                            )?.toLocaleString()}{" "}
-                                            USD
-                                          </p>
-                                        </div>
-
-                                        {visibleQuotations[0].swiftBankUSD !==
-                                          undefined && (
-                                          <div className="bg-gray-50 p-3 rounded-lg border">
-                                            <p className="text-xs text-gray-600">
-                                              SWIFT Bank
-                                            </p>
-                                            <p className="font-semibold">
-                                              $
-                                              {Number(
-                                                visibleQuotations[0]
-                                                  .swiftBankUSD
-                                              )?.toLocaleString()}{" "}
-                                              USD
-                                            </p>
-                                          </div>
-                                        )}
-
-                                        {visibleQuotations[0]
-                                          .correspondentBankUSD !==
-                                          undefined && (
-                                          <div className="bg-gray-50 p-3 rounded-lg border">
-                                            <p className="text-xs text-gray-600">
-                                              Banco Corresponsal
-                                            </p>
-                                            <p className="font-semibold">
-                                              $
-                                              {Number(
-                                                visibleQuotations[0]
-                                                  .correspondentBankUSD
-                                              )?.toLocaleString()}{" "}
-                                              USD
-                                            </p>
-                                          </div>
-                                        )}
-                                      </div>
-
-                                      {/* BOB Costs */}
-                                      {(visibleQuotations[0].amountInBs ||
-                                        visibleQuotations[0].swiftBankBs ||
-                                        visibleQuotations[0]
-                                          .correspondentBankBs) && (
-                                        <div className="space-y-3">
-                                          <h4 className="font-medium text-gray-900 text-sm border-b pb-1">
-                                            Costos en BOB
-                                          </h4>
-
-                                          {visibleQuotations[0].amountInBs && (
-                                            <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-                                              <p className="text-xs text-green-600">
-                                                Monto Principal
-                                              </p>
-                                              <p className="font-semibold text-green-900">
-                                                {Number(
-                                                  visibleQuotations[0]
-                                                    .amountInBs
-                                                )?.toLocaleString()}{" "}
-                                                BOB
-                                              </p>
-                                            </div>
-                                          )}
-
-                                          {visibleQuotations[0].swiftBankBs && (
-                                            <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-                                              <p className="text-xs text-green-600">
-                                                SWIFT Bank
-                                              </p>
-                                              <p className="font-semibold text-green-900">
-                                                {Number(
-                                                  visibleQuotations[0]
-                                                    .swiftBankBs
-                                                )?.toLocaleString()}{" "}
-                                                BOB
-                                              </p>
-                                            </div>
-                                          )}
-
-                                          {visibleQuotations[0]
-                                            .correspondentBankBs && (
-                                            <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-                                              <p className="text-xs text-green-600">
-                                                Banco Corresponsal
-                                              </p>
-                                              <p className="font-semibold text-green-900">
-                                                {Number(
-                                                  visibleQuotations[0]
-                                                    .correspondentBankBs
-                                                )?.toLocaleString()}{" "}
-                                                BOB
-                                              </p>
-                                            </div>
-                                          )}
-                                        </div>
-                                      )}
-
-                                      {/* Management Services */}
-                                      {(visibleQuotations[0]
-                                        .managementServiceBs ||
-                                        visibleQuotations[0]
-                                          .managementServicePercentage) && (
-                                        <div className="space-y-3">
-                                          <h4 className="font-medium text-gray-900 text-sm border-b pb-1">
-                                            Servicios de Gestión
-                                          </h4>
-
-                                          {visibleQuotations[0]
-                                            .managementServicePercentage && (
-                                            <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
-                                              <p className="text-xs text-purple-600">
-                                                Porcentaje de Servicio
-                                              </p>
-                                              <p className="font-semibold text-purple-900">
-                                                {Number(
-                                                  visibleQuotations[0]
-                                                    .managementServicePercentage
-                                                )?.toFixed(2)}
-                                                %
-                                              </p>
-                                            </div>
-                                          )}
-
-                                          {visibleQuotations[0]
-                                            .managementServiceBs && (
-                                            <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
-                                              <p className="text-xs text-purple-600">
-                                                Servicio de Gestión
-                                              </p>
-                                              <p className="font-semibold text-purple-900">
-                                                {Number(
-                                                  visibleQuotations[0]
-                                                    .managementServiceBs
-                                                )?.toLocaleString()}{" "}
-                                                BOB
-                                              </p>
-                                            </div>
-                                          )}
-                                        </div>
-                                      )}
-                                    </div>
-
-                                    {/* Total Section */}
-                                    {visibleQuotations[0].totalInBs && (
-                                      <div className="border-t pt-4">
-                                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                                          <div className="flex items-center justify-between">
-                                            <div>
-                                              <p className="text-sm text-blue-600 font-medium">
-                                                Total a Pagar
-                                              </p>
-                                              <p className="text-xs text-blue-500">
-                                                Incluye todos los costos y
-                                                servicios
-                                              </p>
-                                            </div>
-                                            <p className="font-bold text-2xl text-blue-900">
-                                              {Number(
-                                                visibleQuotations[0].totalInBs
-                                              )?.toLocaleString()}{" "}
-                                              BOB
-                                            </p>
-                                          </div>
-                                        </div>
-                                      </div>
+                                {/* Status and Date */}
+                                <div className="flex items-center justify-between">
+                                  <div className="text-sm text-gray-600">
+                                    <Calendar className="h-4 w-4 inline mr-1" />
+                                    Creada el:{" "}
+                                    {format(
+                                      new Date(visibleQuotations[0].createdAt),
+                                      "dd/MM/yyyy",
+                                      {
+                                        locale: es,
+                                      }
                                     )}
-                                  </CardContent>
-                                </Card>
+                                  </div>
+                                  <div className="text-sm text-gray-600">
+                                    <Clock className="h-4 w-4 inline mr-1" />
+                                    Válida hasta:{" "}
+                                    {format(
+                                      new Date(visibleQuotations[0].validUntil),
+                                      "dd/MM/yyyy",
+                                      {
+                                        locale: es,
+                                      }
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Amount Breakdown */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                  <div className="bg-gray-50 p-3 rounded-lg">
+                                    <p className="text-xs text-gray-600 mb-1">
+                                      Monto Principal
+                                    </p>
+                                    <p className="font-semibold">
+                                      {formatCurrency(
+                                        visibleQuotations[0].amount,
+                                        visibleQuotations[0].currency
+                                      )}
+                                    </p>
+                                  </div>
+                                  <div className="bg-gray-50 p-3 rounded-lg">
+                                    <p className="text-xs text-gray-600 mb-1">
+                                      Servicio de Gestión
+                                    </p>
+                                    <p className="font-semibold">
+                                      {formatCurrency(
+                                        visibleQuotations[0]
+                                          .managementServiceBs,
+                                        "Bs"
+                                      )}
+                                      {visibleQuotations[0]
+                                        .managementServicePercentage && (
+                                        <span className="text-xs text-gray-500 block">
+                                          (
+                                          {
+                                            visibleQuotations[0]
+                                              .managementServicePercentage
+                                          }
+                                          %)
+                                        </span>
+                                      )}
+                                    </p>
+                                  </div>
+                                  <div className="bg-gray-50 p-3 rounded-lg">
+                                    <p className="text-xs text-gray-600 mb-1">
+                                      Banco Corresponsal
+                                    </p>
+                                    <p className="font-semibold">
+                                      {formatCurrency(
+                                        visibleQuotations[0]
+                                          .correspondentBankUSD,
+                                        "USD"
+                                      )}
+                                    </p>
+                                  </div>
+                                  <div className="bg-blue-50 p-3 rounded-lg">
+                                    <p className="text-xs text-blue-600 mb-1">
+                                      Total en Bs
+                                    </p>
+                                    <p className="font-bold text-lg text-blue-900">
+                                      {formatCurrency(
+                                        visibleQuotations[0].totalInBs,
+                                        "Bs"
+                                      )}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Exchange Rate and Banking Details */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div className="bg-green-50 p-3 rounded-lg">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <TrendingUp className="h-4 w-4 text-green-600" />
+                                      <p className="text-xs text-green-600 font-medium">
+                                        Tipo de Cambio
+                                      </p>
+                                    </div>
+                                    <p className="font-semibold text-green-900">
+                                      {visibleQuotations[0].exchangeRate
+                                        ? `1 USD = ${formatExchangeRate(visibleQuotations[0].exchangeRate)} Bs`
+                                        : "No disponible"}
+                                    </p>
+                                  </div>
+                                  <div className="bg-purple-50 p-3 rounded-lg">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <Banknote className="h-4 w-4 text-purple-600" />
+                                      <p className="text-xs text-purple-600 font-medium">
+                                        Monto en Bs
+                                      </p>
+                                    </div>
+                                    <p className="font-semibold text-purple-900">
+                                      {formatCurrency(
+                                        visibleQuotations[0].amountInBs,
+                                        "Bs"
+                                      )}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Banking Fees Breakdown */}
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <Calculator className="h-5 w-5 text-gray-700" />
+                                    <h4 className="font-medium text-gray-900">
+                                      Desglose de Comisiones Bancarias
+                                    </h4>
+                                  </div>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                      <p className="text-sm text-gray-600 mb-1">
+                                        Banco Corresponsal (Bs)
+                                      </p>
+                                      <p className="font-semibold">
+                                        {formatCurrency(
+                                          visibleQuotations[0]
+                                            .correspondentBankBs,
+                                          "Bs"
+                                        )}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="text-sm text-gray-600 mb-1">
+                                        Banco Corresponsal (USD)
+                                      </p>
+                                      <p className="font-semibold">
+                                        {formatCurrency(
+                                          visibleQuotations[0]
+                                            .correspondentBankUSD,
+                                          "USD"
+                                        )}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="text-sm text-gray-600 mb-1">
+                                        SWIFT Bank (Bs)
+                                      </p>
+                                      <p className="font-semibold">
+                                        {formatCurrency(
+                                          visibleQuotations[0].swiftBankBs,
+                                          "Bs"
+                                        )}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="text-sm text-gray-600 mb-1">
+                                        SWIFT Bank (USD)
+                                      </p>
+                                      <p className="font-semibold">
+                                        {formatCurrency(
+                                          visibleQuotations[0].swiftBankUSD,
+                                          "USD"
+                                        )}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Valid Until */}
+                                <div className="bg-yellow-50 p-3 rounded-lg">
+                                  <div className="text-sm text-yellow-800 flex items-center gap-2">
+                                    <Clock className="h-4 w-4 inline" />
+                                    <span>
+                                      Válida hasta:{" "}
+                                      {format(
+                                        new Date(
+                                          visibleQuotations[0].validUntil
+                                        ),
+                                        "dd/MM/yyyy 'a las' HH:mm",
+                                        { locale: es }
+                                      )}
+                                    </span>
+                                    {new Date() >
+                                      new Date(
+                                        visibleQuotations[0].validUntil
+                                      ) && (
+                                      <Badge
+                                        variant="destructive"
+                                        className="ml-2"
+                                      >
+                                        <AlertTriangle className="h-3 w-3 mr-1" />
+                                        Expirada
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
 
                                 {/* Terms and Notes */}
-                                {(visibleQuotations[0].terms ||
-                                  visibleQuotations[0].notes ||
-                                  visibleQuotations[0].rejectionReason) && (
-                                  <Card>
-                                    <CardHeader>
-                                      <CardTitle className="flex items-center gap-2">
-                                        <MessageSquare className="h-4 w-4" />
-                                        Términos y Observaciones
-                                      </CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="space-y-4">
-                                      {visibleQuotations[0].terms && (
-                                        <div>
-                                          <p className="text-sm font-medium text-gray-700 mb-2">
-                                            Términos y Condiciones
-                                          </p>
-                                          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                                            <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
-                                              {visibleQuotations[0].terms}
-                                            </p>
-                                          </div>
-                                        </div>
-                                      )}
-
-                                      {visibleQuotations[0].notes && (
-                                        <div>
-                                          <p className="text-sm font-medium text-gray-700 mb-2">
-                                            Notas Adicionales
-                                          </p>
-                                          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                                            <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
-                                              {visibleQuotations[0].notes}
-                                            </p>
-                                          </div>
-                                        </div>
-                                      )}
-
-                                      {visibleQuotations[0].rejectionReason && (
-                                        <div>
-                                          <p className="text-sm font-medium text-red-700 mb-2">
-                                            Razón de Rechazo
-                                          </p>
-                                          <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                                            <p className="text-sm text-red-800 whitespace-pre-wrap leading-relaxed">
-                                              {
-                                                visibleQuotations[0]
-                                                  .rejectionReason
-                                              }
-                                            </p>
-                                          </div>
-                                        </div>
-                                      )}
-                                    </CardContent>
-                                  </Card>
+                                {visibleQuotations[0].terms && (
+                                  <div>
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <FileText className="h-4 w-4 text-gray-700" />
+                                      <p className="text-sm font-medium text-gray-700">
+                                        Términos y Condiciones:
+                                      </p>
+                                    </div>
+                                    <div className="bg-gray-50 p-3 rounded-lg">
+                                      <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                                        {visibleQuotations[0].terms}
+                                      </p>
+                                    </div>
+                                  </div>
                                 )}
 
-                                {/* Action Buttons - Only show if quotation can be responded to */}
+                                {visibleQuotations[0].notes && (
+                                  <div>
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <Info className="h-4 w-4 text-gray-700" />
+                                      <p className="text-sm font-medium text-gray-700">
+                                        Notas:
+                                      </p>
+                                    </div>
+                                    <div className="bg-gray-50 p-3 rounded-lg">
+                                      <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                                        {visibleQuotations[0].notes}
+                                      </p>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {visibleQuotations[0].rejectionReason && (
+                                  <div>
+                                    <p className="text-sm font-medium text-red-700 mb-2 flex items-center gap-2">
+                                      <X className="h-4 w-4" />
+                                      Motivo de Rechazo Anterior:
+                                    </p>
+                                    <div className="bg-red-50 border border-red-200 p-3 rounded-lg">
+                                      <p className="text-sm text-red-800 whitespace-pre-wrap">
+                                        {visibleQuotations[0].rejectionReason}
+                                      </p>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Action Buttons */}
                                 {(() => {
                                   const isExpired =
                                     new Date() >
@@ -2019,27 +2154,235 @@ export default function ImportadorSolicitudDetail() {
 
                                   return (
                                     canRespond && (
-                                      <Card>
-                                        <CardHeader>
-                                          <CardTitle>
-                                            Acciones Disponibles
-                                          </CardTitle>
-                                          <p className="text-sm text-gray-600">
-                                            Decida si aprobar o rechazar esta
-                                            cotización
-                                          </p>
-                                        </CardHeader>
-                                        <CardContent>
-                                          <QuotationActionButtons
-                                            quotation={visibleQuotations[0]}
-                                            onUpdate={handleQuotationUpdate}
-                                          />
-                                        </CardContent>
-                                      </Card>
+                                      <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+                                        <div className="flex-1 flex gap-3">
+                                          {/* Approve Button */}
+                                          <Button
+                                            onClick={() =>
+                                              setShowApproveDialog(true)
+                                            }
+                                            className="flex-1 bg-green-600 hover:bg-green-700"
+                                            disabled={isActionLoading}
+                                          >
+                                            <Check className="h-4 w-4 mr-2" />
+                                            Aprobar Cotización
+                                          </Button>
+
+                                          {/* Reject Button */}
+                                          <Button
+                                            onClick={() =>
+                                              setShowRejectDialog(true)
+                                            }
+                                            variant="destructive"
+                                            className="flex-1"
+                                            disabled={isActionLoading}
+                                          >
+                                            <X className="h-4 w-4 mr-2" />
+                                            Rechazar Cotización
+                                          </Button>
+                                        </div>
+                                      </div>
                                     )
                                   );
                                 })()}
+
+                                {visibleQuotations[0].status === "ACCEPTED" && (
+                                  <div className="flex items-center gap-2 pt-4 border-t text-green-700">
+                                    <CheckCircle className="h-4 w-4" />
+                                    <span className="text-sm font-medium">
+                                      Cotización aprobada - Procediendo al
+                                      siguiente paso
+                                    </span>
+                                  </div>
+                                )}
+
+                                {visibleQuotations[0].status === "REJECTED" && (
+                                  <div className="flex items-center gap-2 pt-4 border-t text-red-700">
+                                    <X className="h-4 w-4" />
+                                    <span className="text-sm font-medium">
+                                      Cotización rechazada
+                                    </span>
+                                  </div>
+                                )}
                               </div>
+
+                              {/* Nested Dialogs for Approve/Reject */}
+                              <Dialog
+                                open={showApproveDialog}
+                                onOpenChange={setShowApproveDialog}
+                              >
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>
+                                      Aprobar Cotización
+                                    </DialogTitle>
+                                    <DialogDescription>
+                                      ¿Está seguro que desea aprobar esta
+                                      cotización? Esta acción moverá la
+                                      solicitud al siguiente paso del proceso.
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <div className="space-y-4 py-4">
+                                    {/* Terms Acceptance Message */}
+                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                      <div className="flex items-start gap-3">
+                                        <Check className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                                        <div>
+                                          <p className="text-xs font-medium text-blue-900 mb-1">
+                                            Aceptación de Términos
+                                          </p>
+                                          <p className="text-xs text-blue-800">
+                                            Al aprobar esta cotización, confirma
+                                            que acepta todos los términos y
+                                            condiciones establecidos, incluyendo
+                                            los costos detallados, el tipo de
+                                            cambio aplicado y las condiciones de
+                                            servicio.
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <Label htmlFor="approve-notes">
+                                        Notas adicionales (opcional)
+                                      </Label>
+                                      <Textarea
+                                        id="approve-notes"
+                                        value={notes}
+                                        onChange={(e) =>
+                                          setNotes(e.target.value)
+                                        }
+                                        placeholder="Comentarios adicionales sobre la aprobación..."
+                                        className="mt-2"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-3">
+                                    <Button
+                                      variant="outline"
+                                      onClick={() => {
+                                        setShowApproveDialog(false);
+                                        setNotes("");
+                                      }}
+                                      disabled={isActionLoading}
+                                    >
+                                      Cancelar
+                                    </Button>
+                                    <Button
+                                      onClick={handleApprove}
+                                      disabled={isActionLoading}
+                                      className="bg-green-600 hover:bg-green-700"
+                                    >
+                                      {isActionLoading ? (
+                                        <>
+                                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                          Aprobando...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Check className="h-4 w-4 mr-2" />
+                                          Confirmar Aprobación
+                                        </>
+                                      )}
+                                    </Button>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+
+                              <AlertDialog
+                                open={showRejectDialog}
+                                onOpenChange={setShowRejectDialog}
+                              >
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle className="flex items-center gap-2">
+                                      <X className="h-5 w-5 text-red-600" />
+                                      Rechazar Cotización
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      ¿Está seguro que desea rechazar esta
+                                      cotización? Debe proporcionar una razón
+                                      detallada para el rechazo.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <div className="space-y-4 py-4">
+                                    {/* Terms Acceptance Message */}
+                                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                      <div className="flex items-start gap-3">
+                                        <X className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                                        <div>
+                                          <p className="text-xs font-medium text-red-900 mb-1">
+                                            Confirmación de Rechazo
+                                          </p>
+                                          <p className="text-xs text-red-800">
+                                            Al rechazar esta cotización,
+                                            confirma que no acepta los términos
+                                            y condiciones ofrecidos. Debe
+                                            proporcionar una razón válida para
+                                            el rechazo.
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <Label
+                                        htmlFor="reject-notes"
+                                        className="font-medium"
+                                      >
+                                        Motivo del rechazo *
+                                      </Label>
+                                      <Textarea
+                                        id="reject-notes"
+                                        value={notes}
+                                        onChange={(e) =>
+                                          setNotes(e.target.value)
+                                        }
+                                        placeholder="Explique por qué está rechazando esta cotización..."
+                                        className="mt-2"
+                                        rows={4}
+                                        required
+                                      />
+                                      <p className="text-xs text-gray-500 mt-1">
+                                        Mínimo 10 caracteres requeridos
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel
+                                      onClick={() => {
+                                        setShowRejectDialog(false);
+                                        setNotes("");
+                                      }}
+                                      disabled={isActionLoading}
+                                    >
+                                      Cancelar
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={handleReject}
+                                      disabled={
+                                        isActionLoading ||
+                                        !notes.trim() ||
+                                        notes.trim().length < 10
+                                      }
+                                      className="bg-red-600 hover:bg-red-700"
+                                    >
+                                      {isActionLoading ? (
+                                        <>
+                                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                          Rechazando...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <X className="h-4 w-4 mr-2" />
+                                          Confirmar Rechazo
+                                        </>
+                                      )}
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
                             </DialogContent>
                           </Dialog>
                         ) : (

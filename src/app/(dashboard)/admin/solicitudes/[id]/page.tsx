@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
+import { formatCurrency } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -2638,7 +2639,8 @@ export default function AdminSolicitudDetail() {
                               {q.code}
                             </p>
                             <p className="text-sm text-green-700">
-                              Monto Aprobado: ${q.amount?.toLocaleString()}{" "}
+                              Monto Aprobado:{" "}
+                              {formatCurrency(q.amount || 0, " ")}
                               {q.currency}
                             </p>
                           </div>
@@ -2683,7 +2685,7 @@ export default function AdminSolicitudDetail() {
                           <div>
                             <p className="font-medium text-red-900">{q.code}</p>
                             <p className="text-sm text-red-700">
-                              Monto: ${q.amount?.toLocaleString()} {q.currency}
+                              Monto: {formatCurrency(q.amount || 0, q.currency)}
                             </p>
                           </div>
                           <div className="text-right">
@@ -2762,7 +2764,7 @@ export default function AdminSolicitudDetail() {
                               {q.code}
                             </p>
                             <p className="text-sm text-amber-700">
-                              Monto: ${q.amount?.toLocaleString()} {q.currency}
+                              Monto: {formatCurrency(q.amount || 0, q.currency)}
                             </p>
                           </div>
                           <div className="text-right">
@@ -2855,7 +2857,7 @@ export default function AdminSolicitudDetail() {
                   <div className="flex items-center gap-2">
                     <span className="font-medium">Monto estimado:</span>
                     <span>
-                      ${request.amount?.toLocaleString()} {request.currency}
+                      {formatCurrency(request.amount || 0, request.currency)}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -3157,7 +3159,7 @@ export default function AdminSolicitudDetail() {
                         <div>
                           <p className="text-gray-600">Monto Total</p>
                           <p className="font-semibold">
-                            ${quotation.amount?.toLocaleString()}{" "}
+                            {formatCurrency(quotation.amount || 0, " ")}
                             {quotation.currency}
                           </p>
                         </div>

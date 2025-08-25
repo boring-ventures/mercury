@@ -1,7 +1,8 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "
+import { formatCurrency } from "@/lib/utils";@/components/ui/skeleton";
 import {
   Users,
   UserCheck,

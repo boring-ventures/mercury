@@ -4,7 +4,10 @@ import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import prisma from "@/lib/prisma";
 import { createSystemNotification } from "@/lib/notifications";
 import { resend, FROM_EMAIL } from "@/lib/resend";
-import { generateQuotationAcceptedAdminEmail } from "@/lib/email-templates";
+import {
+  generateQuotationAcceptedAdminEmail,
+  generateQuotationRejectedAdminEmail,
+} from "@/lib/email-templates";
 import { notifyQuotationReceived } from "@/lib/notification-events";
 import { RequestStatus, QuotationStatus, Currency } from "@prisma/client";
 
@@ -250,9 +253,11 @@ export async function PUT(
           },
           select: {
             id: true,
+            email: true,
           },
         });
 
+        // Notify all admin users (in-app notification)
         await Promise.all(
           adminUsers.map((admin) =>
             createSystemNotification("REQUEST_REJECTED", admin.id, {
@@ -265,11 +270,37 @@ export async function PUT(
             })
           )
         );
+
+        // Send email to admins who have an email configured
+        const adminEmails = adminUsers
+          .map((a) => a.email)
+          .filter((e): e is string => Boolean(e));
+        if (adminEmails.length > 0) {
+          const appUrl =
+            process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+          const html = generateQuotationRejectedAdminEmail({
+            companyName: quotation.request.company.name,
+            requestCode: quotation.request.code,
+            quotationCode: quotation.code,
+            amount: quotation.amount.toString(),
+            currency: quotation.currency,
+            rejectedAt: new Date().toISOString(),
+            reason: notes || "No reason provided",
+            link: `${appUrl}/admin/quotations/${quotationId}`,
+          });
+          await resend.emails.send({
+            from: FROM_EMAIL,
+            to: adminEmails,
+            subject: `Cotización rechazada • ${quotation.code}`,
+            html,
+          });
+        }
       } catch (notificationError) {
         console.error(
-          "Error sending notification to admin:",
+          "Error sending notification/email to admin:",
           notificationError
         );
+        // Don't fail the quotation update if notification fails
       }
     }
 
