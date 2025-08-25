@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -64,6 +64,7 @@ interface UploadedFile {
   type: string;
   file: File;
   previewUrl?: string;
+  documentInfo?: string; // Additional text information about the document
 }
 
 // Type for submitted data
@@ -75,6 +76,13 @@ interface SubmittedData {
     aduana: UploadedFile | null;
     poder: UploadedFile | null;
     carnet: UploadedFile | null;
+  };
+  documentInfo: {
+    matricula: string;
+    nit: string;
+    aduana: string;
+    poder: string;
+    carnet: string;
   };
   response?: {
     id: string;
@@ -158,13 +166,38 @@ export default function RegisterPage() {
     carnet: null,
   });
 
+  const [documentInfo, setDocumentInfo] = useState<{
+    matricula: string;
+    nit: string;
+    aduana: string;
+    poder: string;
+    carnet: string;
+  }>({
+    matricula: "",
+    nit: "",
+    aduana: "",
+    poder: "",
+    carnet: "",
+  });
+
+  // Memoized handler for document info changes to prevent re-renders
+  const handleDocumentInfoChange = useCallback(
+    (fileType: string, value: string) => {
+      setDocumentInfo((prev) => ({
+        ...prev,
+        [fileType]: value,
+      }));
+    },
+    []
+  );
+
   // Use registration hook
   const { validateEmail, submitRegistration, isLoading, clearError } =
     useRegistration();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    mode: "onChange", // Enable real-time validation but don't show errors yet
+    mode: "onBlur", // Change to onBlur to reduce re-renders during typing
     defaultValues: {
       companyName: "",
       nit: "",
@@ -256,7 +289,7 @@ export default function RegisterPage() {
 
     // For step 1, handle conditional validation for city field
     if (currentStep === 1) {
-      const country = form.watch("country");
+      const country = getCurrentCountry();
       const fieldsToValidateFiltered = fieldsToValidate.filter(
         (field) => field !== "city" || country
       );
@@ -284,7 +317,7 @@ export default function RegisterPage() {
 
     // For step 3 (documents), validate required documents based on company type
     if (currentStep === 3) {
-      const companyType = form.watch("companyType");
+      const companyType = getCurrentCompanyType();
       const requiredDocs: string[] = ["nit", "carnet"]; // Always required
 
       // Add conditional required documents
@@ -359,13 +392,18 @@ export default function RegisterPage() {
       );
 
       // Submit using the hook
-      const result = await submitRegistration(values, documentsForSubmission);
+      const result = await submitRegistration(
+        values,
+        documentsForSubmission,
+        documentInfo
+      );
 
       if (result.success) {
         // Store submitted data and go to success step
         setSubmittedData({
           formData: values,
           documents: uploadedFiles,
+          documentInfo: documentInfo,
           response: result.registrationRequest,
         });
         setStep(4);
@@ -519,15 +557,30 @@ export default function RegisterPage() {
     accept,
     label,
     description,
+    placeholder,
   }: {
     fileType: string;
     accept: string;
     label: string;
     description: string;
+    placeholder?: string;
   }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const uploadedFile = uploadedFiles[fileType as keyof typeof uploadedFiles];
-    const companyType = form.watch("companyType");
+    // Use the companyType from parent component to avoid re-renders
+    const companyTypeForComponent = getCurrentCompanyType();
+
+    // Use local state for the input field to prevent re-renders
+    const [localDocumentInfo, setLocalDocumentInfo] = useState(
+      documentInfo[fileType as keyof typeof documentInfo] || ""
+    );
+
+    // Sync local state with parent state when it changes
+    useEffect(() => {
+      setLocalDocumentInfo(
+        documentInfo[fileType as keyof typeof documentInfo] || ""
+      );
+    }, [documentInfo[fileType as keyof typeof documentInfo], fileType]);
 
     // Determine if document is required or optional based on company type
     const isRequired = () => {
@@ -536,9 +589,9 @@ export default function RegisterPage() {
         case "carnet":
           return true; // Always required
         case "matricula":
-          return companyType !== "UNIPERSONAL"; // Required for SRL/SA, optional for UNIPERSONAL
+          return companyTypeForComponent !== "UNIPERSONAL"; // Required for SRL/SA, optional for UNIPERSONAL
         case "poder":
-          return companyType !== "UNIPERSONAL"; // Required for SRL/SA, not shown for UNIPERSONAL
+          return companyTypeForComponent !== "UNIPERSONAL"; // Required for SRL/SA, not shown for UNIPERSONAL
         case "aduana":
           return false; // Always optional
         default:
@@ -669,6 +722,28 @@ export default function RegisterPage() {
           <p className="text-xs text-muted-foreground mt-1">
             Formato: PDF, JPG, PNG (máx. 5MB)
           </p>
+
+          {/* Document Information Text Input */}
+          <div className="mt-3">
+            <label className="text-sm font-medium text-foreground mb-2 block">
+              Información adicional del documento
+            </label>
+            <Input
+              placeholder={placeholder || "Ej: Número de documento"}
+              value={localDocumentInfo}
+              onChange={(e) => {
+                setLocalDocumentInfo(e.target.value);
+              }}
+              onBlur={() => {
+                handleDocumentInfoChange(fileType, localDocumentInfo);
+              }}
+              className="h-9 text-sm"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Agregue información relevante como números de documento, fechas,
+              etc.
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -676,7 +751,7 @@ export default function RegisterPage() {
 
   // Cities mapping based on country
   const citiesByCountry = {
-    bolivia: [
+    Bolivia: [
       "La Paz",
       "Santa Cruz",
       "Cochabamba",
@@ -687,7 +762,7 @@ export default function RegisterPage() {
       "Beni",
       "Pando",
     ],
-    peru: [
+    Perú: [
       "Lima",
       "Arequipa",
       "Trujillo",
@@ -699,7 +774,7 @@ export default function RegisterPage() {
       "Tacna",
       "Ica",
     ],
-    colombia: [
+    Colombia: [
       "Bogotá",
       "Medellín",
       "Cali",
@@ -711,7 +786,7 @@ export default function RegisterPage() {
       "Ibagué",
       "Pasto",
     ],
-    ecuador: [
+    Ecuador: [
       "Guayaquil",
       "Quito",
       "Cuenca",
@@ -725,10 +800,13 @@ export default function RegisterPage() {
     ],
   };
 
+  // Get current form values directly when needed to avoid re-renders
+  const getCurrentCompanyType = () => form.getValues("companyType") || "";
+  const getCurrentCountry = () => form.getValues("country") || "";
+
   // Get current cities based on selected country
   const currentCities =
-    citiesByCountry[form.watch("country") as keyof typeof citiesByCountry] ||
-    [];
+    citiesByCountry[getCurrentCountry() as keyof typeof citiesByCountry] || [];
 
   return (
     <AuthLayout>
@@ -910,7 +988,7 @@ export default function RegisterPage() {
                                   // Reset city when country changes
                                   form.setValue("city", "");
                                 }}
-                                defaultValue={field.value}
+                                value={field.value}
                               >
                                 <FormControl>
                                   <SelectTrigger className="h-11">
@@ -918,25 +996,25 @@ export default function RegisterPage() {
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="bolivia">
+                                  <SelectItem value="Bolivia">
                                     <div className="flex items-center">
                                       <span className="mr-2">🇧🇴</span>
                                       <span>Bolivia</span>
                                     </div>
                                   </SelectItem>
-                                  <SelectItem value="peru">
+                                  <SelectItem value="Perú">
                                     <div className="flex items-center">
                                       <span className="mr-2">🇵🇪</span>
                                       <span>Perú</span>
                                     </div>
                                   </SelectItem>
-                                  <SelectItem value="colombia">
+                                  <SelectItem value="Colombia">
                                     <div className="flex items-center">
                                       <span className="mr-2">🇨🇴</span>
                                       <span>Colombia</span>
                                     </div>
                                   </SelectItem>
-                                  <SelectItem value="ecuador">
+                                  <SelectItem value="Ecuador">
                                     <div className="flex items-center">
                                       <span className="mr-2">🇪🇨</span>
                                       <span>Ecuador</span>
@@ -960,14 +1038,14 @@ export default function RegisterPage() {
                               </FormLabel>
                               <Select
                                 onValueChange={field.onChange}
-                                defaultValue={field.value}
-                                disabled={!form.watch("country")}
+                                value={field.value}
+                                disabled={!getCurrentCountry()}
                               >
                                 <FormControl>
                                   <SelectTrigger className="h-11">
                                     <SelectValue
                                       placeholder={
-                                        form.watch("country")
+                                        getCurrentCountry()
                                           ? "Seleccionar ciudad"
                                           : "Primero seleccione un país"
                                       }
@@ -1241,8 +1319,7 @@ export default function RegisterPage() {
                           {/* Required Documents Section */}
                           <div>
                             <h3 className="text-lg font-semibold mb-4 text-foreground">
-                              Documentos Requeridos ({form.watch("companyType")}
-                              )
+                              Documentos Requeridos ({getCurrentCompanyType()})
                             </h3>
                             <div className="grid grid-cols-1 gap-6">
                               {/* Documento NIT - Always Required */}
@@ -1251,6 +1328,7 @@ export default function RegisterPage() {
                                 accept=".pdf,.jpg,.jpeg,.png"
                                 label="Certificado de NIT"
                                 description="Número de Identificación Tributaria"
+                                placeholder="Ej: NIT 1234567890"
                               />
 
                               {/* Carnet de Identidad del RL - Always Required */}
@@ -1259,25 +1337,28 @@ export default function RegisterPage() {
                                 accept=".pdf,.jpg,.jpeg,.png"
                                 label="Carnet de Identidad del Representante Legal"
                                 description="Documento de identidad del representante"
+                                placeholder="Ej: CI 12345678 LP"
                               />
 
                               {/* Matrícula de Comercio - Required except for UNIPERSONAL */}
-                              {form.watch("companyType") !== "UNIPERSONAL" && (
+                              {getCurrentCompanyType() !== "UNIPERSONAL" && (
                                 <CustomFileUpload
                                   fileType="matricula"
                                   accept=".pdf,.jpg,.jpeg,.png"
                                   label="Matrícula de Comercio"
                                   description="Documento oficial de registro comercial"
+                                  placeholder="Ej: Matrícula N° 12345"
                                 />
                               )}
 
                               {/* Poder de Representante Legal - Only for SRL and SA */}
-                              {form.watch("companyType") !== "UNIPERSONAL" && (
+                              {getCurrentCompanyType() !== "UNIPERSONAL" && (
                                 <CustomFileUpload
                                   fileType="poder"
                                   accept=".pdf,.jpg,.jpeg,.png"
                                   label="Poder de Representante Legal"
                                   description="Documento que acredita al representante legal"
+                                  placeholder="Ej: Poder N° 123"
                                 />
                               )}
                             </div>
@@ -1290,12 +1371,13 @@ export default function RegisterPage() {
                             </h3>
                             <div className="grid grid-cols-1 gap-6">
                               {/* Matrícula de Comercio - Optional for UNIPERSONAL */}
-                              {form.watch("companyType") === "UNIPERSONAL" && (
+                              {getCurrentCompanyType() === "UNIPERSONAL" && (
                                 <CustomFileUpload
                                   fileType="matricula"
                                   accept=".pdf,.jpg,.jpeg,.png"
                                   label="Matrícula de Comercio"
                                   description="Documento oficial de registro comercial"
+                                  placeholder="Ej: Matrícula N° 12345"
                                 />
                               )}
 
@@ -1305,6 +1387,7 @@ export default function RegisterPage() {
                                 accept=".pdf,.jpg,.jpeg,.png"
                                 label="Certificado de Aduana"
                                 description="Certificado de operador económico autorizado"
+                                placeholder="Ej: Certificado N° 789"
                               />
                             </div>
                           </div>
@@ -1331,7 +1414,7 @@ export default function RegisterPage() {
                                     >
                                       términos y condiciones
                                     </Link>{" "}
-                                    de Mercury Platform
+                                    de NORDEX Platform
                                   </FormLabel>
                                   {showErrors && <FormMessage />}
                                 </div>
@@ -1359,7 +1442,7 @@ export default function RegisterPage() {
                                     >
                                       política de privacidad
                                     </Link>{" "}
-                                    de Mercury Platform
+                                    de NORDEX Platform
                                   </FormLabel>
                                   {showErrors && <FormMessage />}
                                 </div>
@@ -1532,10 +1615,10 @@ export default function RegisterPage() {
                                 Si tiene preguntas sobre su solicitud, puede
                                 contactarnos en{" "}
                                 <a
-                                  href="mailto:soporte@mercury.com"
+                                  href="mailto:soporte@nordex.com"
                                   className="text-primary hover:underline font-medium"
                                 >
-                                  soporte@mercury.com
+                                  soporte@nordex.com
                                 </a>{" "}
                                 o incluya su ID de solicitud en la consulta.
                               </p>
@@ -1620,6 +1703,13 @@ export default function RegisterPage() {
                           poder: null,
                           carnet: null,
                         });
+                        setDocumentInfo({
+                          matricula: "",
+                          nit: "",
+                          aduana: "",
+                          poder: "",
+                          carnet: "",
+                        });
                       }}
                       className="flex items-center"
                     >
@@ -1656,10 +1746,10 @@ export default function RegisterPage() {
           <p>
             ¿Necesitas ayuda? Contáctanos a{" "}
             <a
-              href="mailto:soporte@mercury.com"
+              href="mailto:soporte@nordex.com"
               className="text-primary hover:underline"
             >
-              soporte@mercury.com
+              soporte@nordex.com
             </a>
           </p>
         </div>

@@ -71,6 +71,11 @@ export const NOTIFICATION_TEMPLATES: SystemNotificationTemplates = {
     message: "Un importador ha aceptado y firmado el contrato generado",
     type: NotificationType.SUCCESS,
   },
+  REGISTRATION_REQUEST_SUBMITTED: {
+    title: "🆕 Nueva Solicitud de Registro",
+    message: "Se ha recibido una nueva solicitud de registro que requiere revisión",
+    type: NotificationType.INFO,
+  },
 };
 
 // Create a single notification

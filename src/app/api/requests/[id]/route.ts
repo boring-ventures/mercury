@@ -94,6 +94,7 @@ export async function GET(
             type: true,
             status: true,
             createdAt: true,
+            documentInfo: true, // Include document text information
           },
         },
         quotations: {

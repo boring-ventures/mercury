@@ -62,6 +62,7 @@ export interface SystemNotificationTemplates {
   PAYMENT_RECEIVED: NotificationTemplate;
   DOCUMENT_APPROVED: NotificationTemplate;
   DOCUMENT_REJECTED: NotificationTemplate;
+  REGISTRATION_REQUEST_SUBMITTED: NotificationTemplate;
   REGISTRATION_APPROVED: NotificationTemplate;
   REGISTRATION_REJECTED: NotificationTemplate;
 }

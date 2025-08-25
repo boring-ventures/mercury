@@ -44,7 +44,7 @@ export const generateRegistrationConfirmationEmail = (
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solicitud de Registro Recibida - Mercury Platform</title>
+    <title>Solicitud de Registro Recibida - NORDEX Platform</title>
     <style>
         body {
             margin: 0;
@@ -279,7 +279,7 @@ export const generateRegistrationConfirmationEmail = (
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1 class="logo">MERCURY</h1>
+            <h1 class="logo">NORDEX</h1>
             <p class="tagline">Plataforma especializada para gestión de envíos internacionales</p>
         </div>
 
@@ -403,11 +403,11 @@ export const generateRegistrationConfirmationEmail = (
             <h4 class="support-title">¿Necesita ayuda?</h4>
             <p class="support-text">
                 Si tiene preguntas sobre su solicitud, puede contactarnos en 
-                <a href="mailto:soporte@mercury.com" class="link">soporte@mercury.com</a>
+                <a href="mailto:soporte@nordex.com" class="link">soporte@nordex.com</a>
                 e incluya su ID de solicitud <strong>${data.requestId}</strong> en la consulta.
             </p>
             
-            <a href="mailto:soporte@mercury.com" class="cta-button">
+                            <a href="mailto:soporte@nordex.com" class="cta-button">
                 Contactar Soporte
             </a>
         </div>
@@ -416,7 +416,7 @@ export const generateRegistrationConfirmationEmail = (
         <div class="footer">
             <hr class="divider">
             <p class="footer-text">
-                © 2025 Mercury Platform. Todos los derechos reservados.
+                © 2025 NORDEX Platform. Todos los derechos reservados.
             </p>
             <p class="footer-text">
                 Este es un email automático, por favor no responda a esta dirección.
@@ -453,7 +453,7 @@ export const generateAdminNotificationEmail = (
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nueva Solicitud de Registro - Mercury Platform</title>
+    <title>Nueva Solicitud de Registro - NORDEX Platform</title>
     <style>
         body {
             margin: 0;
@@ -648,7 +648,7 @@ export const generateAdminNotificationEmail = (
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1 class="logo">MERCURY</h1>
+            <h1 class="logo">NORDEX</h1>
             <p class="tagline">Plataforma especializada para gestión de envíos internacionales</p>
         </div>
 
@@ -759,7 +759,7 @@ export const generateAdminNotificationEmail = (
         <div class="footer">
             <hr class="divider">
             <p class="footer-text">
-                © 2025 Mercury Platform. Todos los derechos reservados.
+                © 2025 NORDEX Platform. Todos los derechos reservados.
             </p>
             <p class="footer-text">
                 Este es un email automático del sistema de notificaciones.
@@ -988,4 +988,318 @@ export const generateContractAcceptedAdminEmail = (
     </div>
   </body>
 </html>`;
+};
+
+interface QuotationNotificationData {
+  companyName: string;
+  requestCode: string;
+  quotationCode: string;
+  amount: number | string;
+  currency: string;
+  totalInBs: number | string;
+  exchangeRate: number | string;
+  validUntil: string;
+  createdBy: string;
+  createdAt: string;
+  link: string;
+}
+
+export const generateQuotationNotificationEmail = (
+  data: QuotationNotificationData
+): string => {
+  return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nueva Cotización Disponible - NORDEX Platform</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #ffffff;
+            color: #1f2937;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .logo {
+            color: #f59e0b;
+            font-size: 28px;
+            font-weight: bold;
+            margin: 0;
+        }
+        .tagline {
+            color: #6b7280;
+            font-size: 14px;
+            margin: 5px 0 0 0;
+        }
+        .hero-section {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-radius: 12px;
+            padding: 40px 30px;
+            text-align: center;
+            margin: 30px 0;
+        }
+        .hero-title {
+            color: #1f2937;
+            font-size: 28px;
+            font-weight: bold;
+            margin: 0 0 15px 0;
+        }
+        .hero-subtitle {
+            color: #4b5563;
+            font-size: 16px;
+            margin: 0 0 25px 0;
+        }
+        .status-badge {
+            background-color: #dbeafe;
+            border: 1px solid #93c5fd;
+            color: #1e40af;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .details-section {
+            background-color: #f9fafb;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+        .section-title {
+            color: #1f2937;
+            font-size: 22px;
+            font-weight: bold;
+            margin: 0 0 20px 0;
+        }
+        .quotation-id-box {
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin: 20px 0;
+        }
+        .quotation-id-label {
+            color: #6b7280;
+            font-size: 14px;
+            margin: 0 0 5px 0;
+        }
+        .quotation-id-value {
+            color: #1f2937;
+            font-size: 18px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            margin: 0;
+        }
+        .created-date {
+            color: #6b7280;
+            font-size: 14px;
+            margin: 0 0 20px 0;
+        }
+        .subsection-title {
+            color: #1f2937;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 25px 0 15px 0;
+        }
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .detail-row {
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .detail-label {
+            color: #6b7280;
+            font-size: 14px;
+            padding: 10px 0;
+            width: 40%;
+            vertical-align: top;
+        }
+        .detail-value {
+            color: #1f2937;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 10px 0;
+            vertical-align: top;
+        }
+        .divider {
+            height: 1px;
+            background-color: #e5e7eb;
+            margin: 25px 0;
+            border: none;
+        }
+        .action-section {
+            background-color: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+        .action-title {
+            color: #0369a1;
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0 0 15px 0;
+        }
+        .action-text {
+            color: #4b5563;
+            font-size: 14px;
+            margin: 0 0 20px 0;
+        }
+        .cta-button {
+            background-color: #0369a1;
+            color: #ffffff;
+            padding: 16px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 16px;
+            display: inline-block;
+            transition: background-color 0.2s;
+            text-align: center;
+            min-width: 200px;
+            box-shadow: 0 2px 4px rgba(3, 105, 161, 0.2);
+        }
+        .cta-button:hover {
+            background-color: #075985;
+            box-shadow: 0 4px 8px rgba(3, 105, 161, 0.3);
+        }
+        .footer {
+            border-top: 1px solid #e5e7eb;
+            padding: 25px 0;
+            text-align: center;
+            margin-top: 40px;
+        }
+        .footer-text {
+            color: #9ca3af;
+            font-size: 12px;
+            margin: 5px 0;
+        }
+        .link {
+            color: #f59e0b;
+            text-decoration: underline;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            .hero-section {
+                padding: 30px 20px;
+            }
+            .details-section, .action-section {
+                padding: 20px;
+            }
+            .hero-title {
+                font-size: 24px;
+            }
+            .detail-table {
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1 class="logo">NORDEX</h1>
+            <p class="tagline">Plataforma especializada para gestión de envíos internacionales</p>
+        </div>
+
+        <!-- Success Message -->
+        <div class="hero-section">
+            <h2 class="hero-title">💰 Nueva Cotización Disponible</h2>
+            <p class="hero-subtitle">
+                Se ha generado una nueva cotización para su solicitud de importación. 
+                Revise los detalles y proceda con la siguiente etapa del proceso.
+            </p>
+            <div class="status-badge">
+                Estado: Cotización Generada
+            </div>
+        </div>
+
+        <!-- Quotation Details -->
+        <div class="details-section">
+            <h3 class="section-title">Detalles de la Cotización</h3>
+            
+            <div class="quotation-id-box">
+                <p class="quotation-id-label">Código de Cotización:</p>
+                <p class="quotation-id-value">${data.quotationCode}</p>
+            </div>
+
+            <p class="created-date">
+                Generada el: ${formatDate(data.createdAt)}
+            </p>
+
+            <hr class="divider">
+
+            <!-- Quotation Information -->
+            <h4 class="subsection-title">📊 Información de la Cotización</h4>
+            <table class="detail-table">
+                <tr class="detail-row">
+                    <td class="detail-label">Solicitud:</td>
+                    <td class="detail-value">${data.requestCode}</td>
+                </tr>
+                <tr class="detail-row">
+                    <td class="detail-label">Monto a Enviar:</td>
+                    <td class="detail-value">$${data.amount} ${data.currency}</td>
+                </tr>
+                <tr class="detail-row">
+                    <td class="detail-label">Tipo de Cambio:</td>
+                    <td class="detail-value">${data.exchangeRate} BOB/USDT</td>
+                </tr>
+                <tr class="detail-row">
+                    <td class="detail-label">Total en Bolivianos:</td>
+                    <td class="detail-value">${data.totalInBs} BOB</td>
+                </tr>
+                <tr class="detail-row">
+                    <td class="detail-label">Válida hasta:</td>
+                    <td class="detail-value">${formatDate(data.validUntil)}</td>
+                </tr>
+                <tr class="detail-row">
+                    <td class="detail-label">Generada por:</td>
+                    <td class="detail-value">${data.createdBy}</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Action Section -->
+        <div class="action-section">
+            <h3 class="action-title">Acción Requerida</h3>
+            <p class="action-text">
+                Por favor, revise esta cotización en su panel de importador y tome la decisión correspondiente 
+                (aceptar o rechazar) basándose en los términos y condiciones ofrecidos.
+            </p>
+            
+            <a href="${data.link}" class="cta-button">
+                Revisar Cotización
+            </a>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <hr class="divider">
+            <p class="footer-text">
+                © 2025 NORDEX Platform. Todos los derechos reservados.
+            </p>
+            <p class="footer-text">
+                Este es un email automático del sistema de notificaciones.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+  `;
 };

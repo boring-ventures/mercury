@@ -50,6 +50,14 @@ export interface DocumentFiles {
   } | null;
 }
 
+export interface DocumentInfo {
+  matricula: string;
+  nit: string;
+  aduana: string;
+  poder: string;
+  carnet: string;
+}
+
 export interface RegistrationResponse {
   success: boolean;
   message?: string;
@@ -84,6 +92,7 @@ interface UploadedDocument {
   size: number;
   type: string;
   fileUrl: string;
+  documentInfo?: string;
 }
 
 // Helper function to upload a single file to Supabase storage
@@ -145,7 +154,8 @@ export function useRegistration() {
 
   const submitRegistration = async (
     data: RegistrationData,
-    documents: DocumentFiles
+    documents: DocumentFiles,
+    documentInfo?: DocumentInfo
   ): Promise<RegistrationResponse> => {
     setIsLoading(true);
     setError(null);
@@ -240,7 +250,7 @@ export function useRegistration() {
       }
 
       // Upload files to Supabase storage first
-      const bucketName = "mercury"; // Your bucket name
+      const bucketName = "nordex"; // Your bucket name
       const uploadedDocuments: Record<string, UploadedDocument> = {};
       const timestamp = Date.now();
       const sanitizedCompanyName = data.companyName.replace(
@@ -281,6 +291,7 @@ export function useRegistration() {
             size: file.size,
             type: file.type,
             fileUrl: url, // url is now guaranteed to be string (not null)
+            documentInfo: documentInfo?.[docType as keyof DocumentInfo] || "",
           };
         }
       }

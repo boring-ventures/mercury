@@ -85,6 +85,7 @@ interface DocumentItem {
   status?: string;
   reviewNotes?: string;
   createdAt?: Date;
+  documentInfo?: string;
 }
 
 interface HistoryEvent {
@@ -184,7 +185,6 @@ interface DocumentViewerProps {
 }
 
 function DocumentViewer({ document }: DocumentViewerProps) {
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
 
@@ -222,127 +222,43 @@ function DocumentViewer({ document }: DocumentViewerProps) {
   // If we know the URL is invalid from the start, show placeholder
   const shouldShowPlaceholder = !documentUrl || imageError;
 
-  const handleOpenFullscreen = () => {
-    if (documentUrl) {
-      setIsFullscreen(true);
-    }
-  };
-
-  const handleDownload = () => {
-    if (documentUrl) {
-      window.open(documentUrl, "_blank");
-    }
-  };
-
   if (isImage) {
     return (
-      <>
-        <div
-          className="relative group cursor-pointer"
-          onClick={handleOpenFullscreen}
-        >
-          <div className="border rounded-lg overflow-hidden bg-gray-50">
-            {shouldShowPlaceholder ? (
-              // Show placeholder immediately if there was an error or no valid URL
-              <div className="w-full h-64 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                <div className="text-center">
-                  <FileText className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                  <p className="text-sm text-gray-600 font-medium">
-                    {document.filename}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Vista previa no disponible
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Archivo de demostración
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <Image
-                src={documentUrl}
-                alt={document.filename}
-                width={400}
-                height={256}
-                className="w-full h-64 object-contain"
-                onError={() => {
-                  console.log(`Failed to load image: ${documentUrl}`);
-                  setImageError(true);
-                }}
-                onLoad={() => {
-                  setImageLoaded(true);
-                  setImageError(false);
-                }}
-              />
-            )}
+      <div className="border rounded-lg overflow-hidden bg-gray-50">
+        {shouldShowPlaceholder ? (
+          // Show placeholder immediately if there was an error or no valid URL
+          <div className="w-full h-64 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+            <div className="text-center">
+              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+              <p className="text-sm text-gray-600 font-medium">
+                {document.filename}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Vista previa no disponible
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                Archivo de demostración
+              </p>
+            </div>
           </div>
-
-          {imageLoaded && !imageError && (
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
-              <Button
-                size="sm"
-                className="bg-black/50 hover:bg-black/70 text-white"
-              >
-                <ZoomIn className="h-4 w-4 mr-1" />
-                Ver completo
-              </Button>
-            </div>
-          )}
-        </div>
-
-        <div className="flex gap-2 mt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleOpenFullscreen}
-            disabled={shouldShowPlaceholder}
-          >
-            <Eye className="h-4 w-4 mr-1" />
-            Ver
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDownload}
-            disabled={shouldShowPlaceholder}
-          >
-            <Download className="h-4 w-4 mr-1" />
-            Descargar
-          </Button>
-        </div>
-
-        {/* Fullscreen Modal */}
-        <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
-          <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden">
-            <DialogHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <DialogTitle>{document.filename}</DialogTitle>
-                  <DialogDescription className="text-sm text-gray-500">
-                    {document.type} • Vista completa
-                  </DialogDescription>
-                </div>
-                <Button variant="outline" size="sm" onClick={handleDownload}>
-                  <Download className="h-4 w-4 mr-1" />
-                  Descargar
-                </Button>
-              </div>
-            </DialogHeader>
-            <div className="relative max-h-[80vh] overflow-auto">
-              {documentUrl && !shouldShowPlaceholder && (
-                <Image
-                  src={documentUrl}
-                  alt={document.filename}
-                  width={1200}
-                  height={800}
-                  className="w-full h-auto object-contain"
-                  onError={() => setImageError(true)}
-                />
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
-      </>
+        ) : (
+          <Image
+            src={documentUrl}
+            alt={document.filename}
+            width={800}
+            height={600}
+            className="w-full h-auto object-contain"
+            onError={() => {
+              console.log(`Failed to load image: ${documentUrl}`);
+              setImageError(true);
+            }}
+            onLoad={() => {
+              setImageLoaded(true);
+              setImageError(false);
+            }}
+          />
+        )}
+      </div>
     );
   }
 
@@ -354,20 +270,6 @@ function DocumentViewer({ document }: DocumentViewerProps) {
           Documento PDF
         </h3>
         <p className="text-gray-600 mb-4">{document.filename}</p>
-        <div className="flex gap-2 justify-center">
-          <Button onClick={handleDownload} disabled={shouldShowPlaceholder}>
-            <Eye className="h-4 w-4 mr-2" />
-            Abrir PDF
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleDownload}
-            disabled={shouldShowPlaceholder}
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Descargar
-          </Button>
-        </div>
         {shouldShowPlaceholder && (
           <p className="text-xs text-gray-500 mt-2">
             Archivo de demostración - Vista previa no disponible
@@ -387,14 +289,6 @@ function DocumentViewer({ document }: DocumentViewerProps) {
       <p className="text-gray-600 mb-4">
         Vista previa no disponible para este tipo de archivo
       </p>
-      <Button
-        onClick={handleDownload}
-        disabled={shouldShowPlaceholder}
-        variant="outline"
-      >
-        <Download className="h-4 w-4 mr-2" />
-        Descargar
-      </Button>
       {shouldShowPlaceholder && (
         <p className="text-xs text-gray-500 mt-2">
           Archivo de demostración - Descarga no disponible
@@ -416,6 +310,7 @@ function DocumentCard({
   const { toast } = useToast();
   const { mutate: updateDocumentStatus, isPending: isUpdating } =
     useUpdateDocumentStatus();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleStatusChange = (newStatus: string) => {
     updateDocumentStatus(
@@ -448,6 +343,8 @@ function DocumentCard({
       FACTURA_COMERCIAL: "Factura Comercial",
       CONTRATO: "Contrato",
       COMPROBANTE_PAGO: "Comprobante de Pago",
+      CARNET_IDENTIDAD: "Carnet de Identidad",
+      PASAPORTE: "Pasaporte",
       OTHER: "Otro",
     };
     return types[type] || type;
@@ -473,100 +370,147 @@ function DocumentCard({
     );
   };
 
-  if (compact) {
-    return (
+  const handleViewDocument = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleDownload = () => {
+    const url = `/api/documents/${document.id}`;
+    const link = window.document.createElement("a");
+    link.href = url;
+    link.download = document.filename;
+    link.click();
+  };
+
+  return (
+    <>
       <Card className="mb-2 p-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <FileText className="h-3 w-3 text-blue-500 flex-shrink-0" />
+            <FileText className="h-4 w-4 text-blue-500 flex-shrink-0" />
             <div className="min-w-0 flex-1">
-              <p className="font-medium text-sm truncate">
+              <p className="font-medium text-sm text-gray-900">
+                {getDocumentTypeLabel(document.type || "Documento")}
+              </p>
+              <p className="text-xs text-gray-500 truncate">
                 {document.filename}
               </p>
-              <p className="text-xs text-gray-500">
-                {getDocumentTypeLabel(document.type || "")}
-              </p>
+              {document.documentInfo && (
+                <p className="text-xs text-blue-600 mt-1 line-clamp-2">
+                  {document.documentInfo}
+                </p>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
+            {!compact && (
+              <div className="flex items-center gap-2 mr-2">
+                {getStatusBadge(document.status || "PENDING")}
+                <Select
+                  value={document.status}
+                  onValueChange={handleStatusChange}
+                  disabled={isUpdating}
+                >
+                  <SelectTrigger className="w-32 h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PENDING">Pendiente</SelectItem>
+                    <SelectItem value="APPROVED">Aprobar</SelectItem>
+                    <SelectItem value="REJECTED">Rechazar</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0"
-              onClick={() => {
-                const url = `/api/documents/${document.id}`;
-                window.open(url, "_blank");
-              }}
+              className="h-8 w-8 p-0"
+              onClick={handleViewDocument}
             >
-              <Eye className="h-3 w-3" />
+              <Eye className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0"
-              onClick={() => {
-                const url = `/api/documents/${document.id}`;
-                const link = window.document.createElement("a");
-                link.href = url;
-                link.download = document.filename;
-                link.click();
-              }}
+              className="h-8 w-8 p-0"
+              onClick={handleDownload}
             >
-              <Download className="h-3 w-3" />
+              <Download className="h-4 w-4" />
             </Button>
           </div>
         </div>
       </Card>
-    );
-  }
 
-  return (
-    <Card className="mb-4">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <FileText className="h-4 w-4 text-blue-500" />
-            <div>
-              <p className="font-medium">{document.filename}</p>
-              <p className="text-xs text-gray-500">
-                {getDocumentTypeLabel(document.type || "")}
-              </p>
+      {/* Document View Modal */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <DialogTitle className="text-lg">
+                  {getDocumentTypeLabel(document.type || "Documento")}
+                </DialogTitle>
+                <DialogDescription className="text-sm text-gray-500">
+                  {document.filename}
+                </DialogDescription>
+                {document.documentInfo && (
+                  <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm font-medium text-blue-900 mb-1">
+                      Información del Documento:
+                    </p>
+                    <p className="text-sm text-blue-800 whitespace-pre-wrap">
+                      {document.documentInfo}
+                    </p>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {!compact && (
+                  <div className="flex items-center gap-2">
+                    {getStatusBadge(document.status || "PENDING")}
+                    <Select
+                      value={document.status}
+                      onValueChange={handleStatusChange}
+                      disabled={isUpdating}
+                    >
+                      <SelectTrigger className="w-32 h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="PENDING">Pendiente</SelectItem>
+                        <SelectItem value="APPROVED">Aprobar</SelectItem>
+                        <SelectItem value="REJECTED">Rechazar</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                <Button variant="outline" size="sm" onClick={handleDownload}>
+                  <Download className="h-4 w-4 mr-1" />
+                  Descargar
+                </Button>
+              </div>
             </div>
+          </DialogHeader>
+          <div className="relative max-h-[80vh] overflow-auto">
+            <DocumentViewer document={document} />
           </div>
-          <div className="flex items-center gap-2">
-            {getStatusBadge(document.status || "PENDING")}
-            <Select
-              value={document.status}
-              onValueChange={handleStatusChange}
-              disabled={isUpdating}
-            >
-              <SelectTrigger className="w-32 h-8">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="PENDING">Pendiente</SelectItem>
-                <SelectItem value="APPROVED">Aprobar</SelectItem>
-                <SelectItem value="REJECTED">Rechazar</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="pt-0">
-        <DocumentViewer document={document} />
-      </CardContent>
-    </Card>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
 function QuotationGenerator({
   requestId,
+  requestAmount,
   onSuccess,
   variant = "default",
   disabled = false,
   disabledReason = "",
 }: {
   requestId: string;
+  requestAmount?: number;
   onSuccess: () => void;
   variant?: "default" | "compact";
   disabled?: boolean;
@@ -575,15 +519,6 @@ function QuotationGenerator({
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-
-  // Get default valid until date (30 days from now)
-  const getDefaultValidUntil = () => {
-    const date = new Date();
-    date.setDate(date.getDate() + 30);
-    // Set default time to 23:59 (end of day)
-    date.setHours(23, 59, 0, 0);
-    return date.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:mm
-  };
 
   // Get tomorrow's date as minimum (to ensure it's always future)
   const getMinimumDate = () => {
@@ -594,22 +529,34 @@ function QuotationGenerator({
     return tomorrow.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:mm
   };
 
-  const [quotationData, setQuotationData] = useState({
-    amount: "",
-    currency: "USD", // Fixed to USD
-    exchangeRate: "",
-    amountInBs: "",
-    swiftBankUSD: "",
-    correspondentBankUSD: "",
-    swiftBankBs: "",
-    correspondentBankBs: "",
-    managementServiceBs: "",
-    managementServicePercentage: "1.5",
-    totalInBs: "",
-    validUntil: getDefaultValidUntil(),
-    terms: "",
-    notes: "",
-    status: "DRAFT",
+  // Get default valid until date (same as minimum date)
+  const getDefaultValidUntil = () => {
+    return getMinimumDate();
+  };
+
+  const [quotationData, setQuotationData] = useState(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    const defaultValidUntil = tomorrow.toISOString().slice(0, 16);
+
+    return {
+      amount: requestAmount?.toString() || "",
+      currency: "USD", // Fixed to USD
+      exchangeRate: "",
+      amountInBs: "",
+      swiftBankUSD: "",
+      correspondentBankUSD: "",
+      swiftBankBs: "",
+      correspondentBankBs: "",
+      managementServiceBs: "",
+      managementServicePercentage: "1.5",
+      totalInBs: "",
+      validUntil: defaultValidUntil,
+      terms: "",
+      notes: "",
+      status: "DRAFT",
+    };
   });
 
   const [binancePrice, setBinancePrice] = useState<{
@@ -621,6 +568,16 @@ function QuotationGenerator({
   } | null>(null);
   const [isBinanceCollapsed, setIsBinanceCollapsed] = useState(true);
   const [isLoadingExchangeRate, setIsLoadingExchangeRate] = useState(false);
+
+  // Preload amount when modal opens
+  useEffect(() => {
+    if (requestAmount && requestAmount > 0 && isOpen) {
+      setQuotationData((prev) => ({
+        ...prev,
+        amount: requestAmount.toString(),
+      }));
+    }
+  }, [requestAmount, isOpen]);
 
   // Validate if the selected date is valid (at least tomorrow)
   const isValidDate = (dateString: string) => {
@@ -735,19 +692,19 @@ function QuotationGenerator({
     calculateTotalInBs();
   }, [calculateTotalInBs]);
 
-  // Fetch Binance price when amount changes
+  // Fetch Binance price when amount changes (but not when it's being set from prop)
   useEffect(() => {
     const amount = parseFloat(quotationData.amount);
-    if (amount > 0) {
+    if (amount > 0 && amount !== requestAmount) {
       const timeoutId = setTimeout(() => {
         fetchBinancePrice(amount);
       }, 1000); // 1 second debounce
 
       return () => clearTimeout(timeoutId);
-    } else {
+    } else if (amount === 0) {
       setBinancePrice(null);
     }
-  }, [quotationData.amount]);
+  }, [quotationData.amount, requestAmount]);
 
   // Function to fetch exchange rate from Binance P2P API
   const fetchExchangeRate = async () => {
@@ -1395,6 +1352,37 @@ function QuotationGenerator({
                 rows={2}
               />
             </div>
+            <div>
+              <Label htmlFor="status">Estado de la Cotización*</Label>
+              <Select
+                value={quotationData.status}
+                onValueChange={(value) =>
+                  setQuotationData((prev) => ({ ...prev, status: value }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="DRAFT">
+                    <div className="flex flex-col items-start">
+                      <span>Borrador</span>
+                      <span className="text-xs text-gray-500">
+                        Puede ser modificada, no visible para el importador
+                      </span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="SENT">
+                    <div className="flex flex-col items-start">
+                      <span>Publicada</span>
+                      <span className="text-xs text-gray-500">
+                        Visible para el importador, lista para revisión
+                      </span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             {parseFloat(quotationData.totalInBs) > 0 && (
               <div className="bg-blue-50 p-4 rounded-lg border">
                 <h4 className="font-medium text-sm mb-2 text-blue-900">
@@ -1710,23 +1698,44 @@ function QuotationEditForm({
   }) => void;
   onCancel: () => void;
 }) {
-  const [formData, setFormData] = useState({
-    amount: quotation.amount?.toString() || "",
-    currency: quotation.currency || "USD",
-    exchangeRate: quotation.exchangeRate?.toString() || "",
-    amountInBs: quotation.amountInBs?.toString() || "",
-    swiftBankUSD: quotation.swiftBankUSD?.toString() || "",
-    correspondentBankUSD: quotation.correspondentBankUSD?.toString() || "",
-    swiftBankBs: quotation.swiftBankBs?.toString() || "",
-    correspondentBankBs: quotation.correspondentBankBs?.toString() || "",
-    managementServiceBs: quotation.managementServiceBs?.toString() || "",
-    managementServicePercentage:
-      quotation.managementServicePercentage?.toString() || "1.5",
-    totalInBs: quotation.totalInBs?.toString() || "",
-    validUntil: format(new Date(quotation.validUntil), "yyyy-MM-dd'T'HH:mm"),
-    terms: quotation.terms || "",
-    notes: quotation.notes || "",
-    status: quotation.status,
+  // Get tomorrow's date as minimum (to ensure it's always future)
+  const getMinimumDate = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    // Set time to 00:00 (start of day)
+    tomorrow.setHours(0, 0, 0, 0);
+    return tomorrow.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:mm
+  };
+
+  // Get minimum date as default validUntil
+  const getDefaultValidUntil = () => {
+    return getMinimumDate();
+  };
+
+  const [formData, setFormData] = useState(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    const defaultValidUntil = tomorrow.toISOString().slice(0, 16);
+
+    return {
+      amount: quotation.amount?.toString() || "",
+      currency: quotation.currency || "USD",
+      exchangeRate: quotation.exchangeRate?.toString() || "",
+      amountInBs: quotation.amountInBs?.toString() || "",
+      swiftBankUSD: quotation.swiftBankUSD?.toString() || "",
+      correspondentBankUSD: quotation.correspondentBankUSD?.toString() || "",
+      swiftBankBs: quotation.swiftBankBs?.toString() || "",
+      correspondentBankBs: quotation.correspondentBankBs?.toString() || "",
+      managementServiceBs: quotation.managementServiceBs?.toString() || "",
+      managementServicePercentage:
+        quotation.managementServicePercentage?.toString() || "1.5",
+      totalInBs: quotation.totalInBs?.toString() || "",
+      validUntil: defaultValidUntil,
+      terms: quotation.terms || "",
+      notes: quotation.notes || "",
+      status: quotation.status,
+    };
   });
 
   const [binancePrice, setBinancePrice] = useState<{
@@ -1738,15 +1747,6 @@ function QuotationEditForm({
   } | null>(null);
   const [isBinanceCollapsed, setIsBinanceCollapsed] = useState(false);
   const [isLoadingExchangeRate, setIsLoadingExchangeRate] = useState(false);
-
-  // Get tomorrow's date as minimum (to ensure it's always future)
-  const getMinimumDate = () => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    // Set time to 00:00 (start of day)
-    tomorrow.setHours(0, 0, 0, 0);
-    return tomorrow.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:mm
-  };
 
   // Calculate functions (same as in QuotationGenerator)
   const calculateAmountInBs = useCallback(() => {
@@ -1852,19 +1852,7 @@ function QuotationEditForm({
     }
   };
 
-  // Remove the automatic trigger useEffect
-  // useEffect(() => {
-  //   const amount = parseFloat(quotationData.amount);
-  //   if (amount > 0) {
-  //     const timeoutId = setTimeout(() => {
-  //       fetchBinancePrice(amount);
-  //     }, 1000); // 1 second debounce
-
-  //     return () => clearTimeout(timeoutId);
-  //   } else {
-  //     setBinancePrice(null);
-  //   }
-  // }, [quotationData.amount]);
+  // Don't auto-fetch Binance price - only show existing data
 
   const handleSave = () => {
     // Validate date
@@ -1984,88 +1972,7 @@ function QuotationEditForm({
         </div>
       </div>
 
-      {/* Binance P2P Price Display */}
-      {formData.amount && parseFloat(formData.amount) > 0 && (
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-2">
-            <h4 className="font-medium text-blue-900 flex items-center gap-2">
-              <Banknote className="h-4 w-4" />
-              Precio Binance P2P
-            </h4>
-            {binancePrice ? (
-              <Badge className="bg-green-100 text-green-800 border-green-200">
-                Disponible
-              </Badge>
-            ) : (
-              <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
-                Consultando...
-              </Badge>
-            )}
-          </div>
-
-          {binancePrice ? (
-            <div className="space-y-2">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-blue-700 font-medium">Precio Promedio:</p>
-                  <p className="text-lg font-bold text-blue-900">
-                    {binancePrice.price.toFixed(2)} BOB/USDT
-                  </p>
-                </div>
-                <div>
-                  <p className="text-blue-700 font-medium">Disponible:</p>
-                  <p className="text-lg font-bold text-blue-900">
-                    {binancePrice.available.toLocaleString()} USDT
-                  </p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-blue-700 font-medium">Cobertura:</p>
-                  <p className="font-medium text-blue-900">
-                    {binancePrice.coverage}%
-                  </p>
-                </div>
-                <div>
-                  <p className="text-blue-700 font-medium">Ofertas:</p>
-                  <p className="font-medium text-blue-900">
-                    {binancePrice.offers} ofertas
-                  </p>
-                </div>
-              </div>
-              <div className="mt-2 pt-2 border-t border-blue-200">
-                <p className="text-xs text-blue-600">
-                  💡 Este precio se actualiza automáticamente según el monto
-                  ingresado
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center py-4">
-              <Loader2 className="h-4 w-4 animate-spin text-blue-500 mr-2" />
-              <span className="text-sm text-blue-600">
-                Consultando precio para{" "}
-                {parseFloat(formData.amount).toLocaleString()} USDT...
-              </span>
-            </div>
-          )}
-        </div>
-      )}
-
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="editExchangeRate">Tipo de Cambio</Label>
-          <Input
-            id="editExchangeRate"
-            type="number"
-            step="0.0001"
-            value={formData.exchangeRate}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, exchangeRate: e.target.value }))
-            }
-            placeholder="0.0000"
-          />
-        </div>
         <div>
           <Label htmlFor="editAmountInBs">
             Monto a Enviar en Bs (Auto-calculado)
@@ -2084,6 +1991,52 @@ function QuotationEditForm({
           </p>
         </div>
       </div>
+
+      {/* Binance P2P Price Display - Only show when user requests it */}
+      {binancePrice && (
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="font-medium text-blue-900 flex items-center gap-2">
+              <Banknote className="h-4 w-4" />
+              Precio Binance P2P
+            </h4>
+            <Badge className="bg-green-100 text-green-800 border-green-200">
+              Actualizado
+            </Badge>
+          </div>
+
+          <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-blue-700 font-medium">Precio Promedio:</p>
+                <p className="text-lg font-bold text-blue-900">
+                  {binancePrice.price.toFixed(2)} BOB/USDT
+                </p>
+              </div>
+              <div>
+                <p className="text-blue-700 font-medium">Disponible:</p>
+                <p className="text-lg font-bold text-blue-900">
+                  {binancePrice.available.toLocaleString()} USDT
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-blue-700 font-medium">Cobertura:</p>
+                <p className="font-medium text-blue-900">
+                  {binancePrice.coverage}%
+                </p>
+              </div>
+              <div>
+                <p className="text-blue-700 font-medium">Ofertas:</p>
+                <p className="font-medium text-blue-900">
+                  {binancePrice.offers} ofertas
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Gastos Financieros Section */}
       <div className="border-t pt-4">
@@ -2227,21 +2180,22 @@ function QuotationEditForm({
             Calculado automáticamente: Valor Bs + Gasto Bs + Servicio Bs
           </p>
         </div>
-        <div>
-          <Label htmlFor="editValidUntil">Válida hasta*</Label>
-          <Input
-            id="editValidUntil"
-            type="datetime-local"
-            min={getMinimumDate()}
-            value={formData.validUntil}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, validUntil: e.target.value }))
-            }
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            La fecha y hora deben ser al menos desde mañana
-          </p>
-        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="editValidUntil">Válida hasta*</Label>
+        <Input
+          id="editValidUntil"
+          type="datetime-local"
+          min={getMinimumDate()}
+          value={formData.validUntil}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, validUntil: e.target.value }))
+          }
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          La fecha y hora deben ser al menos desde mañana
+        </p>
       </div>
 
       <div>
@@ -2361,152 +2315,6 @@ function QuotationEditForm({
           </div>
         </div>
       )}
-
-      {/* Binance P2P Price Display - Collapsible */}
-      {formData.amount && parseFloat(formData.amount) > 0 && binancePrice && (
-        <Collapsible
-          open={isBinanceCollapsed}
-          onOpenChange={setIsBinanceCollapsed}
-        >
-          <CollapsibleTrigger asChild>
-            <Button
-              variant="outline"
-              className="w-full justify-between bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 hover:from-blue-100 hover:to-indigo-100"
-            >
-              <div className="flex items-center gap-2">
-                <Banknote className="h-4 w-4" />
-                <span className="font-medium text-blue-900">
-                  Precio Binance P2P: {binancePrice.price.toFixed(2)} BOB/USDT
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge className="bg-green-100 text-green-800 border-green-200">
-                  {binancePrice.offers} ofertas
-                </Badge>
-                <ChevronDown
-                  className={`h-4 w-4 transition-transform ${isBinanceCollapsed ? "rotate-180" : ""}`}
-                />
-              </div>
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="mt-2 bg-white border border-blue-200 rounded-lg p-4">
-              <div className="space-y-4">
-                {/* Summary */}
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-blue-700 font-medium">
-                      Precio Promedio:
-                    </p>
-                    <p className="text-lg font-bold text-blue-900">
-                      {binancePrice.price.toFixed(2)} BOB/USDT
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-blue-700 font-medium">Disponible:</p>
-                    <p className="text-lg font-bold text-blue-900">
-                      {binancePrice.available.toLocaleString()} USDT
-                    </p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-blue-700 font-medium">Cobertura:</p>
-                    <p className="font-medium text-blue-900">
-                      {binancePrice.coverage}%
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-blue-700 font-medium">Ofertas Usadas:</p>
-                    <p className="font-medium text-blue-900">
-                      {binancePrice.offers} ofertas
-                    </p>
-                  </div>
-                </div>
-
-                {/* Offers Details */}
-                {binancePrice.offers_used &&
-                  binancePrice.offers_used.length > 0 && (
-                    <div className="border-t pt-4">
-                      <h5 className="font-medium text-blue-900 mb-3">
-                        Detalle de Ofertas:
-                      </h5>
-                      <div className="space-y-2 max-h-40 overflow-y-auto">
-                        {binancePrice.offers_used.map(
-                          (offer: any, index: number) => (
-                            <div
-                              key={index}
-                              className="flex items-center justify-between p-2 bg-gray-50 rounded text-xs"
-                            >
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">
-                                  {offer.advertiser}
-                                </span>
-                                <Badge variant="outline" className="text-xs">
-                                  Grado {offer.userGrade}
-                                </Badge>
-                              </div>
-                              <div className="text-right">
-                                <div className="font-medium">
-                                  {offer.price} BOB/USDT
-                                </div>
-                                <div className="text-gray-600">
-                                  {offer.availableAmount.toLocaleString()} USDT
-                                </div>
-                              </div>
-                            </div>
-                          )
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                <div className="border-t pt-2">
-                  <p className="text-xs text-blue-600">
-                    💡 Precio calculado con {binancePrice.offers} ofertas de
-                    Binance P2P
-                  </p>
-                </div>
-              </div>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-      )}
-
-      <div className="grid grid-cols-2 gap-4 mt-4">
-        <div>
-          <Label htmlFor="editCorrespondentBankUSD">
-            Com. Corresponsal (USD)
-          </Label>
-          <Input
-            id="editCorrespondentBankUSD"
-            type="number"
-            step="0.01"
-            value={formData.correspondentBankUSD}
-            onChange={(e) =>
-              setFormData((prev) => ({
-                ...prev,
-                correspondentBankUSD: e.target.value,
-              }))
-            }
-            placeholder="0.00"
-          />
-        </div>
-        <div>
-          <Label htmlFor="editCorrespondentBankBs">
-            Com. Corresponsal (Bs) (Auto-calculado)
-          </Label>
-          <Input
-            id="editCorrespondentBankBs"
-            type="number"
-            step="0.01"
-            value={formData.correspondentBankBs}
-            readOnly
-            className="bg-gray-50 cursor-not-allowed"
-            placeholder="0.00"
-          />
-        </div>
-      </div>
 
       {/* Hidden save button for dialog footer to trigger */}
       <button
@@ -2913,6 +2721,7 @@ export default function AdminSolicitudDetail() {
                   <div className="flex flex-col sm:flex-row gap-3">
                     <QuotationGenerator
                       requestId={requestId}
+                      requestAmount={request.amount}
                       onSuccess={handleManualStatusCheck}
                       variant="compact"
                       disabled={hasAcceptedQuotation}
@@ -2987,6 +2796,7 @@ export default function AdminSolicitudDetail() {
                   <div className="flex flex-col sm:flex-row gap-3">
                     <QuotationGenerator
                       requestId={requestId}
+                      requestAmount={request.amount}
                       onSuccess={handleManualStatusCheck}
                       variant="compact"
                       disabled={hasAcceptedQuotation}
@@ -3118,6 +2928,7 @@ export default function AdminSolicitudDetail() {
 
                 <QuotationGenerator
                   requestId={requestId}
+                  requestAmount={request.amount}
                   onSuccess={handleManualStatusCheck}
                   disabled={hasAcceptedQuotation}
                 />
@@ -3422,6 +3233,7 @@ export default function AdminSolicitudDetail() {
                         key={document.id}
                         document={document}
                         requestId={request.id}
+                        compact={false}
                       />
                     ))}
                   </div>

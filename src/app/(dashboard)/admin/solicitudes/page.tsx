@@ -45,13 +45,13 @@ const STATUS_FILTERS = [
 
 const COUNTRY_FILTERS = [
   { value: "todos", label: "Todos" },
-  { value: "china", label: "China" },
-  { value: "colombia", label: "Colombia" },
-  { value: "ecuador", label: "Ecuador" },
-  { value: "peru", label: "Perú" },
-  { value: "bolivia", label: "Bolivia" },
-  { value: "usa", label: "Estados Unidos" },
-  { value: "germany", label: "Alemania" },
+  { value: "China", label: "China" },
+  { value: "Colombia", label: "Colombia" },
+  { value: "Ecuador", label: "Ecuador" },
+  { value: "Perú", label: "Perú" },
+  { value: "Bolivia", label: "Bolivia" },
+  { value: "USA", label: "Estados Unidos" },
+  { value: "Germany", label: "Alemania" },
 ];
 
 // Interface for admin request list items

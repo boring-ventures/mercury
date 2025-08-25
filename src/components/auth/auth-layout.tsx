@@ -23,12 +23,12 @@ export default function AuthLayout({ children }: Props) {
             <div className="relative w-12 h-12">
               <Image
                 src="/logo.svg"
-                alt="Mercury Logo"
+                alt="NORDEX Logo"
                 fill
                 className="object-contain"
               />
             </div>
-            <h1 className="text-2xl font-bold text-foreground">MERCURY</h1>
+            <h1 className="text-2xl font-bold text-foreground">NORDEX</h1>
           </div>
           <p className="text-center text-muted-foreground text-sm max-w-sm">
             Plataforma especializada para gestión de envíos internacionales

@@ -17,13 +17,13 @@ import type { SidebarData } from "../types";
 // Base sidebar data - can be extended per role
 export const baseSidebarData: SidebarData = {
   user: {
-    name: "Mercury User",
-    email: "user@mercury.com",
+    name: "NORDEX User",
+    email: "user@nordex.com",
     avatar: "/avatars/default.jpg",
   },
   teams: [
     {
-      name: "Mercury Platform",
+      name: "NORDEX Platform",
       logo: Ship,
       plan: "Gestión de Envíos Internacionales",
     },

@@ -6,6 +6,8 @@ import {
   generateRegistrationConfirmationEmail,
   generateAdminNotificationEmail,
 } from "@/lib/email-templates";
+import { notifyAllAdmins } from "@/lib/notifications";
+import { capitalizeCountry } from "@/lib/utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -118,8 +120,8 @@ export async function POST(request: NextRequest) {
         companyName,
         nit,
         companyType,
-        country,
-        city,
+        country: capitalizeCountry(country),
+        city: capitalizeCountry(city),
         activity,
         contactName,
         contactPosition,
@@ -128,6 +130,26 @@ export async function POST(request: NextRequest) {
         status: "PENDING",
       },
     });
+
+    // Create notifications for all admin users
+    try {
+      await notifyAllAdmins("REGISTRATION_REQUEST_SUBMITTED", {
+        registrationRequestId: registrationRequest.id,
+        companyName,
+        email,
+        companyType,
+        activity,
+        submittedAt: registrationRequest.createdAt.toISOString(),
+      });
+
+      console.log(
+        `Notifications created for all admin users for registration request ${registrationRequest.id}`
+      );
+    } catch (notificationError) {
+      // Log notification error but don't fail the registration
+      console.error("Error creating admin notifications:", notificationError);
+      // The registration was successful, so we still continue
+    }
 
     // If documents were uploaded, create document records
     if (documents) {
@@ -143,6 +165,7 @@ export async function POST(request: NextRequest) {
               fileSize: documents.matricula.size,
               mimeType: documents.matricula.type,
               type: "MATRICULA_COMERCIO",
+              documentInfo: documents.matricula.documentInfo || "",
               registrationRequestId: registrationRequest.id,
             },
           })
@@ -158,6 +181,7 @@ export async function POST(request: NextRequest) {
               fileSize: documents.nit.size,
               mimeType: documents.nit.type,
               type: "NIT",
+              documentInfo: documents.nit.documentInfo || "",
               registrationRequestId: registrationRequest.id,
             },
           })
@@ -173,6 +197,7 @@ export async function POST(request: NextRequest) {
               fileSize: documents.poder.size,
               mimeType: documents.poder.type,
               type: "PODER_REPRESENTANTE",
+              documentInfo: documents.poder.documentInfo || "",
               registrationRequestId: registrationRequest.id,
             },
           })
@@ -188,6 +213,7 @@ export async function POST(request: NextRequest) {
               fileSize: documents.carnet.size,
               mimeType: documents.carnet.type,
               type: "CARNET_IDENTIDAD",
+              documentInfo: documents.carnet.documentInfo || "",
               registrationRequestId: registrationRequest.id,
             },
           })
@@ -204,6 +230,7 @@ export async function POST(request: NextRequest) {
               fileSize: documents.aduana.size,
               mimeType: documents.aduana.type,
               type: "CERTIFICADO_ADUANA",
+              documentInfo: documents.aduana.documentInfo || "",
               registrationRequestId: registrationRequest.id,
             },
           })
@@ -236,7 +263,7 @@ export async function POST(request: NextRequest) {
       await resend.emails.send({
         from: FROM_EMAIL,
         to: email,
-        subject: `Solicitud de Registro Recibida - Mercury Platform (ID: ${registrationRequest.id})`,
+        subject: `Solicitud de Registro Recibida - NORDEX Platform (ID: ${registrationRequest.id})`,
         html: emailHtml,
       });
 
@@ -265,14 +292,12 @@ export async function POST(request: NextRequest) {
 
       // Filter out profiles without emails
       const adminEmails = superAdmins
-        .map(admin => admin.email)
-        .filter(email => email) as string[];
+        .map((admin) => admin.email)
+        .filter((email) => email) as string[];
 
       if (adminEmails.length > 0) {
         // Count uploaded documents
-        const documentsCount = documents
-          ? Object.keys(documents).length
-          : 0;
+        const documentsCount = documents ? Object.keys(documents).length : 0;
 
         const adminEmailHtml = generateAdminNotificationEmail({
           companyName,
@@ -295,7 +320,7 @@ export async function POST(request: NextRequest) {
           resend.emails.send({
             from: FROM_EMAIL,
             to: email,
-            subject: `🚨 Nueva Solicitud de Registro - Mercury Platform (ID: ${registrationRequest.id})`,
+            subject: `🚨 Nueva Solicitud de Registro - NORDEX Platform (ID: ${registrationRequest.id})`,
             html: adminEmailHtml,
           })
         );

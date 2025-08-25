@@ -27,6 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { useCreateProvider } from "@/hooks/use-admin-providers";
 import { Loader2 } from "lucide-react";
+import { capitalizeCountry } from "@/lib/utils";
 
 const createProviderSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
@@ -76,6 +77,7 @@ export function CreateProviderDialog({
 
       await createProvider.mutateAsync({
         ...data,
+        country: capitalizeCountry(data.country),
         email: data.email || undefined,
         phone: data.phone || undefined,
         bankingDetails: data.bankingDetails

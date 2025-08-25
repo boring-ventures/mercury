@@ -1,15 +1,15 @@
 # Email Configuration Setup
 
-This document explains how to set up and use the email functionality for the Mercury Platform registration system.
+This document explains how to set up and use the email functionality for the NORDEX Platform registration system.
 
 ## Overview
 
-The Mercury Platform automatically sends confirmation emails to users when they submit registration requests. The email system uses:
+The NORDEX Platform automatically sends confirmation emails to users when they submit registration requests. The email system uses:
 
 - **Email Service**: Resend (https://resend.com)
 - **Template Type**: HTML email templates with inline CSS
 - **Language**: Spanish (all emails are in Spanish)
-- **Styling**: Matches Mercury Platform brand colors and design
+- **Styling**: Matches NORDEX Platform brand colors and design
 
 ## Setup Instructions
 
@@ -23,13 +23,13 @@ The Mercury Platform automatically sends confirmation emails to users when they 
 
 1. In your Resend dashboard, go to "API Keys"
 2. Click "Create API Key"
-3. Give it a name (e.g., "Mercury Platform")
+3. Give it a name (e.g., "NORDEX Platform")
 4. Copy the generated API key
 
 ### 3. Configure Domain (Recommended)
 
 1. In Resend dashboard, go to "Domains"
-2. Add your domain (e.g., `mercury.com`)
+2. Add your domain (e.g., `nordex.com`)
 3. Configure the DNS records as shown
 4. Verify the domain
 
@@ -55,7 +55,7 @@ FROM_EMAIL=noreply@yourdomain.com
 
 The registration confirmation email includes:
 
-- **Professional Design**: Matches Mercury Platform branding
+- **Professional Design**: Matches NORDEX Platform branding
 - **Complete Request Details**: All submitted company and contact information
 - **Request ID**: Unique identifier for tracking
 - **Status Information**: Clear verification process status
@@ -117,11 +117,11 @@ src/lib/email-templates.ts
 
 ## Email Content Example
 
-**Subject:** `Solicitud de Registro Recibida - Mercury Platform (ID: REQ_12345)`
+**Subject:** `Solicitud de Registro Recibida - NORDEX Platform (ID: REQ_12345)`
 
 **Content:**
 
-- Header with Mercury logo and branding
+- Header with NORDEX logo and branding
 - Success message in prominent styling
 - Complete request details in organized tables
 - Step-by-step next steps explanation

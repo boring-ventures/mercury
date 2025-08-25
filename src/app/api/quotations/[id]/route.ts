@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma";
 import { createSystemNotification } from "@/lib/notifications";
 import { resend, FROM_EMAIL } from "@/lib/resend";
 import { generateQuotationAcceptedAdminEmail } from "@/lib/email-templates";
+import { notifyQuotationReceived } from "@/lib/notification-events";
 import { RequestStatus, QuotationStatus, Currency } from "@prisma/client";
 
 // API route for updating quotation status (approve/reject)
@@ -542,6 +543,47 @@ export async function PATCH(
         profileId: profile.id,
       },
     });
+
+    // Send notifications if status is changed to SENT
+    if (quotation.status !== "SENT" && status === "SENT") {
+      try {
+        // Get the admin who updated the quotation
+        const adminProfile = await prisma.profile.findUnique({
+          where: { id: profile.id },
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        });
+
+        const createdBy = adminProfile
+          ? `${adminProfile.firstName} ${adminProfile.lastName}`.trim()
+          : "Administrador";
+
+        await notifyQuotationReceived({
+          quotationId: updatedQuotation.id,
+          code: updatedQuotation.code,
+          requestId: updatedQuotation.requestId,
+          companyId: updatedQuotation.companyId,
+          amount: updatedQuotation.amount,
+          currency: updatedQuotation.currency,
+          totalInBs: updatedQuotation.totalInBs,
+          exchangeRate: updatedQuotation.exchangeRate,
+          validUntil: updatedQuotation.validUntil.toISOString(),
+          createdBy: createdBy,
+          createdAt: updatedQuotation.createdAt.toISOString(),
+          companyName: updatedQuotation.request?.company?.name,
+          requestCode: updatedQuotation.request?.code,
+          status: updatedQuotation.status,
+        });
+      } catch (notificationError) {
+        console.error(
+          "Error sending notification for quotation status change:",
+          notificationError
+        );
+        // Don't fail the quotation update if notification fails
+      }
+    }
 
     return NextResponse.json({
       success: true,

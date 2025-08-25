@@ -100,6 +100,7 @@ model Provider {
   country        String
   email          String?
   phone          String?
+  additionalInfo String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   bankingDetails Json?
@@ -153,6 +154,7 @@ model Document {
   reviewNotes           String?
   reviewedAt            DateTime?
   reviewedBy            String?
+  documentInfo          String?              // Additional text information about the document
   createdAt             DateTime             @default(now())
   updatedAt             DateTime             @updatedAt
   companyId             String?

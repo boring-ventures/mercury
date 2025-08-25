@@ -25,12 +25,14 @@ export interface CreateRequestData {
   providerBeneficiaryName: string;
   providerEmail?: string;
   providerPhone?: string;
+  providerAdditionalInfo?: string;
   documents?: Array<{
     filename: string;
     fileUrl: string;
     fileSize: number;
     mimeType: string;
     type?: string;
+    documentInfo?: string; // Add document text information
   }>;
 }
 

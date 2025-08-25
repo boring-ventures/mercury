@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import prisma from "@/lib/prisma";
 import { resend, FROM_EMAIL } from "@/lib/resend";
+import { capitalizeCountry } from "@/lib/utils";
 
 interface RouteParams {
   params: Promise<{
@@ -353,8 +354,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
                 | "UNIPERSONAL"
                 | "SRL"
                 | "SA",
-              country: registrationRequest.country,
-              city: registrationRequest.city,
+              country: capitalizeCountry(registrationRequest.country),
+              city: capitalizeCountry(registrationRequest.city),
               activity: registrationRequest.activity as
                 | "IMPORTACION_GENERAL"
                 | "IMPORTACION_ALIMENTOS"
@@ -420,7 +421,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
         console.log("Registration request updated successfully");
 
-        emailSubject = "¡Solicitud Aprobada! - Bienvenido a Mercury Platform";
+        emailSubject = "¡Solicitud Aprobada! - Bienvenido a NORDEX Platform";
         console.log("Sending approval email with password:", temporaryPassword);
         emailContent = generateApprovalEmail(
           updatedRequest,
@@ -457,7 +458,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       });
 
       emailSubject =
-        "Actualización sobre su Solicitud de Registro - Mercury Platform";
+        "Actualización sobre su Solicitud de Registro - NORDEX Platform";
       emailContent = generateRejectionEmail(
         updatedRequest,
         adminName,
@@ -523,7 +524,7 @@ function generateApprovalEmail(
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>¡Bienvenido a Mercury Platform!</title>
+    <title>¡Bienvenido a NORDEX Platform!</title>
     <style>
         body {
             margin: 0;
@@ -665,14 +666,14 @@ function generateApprovalEmail(
 <body>
     <div class="container">
         <div class="header">
-            <h1 class="logo">MERCURY</h1>
+            <h1 class="logo">NORDEX</h1>
             <p style="color: #6b7280; font-size: 16px; margin: 5px 0 0 0;">
                 Plataforma especializada para gestión de envíos internacionales
             </p>
         </div>
 
         <div class="hero-section">
-            <h2 class="hero-title">¡Bienvenido a Mercury!</h2>
+            <h2 class="hero-title">¡Bienvenido a NORDEX!</h2>
             <p class="hero-subtitle">
                 Su solicitud de registro ha sido <strong>aprobada exitosamente</strong>.<br>
                 Ya puede acceder a la plataforma con sus credenciales.
@@ -726,7 +727,7 @@ function generateApprovalEmail(
         <div class="credentials-section">
             <h3 class="credentials-title">🔐 Sus Credenciales de Acceso</h3>
             <p style="color: #6b7280; font-size: 14px; margin: 0 0 20px 0;">
-                Utilice estas credenciales para acceder a Mercury Platform:
+                Utilice estas credenciales para acceder a NORDEX Platform:
             </p>
             
             <div class="credential-item">
@@ -748,7 +749,7 @@ function generateApprovalEmail(
 
         <div style="text-align: center;">
             <a href="${process.env.NEXT_PUBLIC_SITE_URL}/sign-in" class="cta-button">
-                🚀 Acceder a Mercury Platform
+                🚀 Acceder a NORDEX Platform
             </a>
         </div>
 
@@ -764,10 +765,10 @@ function generateApprovalEmail(
         </div>
 
         <div class="footer">
-            <p class="footer-text">© 2024 Mercury Platform. Todos los derechos reservados.</p>
+            <p class="footer-text">© 2024 NORDEX Platform. Todos los derechos reservados.</p>
             <p class="footer-text">
                 Si tiene alguna pregunta, contáctenos en 
-                <a href="mailto:support@mercury.com" style="color: #f59e0b;">support@mercury.com</a>
+                <a href="mailto:support@nordex.com" style="color: #f59e0b;">support@nordex.com</a>
             </p>
         </div>
     </div>
@@ -788,7 +789,7 @@ function generateRejectionEmail(
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Actualización de Solicitud - Mercury Platform</title>
+    <title>Actualización de Solicitud - Nordex Platform</title>
     <style>
         body {
             margin: 0;
@@ -885,7 +886,7 @@ function generateRejectionEmail(
 <body>
     <div class="container">
         <div class="header">
-            <h1 class="logo">MERCURY</h1>
+            <h1 class="logo">NORDEX</h1>
             <p style="color: #6b7280; font-size: 14px; margin: 5px 0 0 0;">
                 Plataforma especializada para gestión de envíos internacionales
             </p>
@@ -897,7 +898,7 @@ function generateRejectionEmail(
                 Estimado/a <strong>${request.contactName}</strong>,
             </p>
             <p style="color: #6b7280; margin: 0 0 25px 0;">
-                Gracias por su interés en formar parte de Mercury Platform. 
+                Gracias por su interés en formar parte de NORDEX Platform. 
                 Hemos revisado cuidadosamente su solicitud de registro para <strong>${request.companyName}</strong>.
             </p>
 
@@ -965,7 +966,7 @@ function generateRejectionEmail(
             </div>
 
             <p style="color: #6b7280; margin: 25px 0 0 0;">
-                Valoramos su interés en Mercury Platform y esperamos poder trabajar con usted en el futuro una vez que se resuelvan los puntos observados.
+                Valoramos su interés en NORDEX Platform y esperamos poder trabajar con usted en el futuro una vez que se resuelvan los puntos observados.
             </p>
         </div>
 
@@ -977,7 +978,7 @@ function generateRejectionEmail(
                     <p style="color: #15803d; font-size: 14px; margin: 0;">
                         Si tiene preguntas sobre los motivos de rechazo o necesita orientación para corregir su solicitud, 
                         puede contactarnos en 
-                        <a href="mailto:soporte@mercury.com" style="color: #f59e0b; font-weight: 600;">soporte@mercury.com</a>
+                        <a href="mailto:soporte@nordex.com" style="color: #f59e0b; font-weight: 600;">soporte@nordex.com</a>
                         <br>
                         <strong>Por favor incluya su ID de solicitud: ${request.id}</strong>
                     </p>
@@ -986,10 +987,10 @@ function generateRejectionEmail(
         </div>
 
         <div class="footer">
-            <p class="footer-text">© 2024 Mercury Platform. Todos los derechos reservados.</p>
+            <p class="footer-text">© 2024 NORDEX Platform. Todos los derechos reservados.</p>
             <p class="footer-text">
                 Soporte técnico: 
-                <a href="mailto:soporte@mercury.com" style="color: #f59e0b;">soporte@mercury.com</a>
+                <a href="mailto:soporte@nordex.com" style="color: #f59e0b;">soporte@nordex.com</a>
             </p>
         </div>
     </div>
