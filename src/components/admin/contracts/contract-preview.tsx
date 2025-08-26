@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   FileText,
   Eye,
@@ -13,6 +15,8 @@ import {
   Calendar,
   DollarSign,
   Info,
+  CheckCircle,
+  AlertCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -92,7 +96,7 @@ Las comunicaciones y/o notificaciones entre las Partes contratantes – para tod
 
 DÉCIMA PRIMERA: PREVENCIÓN CONTRA EL LAVADO DE DINERO Y FINANCIAMIENTO DEL TERRORISMO.- 
 
-El IMPORTADOR declara y garantiza que los fondos utilizados para el pago de proveedores internacionales tienen un origen lícito, conforme a las leyes nacionales e internacionales en materia de prevención del lavado de activos y financiamiento del terrorismo. Asimismo, manifiesta que dichos fondos no provienen de actividades ilícitas ni están relacionados, directa o indirectamente, con el financiamiento del terrorismo o cualquier otra actividad delictiva.
+El IMPORTADOR declara y garantiza que los fondos utilizados para el pago de proveedores internacionales tienen un origen lícito, conforme a las leyes nacionales e internacionales en materia de prevención del lavado de activos y financiamiento del terrorismo. Asimismo, manifiesta que dichos fondos no provienen de actividades ilícitas ni están relacionados, directa o indirectamente, con el financiamiento del terrorismo o cualquier otra actividad delictiva.  
 
 El IMPORTADOR acepta y declara que ninguno de sus empleado(s), trabajador(es), socio(s), dignatario(s), dueño(s), beneficiario(s) final(es) han sido objeto de una investigación o han sido imputado(s), señalado(s) o sentenciado(s) por los delitos de blanqueo de capitales, lavado de activos, financiamiento del terrorismo, financiamiento de proliferación de armas de destrucción masiva, cohecho o soborno, delitos que se encuentren relacionados o en general, por cualquier otro hecho que por su naturaleza pudiese afectar la reputación del PROVEEDOR, o sus clientes.  
 El IMPORTADOR se obliga a hacer cumplir con el máximo celo a sus empleado(s), trabajador(es), socio(s), dignatario(s), dueño(s), beneficiario(s) final(es) o dependiente(s), toda la normativa relacionada con delitos de blanqueo de capitales, lavado de activos, financiamiento del terrorismo, financiamiento de proliferación de armas de destrucción masiva, cohecho o soborno, delitos terroristas o sus relacionados, sanciones financieras y embargos financieros económicos y comerciales a nivel nacional e internacional, y otras figuras delictivas que pudieren afectar el nombre o reputación del PROVEEDOR.
@@ -212,6 +216,7 @@ interface ContractPreviewProps {
     startDate: string;
     endDate: string;
     createdAt: string;
+    status: string;
     additionalData?: {
       companyData?: any;
       contactData?: any;
@@ -248,13 +253,47 @@ interface ContractPreviewProps {
       currency: string;
     } | null;
   };
+  onDatesChanged?: (startDate: string, endDate: string) => void;
+  isDateSelectionEnabled?: boolean;
 }
 
-export default function ContractPreview({ contract }: ContractPreviewProps) {
+export default function ContractPreview({
+  contract,
+  onDatesChanged,
+  isDateSelectionEnabled = false,
+}: ContractPreviewProps) {
   const [contractPreview, setContractPreview] = useState("");
+  const [selectedStartDate, setSelectedStartDate] = useState(
+    contract.startDate ? contract.startDate.split("T")[0] : ""
+  );
+  const [selectedEndDate, setSelectedEndDate] = useState(
+    contract.endDate ? contract.endDate.split("T")[0] : ""
+  );
+
+  // Handle date changes
+  const handleStartDateChange = (date: string) => {
+    setSelectedStartDate(date);
+    if (onDatesChanged && date && selectedEndDate) {
+      onDatesChanged(date, selectedEndDate);
+    }
+  };
+
+  const handleEndDateChange = (date: string) => {
+    setSelectedEndDate(date);
+    if (onDatesChanged && selectedStartDate && date) {
+      onDatesChanged(selectedStartDate, date);
+    }
+  };
+
+  // Check if dates are valid for completion - Fix timezone issue by adding T00:00:00
+  const areDatesValid =
+    selectedStartDate &&
+    selectedEndDate &&
+    new Date(selectedStartDate + "T00:00:00") <
+      new Date(selectedEndDate + "T00:00:00");
 
   // Generate contract preview with contract data
-  const generateContractPreview = () => {
+  const generateContractPreview = useCallback(() => {
     console.log("Admin Contract Preview - Contract data:", contract);
     console.log(
       "Admin Contract Preview - Additional data:",
@@ -305,13 +344,18 @@ export default function ContractPreview({ contract }: ContractPreviewProps) {
       "{importer.company}":
         contract.request?.company?.name || "_________________",
       "{importer.nit}":
-        companyData.nit || additional.nit || contract.request?.company?.nit || "_________________",
+        companyData.nit ||
+        additional.nit ||
+        contract.request?.company?.nit ||
+        "_________________",
       "{importer.address}":
-        companyData.address || additional.address ||
+        companyData.address ||
+        additional.address ||
         contract.request?.company?.address ||
         "_________________",
       "{importer.city}":
-        companyData.city || additional.city ||
+        companyData.city ||
+        additional.city ||
         contract.request?.company?.city ||
         contract.request?.company?.country ||
         "_________________",
@@ -368,8 +412,12 @@ export default function ContractPreview({ contract }: ContractPreviewProps) {
       "{service.fee}": Math.round(
         (Number(contract.amount) || 0) * 0.05
       ).toLocaleString(),
-      "{contract.startDate}": formatDate(contract.startDate),
-      "{contract.endDate}": formatDate(contract.endDate),
+      "{contract.startDate}": selectedStartDate
+        ? formatDate(selectedStartDate + "T00:00:00")
+        : "_________________",
+      "{contract.endDate}": selectedEndDate
+        ? formatDate(selectedEndDate + "T00:00:00")
+        : "_________________",
       "{contract.date}": formatDate(new Date().toISOString()),
     };
 
@@ -382,12 +430,12 @@ export default function ContractPreview({ contract }: ContractPreviewProps) {
     });
 
     return contractText;
-  };
+  }, [contract, selectedStartDate, selectedEndDate]);
 
   useEffect(() => {
     const preview = generateContractPreview();
     setContractPreview(preview);
-  }, [contract]);
+  }, [generateContractPreview]);
 
   return (
     <Card>
@@ -398,6 +446,88 @@ export default function ContractPreview({ contract }: ContractPreviewProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {/* Date Selection Section - Only show for DRAFT contracts */}
+        {isDateSelectionEnabled && contract.status === "DRAFT" && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center gap-2 mb-3">
+              <Calendar className="h-5 w-5 text-blue-600" />
+              <h4 className="font-semibold text-blue-900">
+                SEXTA: PLAZO DE CUMPLIMIENTO
+              </h4>
+            </div>
+            <p className="text-sm text-blue-700 mb-4">
+              Seleccione las fechas para el plazo de cumplimiento del contrato.
+              Estas fechas se incluirán en la sección &quot;SEXTA: PLAZO DE
+              CUMPLIMIENTO&quot; del documento.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="contractStartDate"
+                  className="text-sm font-medium text-blue-900"
+                >
+                  Fecha de Inicio <span className="text-red-500">*</span>
+                </Label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-3 h-4 w-4 text-blue-400" />
+                  <Input
+                    id="contractStartDate"
+                    type="date"
+                    value={selectedStartDate}
+                    onChange={(e) => handleStartDateChange(e.target.value)}
+                    className="pl-10 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="contractEndDate"
+                  className="text-sm font-medium text-blue-900"
+                >
+                  Fecha de Fin <span className="text-red-500">*</span>
+                </Label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-3 h-4 w-4 text-blue-400" />
+                  <Input
+                    id="contractEndDate"
+                    type="date"
+                    value={selectedEndDate}
+                    onChange={(e) => handleEndDateChange(e.target.value)}
+                    className="pl-10 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            {areDatesValid && (
+              <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center gap-2 text-green-700">
+                  <CheckCircle className="h-4 w-4" />
+                  <span className="text-sm font-medium">
+                    Fechas válidas seleccionadas. El botón &quot;Completar
+                    Contrato&quot; está ahora habilitado.
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {selectedStartDate && selectedEndDate && !areDatesValid && (
+              <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-center gap-2 text-red-700">
+                  <AlertCircle className="h-4 w-4" />
+                  <span className="text-sm font-medium">
+                    La fecha de inicio debe ser anterior a la fecha de fin.
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="bg-white border rounded-lg overflow-hidden">
           <div className="flex items-center justify-between p-4 border-b bg-gray-50">
             <h3 className="font-semibold text-gray-900 flex items-center gap-2">

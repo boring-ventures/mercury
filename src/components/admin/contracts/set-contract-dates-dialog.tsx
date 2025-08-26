@@ -30,14 +30,14 @@ import { formatCurrency } from "@/lib/utils";
 interface SetContractDatesDialogProps {
   quotation: {
     id: string;
-    code: string;
-    amount: number;
-    currency: string;
-    totalInBs: number;
+    code?: string;
+    amount?: number;
+    currency?: string;
+    totalInBs?: number;
     terms?: string;
     notes?: string;
-    createdAt: string;
-    validUntil: string;
+    createdAt?: string;
+    validUntil?: string;
   };
   request: {
     id: string;
@@ -101,7 +101,7 @@ export default function SetContractDatesDialog({
           quotationId: quotation.id,
           title: `Contrato - ${request.code}`,
           description: request.description,
-          amount: quotation.totalInBs,
+          amount: quotation.totalInBs || 0,
           currency: "BOB",
           startDate,
           endDate,
@@ -135,7 +135,9 @@ export default function SetContractDatesDialog({
     }
   };
 
-  const isQuotationExpired = new Date() > new Date(quotation.validUntil);
+  const isQuotationExpired = quotation.validUntil
+    ? new Date() > new Date(quotation.validUntil)
+    : false;
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -212,9 +214,11 @@ export default function SetContractDatesDialog({
                 <Clock className="h-4 w-4" />
                 <span>
                   Válida hasta:{" "}
-                  {format(new Date(quotation.validUntil), "dd/MM/yyyy", {
-                    locale: es,
-                  })}
+                  {quotation.validUntil
+                    ? format(new Date(quotation.validUntil), "dd/MM/yyyy", {
+                        locale: es,
+                      })
+                    : "No especificada"}
                 </span>
                 {isQuotationExpired && (
                   <span className="text-red-600 font-medium">(Expirada)</span>

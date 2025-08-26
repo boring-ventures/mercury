@@ -64,8 +64,8 @@ export const adminSidebarData: SidebarData = {
           icon: Building2,
         },
         {
-          title: "Reportes",
-          url: "/admin/reportes",
+          title: "Pagos",
+          url: "/admin/payments",
           icon: TrendingUp,
         },
       ],

@@ -63,7 +63,7 @@ export async function POST(
       include: {
         company: {
           include: {
-            profiles: {
+            users: {
               where: {
                 status: "ACTIVE",
                 role: "IMPORTADOR",
@@ -97,7 +97,7 @@ export async function POST(
         endDate,
         status: "COMPLETED",
         additionalData: {
-          ...contract.additionalData,
+          ...((contract.additionalData as any) || {}),
           adminCompleted: {
             at: new Date().toISOString(),
             by: profile.id,
@@ -139,7 +139,7 @@ export async function POST(
 
     // Send notifications to importers
     try {
-      const importers = contract.company.profiles;
+      const importers = contract.company.users;
 
       if (importers.length > 0) {
         // Send in-app notifications
@@ -223,7 +223,6 @@ export async function POST(
     // Return a proper error response
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("Contract completion failed:", {
-      contractId,
       error: errorMessage,
       stack: error instanceof Error ? error.stack : undefined,
     });

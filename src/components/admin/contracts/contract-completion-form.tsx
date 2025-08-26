@@ -2,10 +2,8 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, CheckCircle, Loader2 } from "lucide-react";
+import { CheckCircle, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 interface ContractCompletionFormProps {
@@ -24,34 +22,10 @@ export function ContractCompletionForm({
   onCompleted,
 }: ContractCompletionFormProps) {
   const { toast } = useToast();
-  const [startDate, setStartDate] = useState(
-    currentStartDate ? currentStartDate.split("T")[0] : ""
-  );
-  const [endDate, setEndDate] = useState(
-    currentEndDate ? currentEndDate.split("T")[0] : ""
-  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!startDate || !endDate) {
-      toast({
-        title: "Error",
-        description: "Por favor complete ambas fechas",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (new Date(startDate) >= new Date(endDate)) {
-      toast({
-        title: "Error",
-        description: "La fecha de inicio debe ser anterior a la fecha de fin",
-        variant: "destructive",
-      });
-      return;
-    }
 
     try {
       setIsSubmitting(true);
@@ -64,8 +38,8 @@ export function ContractCompletionForm({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            startDate,
-            endDate,
+            startDate: currentStartDate,
+            endDate: currentEndDate,
           }),
         }
       );
@@ -112,40 +86,6 @@ export function ContractCompletionForm({
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="startDate">
-              Fecha de Inicio <span className="text-red-500">*</span>
-            </Label>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                id="startDate"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="pl-10"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="endDate">
-              Fecha de Fin <span className="text-red-500">*</span>
-            </Label>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                id="endDate"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="pl-10"
-                required
-              />
-            </div>
-          </div>
-
           <div className="pt-2">
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? (
@@ -166,7 +106,7 @@ export function ContractCompletionForm({
             <p>Al completar el contrato:</p>
             <ul className="list-disc list-inside mt-1 space-y-1">
               <li>Se actualizarán las fechas del contrato</li>
-              <li>El estado cambiará a "COMPLETED"</li>
+              <li>El estado cambiará a &quot;COMPLETED&quot;</li>
               <li>Se enviará notificación al importador</li>
               <li>Se enviará email al importador</li>
             </ul>

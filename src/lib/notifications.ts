@@ -83,6 +83,36 @@ export const NOTIFICATION_TEMPLATES: SystemNotificationTemplates = {
       "Se ha recibido una nueva solicitud de registro que requiere revisión",
     type: NotificationType.INFO,
   },
+  PAYMENT_PROOF_UPLOADED: {
+    title: "📄 Comprobante de Pago Subido",
+    message:
+      "Un importador ha subido un comprobante de pago para un contrato completado. Revise el documento para confirmar el pago.",
+    type: NotificationType.INFO,
+  },
+  PAYMENT_APPROVED: {
+    title: "✅ Pago Aprobado",
+    message:
+      "Su comprobante de pago ha sido aprobado por el administrador. El administrador procederá a realizar el pago al proveedor.",
+    type: NotificationType.SUCCESS,
+  },
+  PAYMENT_REJECTED: {
+    title: "❌ Pago Rechazado",
+    message:
+      "Su comprobante de pago ha sido rechazado. Revise los comentarios y suba un nuevo documento si es necesario.",
+    type: NotificationType.WARNING,
+  },
+  PROVIDER_PAYMENT_COMPLETED: {
+    title: "💰 Pago al Proveedor Completado",
+    message:
+      "El administrador ha completado el pago al proveedor. Pronto subirá el comprobante de pago al proveedor para su revisión.",
+    type: NotificationType.SUCCESS,
+  },
+  PROVIDER_PROOF_UPLOADED: {
+    title: "📄 Comprobante de Pago al Proveedor Subido",
+    message:
+      "El administrador ha subido el comprobante de pago al proveedor. El proceso de pago ha sido completado exitosamente.",
+    type: NotificationType.SUCCESS,
+  },
 };
 
 // Create a single notification

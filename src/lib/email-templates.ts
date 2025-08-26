@@ -1283,10 +1283,24 @@ export const generateContractCompletedEmail = (data: {
         <p><strong>Próximos pasos:</strong></p>
         <ul>
           <li>Su contrato está ahora en estado <strong>COMPLETED</strong></li>
-          <li>Puede proceder con la siguiente fase del proceso de importación</li>
+          <li>Nuestro equipo administrativo procederá a imprimir el documento del contrato</li>
+          <li>El documento será firmado por nuestro representante legal</li>
+          <li>El contrato firmado será enviado físicamente a su dirección registrada</li>
+          <li>Una vez recibido, deberá firmar el documento y proceder con el pago según los términos establecidos</li>
           <li>El sistema ha sido actualizado con las fechas del contrato</li>
           <li>Recibirá notificaciones sobre el progreso del proceso</li>
         </ul>
+
+        <div class="highlight">
+          <strong>📋 Proceso de Firma y Pago:</strong>
+          <p>Este es un proceso que requiere firma física del documento. Una vez que reciba el contrato firmado por nuestra parte, deberá:</p>
+          <ol style="margin-left: 20px; margin-top: 10px;">
+            <li>Revisar el documento completo</li>
+            <li>Firmar en las secciones correspondientes</li>
+            <li>Proceder con el pago según las condiciones establecidas</li>
+            <li>Mantener una copia del contrato firmado</li>
+          </ol>
+        </div>
 
         <div style="text-align: center;">
           <a href="${data.link}" class="cta-button">

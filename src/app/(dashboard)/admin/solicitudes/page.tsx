@@ -64,9 +64,11 @@ interface AdminRequestItem {
   amount: number;
   currency: string;
   createdAt: string;
+  description?: string;
   rejectionCount?: number;
   company?: {
     name: string;
+    email?: string;
   };
   provider?: {
     country: string;

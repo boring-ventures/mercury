@@ -60,6 +60,11 @@ export interface SystemNotificationTemplates {
   CONTRACT_GENERATED: NotificationTemplate;
   CONTRACT_ACCEPTED: NotificationTemplate;
   CONTRACT_COMPLETED: NotificationTemplate;
+  PAYMENT_PROOF_UPLOADED: NotificationTemplate;
+  PAYMENT_APPROVED: NotificationTemplate;
+  PAYMENT_REJECTED: NotificationTemplate;
+  PROVIDER_PAYMENT_COMPLETED: NotificationTemplate;
+  PROVIDER_PROOF_UPLOADED: NotificationTemplate;
   PAYMENT_RECEIVED: NotificationTemplate;
   DOCUMENT_APPROVED: NotificationTemplate;
   DOCUMENT_REJECTED: NotificationTemplate;

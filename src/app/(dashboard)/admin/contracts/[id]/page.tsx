@@ -19,11 +19,9 @@ import {
   Building,
   User,
   Download,
-  Edit,
   Trash2,
   Package,
   FileSignature,
-  Play,
   CheckSquare,
 } from "lucide-react";
 import Link from "next/link";
@@ -47,12 +45,7 @@ function StatusBadge({ status }: { status: string }) {
           variant: "secondary" as const,
           icon: "FileText",
         };
-      case "ACTIVE":
-        return {
-          label: "Activo",
-          variant: "default" as const,
-          icon: "Play",
-        };
+
       case "COMPLETED":
         return {
           label: "Completado",
@@ -100,8 +93,7 @@ function StatusBadge({ status }: { status: string }) {
         return <AlertCircle className="h-3 w-3 mr-1" />;
       case "AlertTriangle":
         return <AlertTriangle className="h-3 w-3 mr-1" />;
-      case "Play":
-        return <Play className="h-3 w-3 mr-1" />;
+
       case "CheckSquare":
         return <CheckSquare className="h-3 w-3 mr-1" />;
       default:
@@ -127,24 +119,15 @@ export default function AdminContractDetail() {
   const { data, isLoading, error } = useAdminContract(contractId);
   const contract = data?.contract;
 
-  const [isActivating, setIsActivating] = useState(false);
   const [showDateEdit, setShowDateEdit] = useState(false);
+  const [selectedContractDates, setSelectedContractDates] = useState<{
+    startDate: string;
+    endDate: string;
+  } | null>(null);
 
-  const handleActivate = async () => {
-    try {
-      setIsActivating(true);
-      const res = await fetch("/api/admin/contracts", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: contractId, status: "ACTIVE" }),
-      });
-      if (!res.ok) throw new Error("Failed to activate contract");
-      window.location.reload();
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsActivating(false);
-    }
+  // Handle date selection from contract preview
+  const handleContractDatesChanged = (startDate: string, endDate: string) => {
+    setSelectedContractDates({ startDate, endDate });
   };
 
   if (isLoading) {
@@ -332,7 +315,13 @@ export default function AdminContractDetail() {
               "Admin Contract Detail - Contract data being passed to preview:",
               contract
             );
-            return <ContractPreview contract={contract} />;
+            return (
+              <ContractPreview
+                contract={contract}
+                onDatesChanged={handleContractDatesChanged}
+                isDateSelectionEnabled={contract.status === "DRAFT"}
+              />
+            );
           })()}
         </div>
 
@@ -510,46 +499,31 @@ export default function AdminContractDetail() {
                 <Download className="h-4 w-4 mr-2" />
                 Descargar DOCX
               </Button>
-              <Button
-                className="w-full"
-                variant="outline"
-                onClick={() => setShowDateEdit(true)}
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Editar Fechas
-              </Button>
+              {/* Contract Completion Form - Only show for DRAFT contracts */}
+              {contract && contract.status === "DRAFT" && (
+                <ContractCompletionForm
+                  contractId={contract.id}
+                  contractCode={contract.code}
+                  currentStartDate={
+                    selectedContractDates?.startDate || contract.startDate
+                  }
+                  currentEndDate={
+                    selectedContractDates?.endDate || contract.endDate
+                  }
+                  onCompleted={() => {
+                    // Refresh the page to show updated status
+                    window.location.reload();
+                  }}
+                />
+              )}
+
               <Button className="w-full" variant="outline" disabled>
                 <Trash2 className="h-4 w-4 mr-2" />
                 Eliminar
               </Button>
-
-              <Button
-                className="w-full"
-                onClick={handleActivate}
-                disabled={isActivating}
-              >
-                <Play className="h-4 w-4 mr-2" />
-                {isActivating ? "Activando..." : "Activar contrato"}
-              </Button>
             </CardContent>
           </Card>
         </div>
-
-        {/* Contract Completion Form - Only show for ACTIVE contracts */}
-        {contract && contract.status === "ACTIVE" && (
-          <div className="mt-6">
-            <ContractCompletionForm
-              contractId={contract.id}
-              contractCode={contract.code}
-              currentStartDate={contract.startDate}
-              currentEndDate={contract.endDate}
-              onCompleted={() => {
-                // Refresh the page to show updated status
-                window.location.reload();
-              }}
-            />
-          </div>
-        )}
       </div>
 
       {/* Contract Date Edit Modal */}
