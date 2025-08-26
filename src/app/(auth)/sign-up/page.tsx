@@ -576,11 +576,12 @@ export default function RegisterPage() {
     );
 
     // Sync local state with parent state when it changes
+    const currentDocumentInfo =
+      documentInfo[fileType as keyof typeof documentInfo] || "";
+
     useEffect(() => {
-      setLocalDocumentInfo(
-        documentInfo[fileType as keyof typeof documentInfo] || ""
-      );
-    }, [documentInfo[fileType as keyof typeof documentInfo], fileType]);
+      setLocalDocumentInfo(currentDocumentInfo);
+    }, [currentDocumentInfo, fileType]);
 
     // Determine if document is required or optional based on company type
     const isRequired = () => {

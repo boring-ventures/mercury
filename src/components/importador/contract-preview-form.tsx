@@ -21,12 +21,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
 import {
   Building2,
   FileText,
@@ -44,11 +39,15 @@ import {
   Loader2,
   Eye,
   Download,
+  AlertTriangle,
+  Clock,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { useContractStatus } from "@/hooks/use-contract-status";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Helper function to download text as file
 const downloadTextAsFile = (
@@ -342,6 +341,11 @@ export default function ContractPreviewForm({
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const queryClient = useQueryClient();
+
+  // Check contract status
+  const { data: contractStatus } = useContractStatus(quotation.id);
+
   // Extract CI information from documents (check both request and company documents)
   const getCIFromDocuments = () => {
     // First check request documents
@@ -405,8 +409,12 @@ export default function ContractPreviewForm({
     contactCI: getCIFromDocuments(),
 
     // Contract Details
-    contractStartDate: "",
-    contractEndDate: "",
+    contractStartDate: contractStatus?.startDate
+      ? format(new Date(contractStatus.startDate), "yyyy-MM-dd")
+      : "",
+    contractEndDate: contractStatus?.endDate
+      ? format(new Date(contractStatus.endDate), "yyyy-MM-dd")
+      : "",
     paymentTerms: "",
     deliveryTerms: "",
     specialConditions: "",
@@ -429,6 +437,9 @@ export default function ContractPreviewForm({
       "",
     providerAccountType: "",
   });
+
+  // Check if contract exists and get its data
+  const contractExists = contractStatus?.exists || false;
 
   // Update form data when props change
   useEffect(() => {
@@ -463,6 +474,14 @@ export default function ContractPreviewForm({
       contactPosition: company?.contactPosition || "",
       contactCI: getCIFromDocuments(),
 
+      // Contract Details (update with contract data if available)
+      contractStartDate: contractStatus?.startDate
+        ? format(new Date(contractStatus.startDate), "yyyy-MM-dd")
+        : "",
+      contractEndDate: contractStatus?.endDate
+        ? format(new Date(contractStatus.endDate), "yyyy-MM-dd")
+        : "",
+
       // Provider Information
       providerName: request?.provider?.name || "",
       providerCountry: request?.provider?.country || "",
@@ -482,7 +501,7 @@ export default function ContractPreviewForm({
         "",
       providerAccountType: "",
     }));
-  }, [company, request]);
+  }, [company, request, contractStatus]);
 
   const handleInputChange = (field: keyof ContractFormData, value: string) => {
     console.log("Form field changed:", field, "Value:", value);
@@ -494,15 +513,104 @@ export default function ContractPreviewForm({
 
   // Generate contract preview with form data
   const generateContractPreview = () => {
-    // Debug: Log current form data for provider banking details
-    console.log("Form data provider banking details:", {
-      providerBankName: formData.providerBankName,
-      providerAccountNumber: formData.providerAccountNumber,
-      providerSwiftCode: formData.providerSwiftCode,
-      providerBeneficiaryName: formData.providerBeneficiaryName,
-      providerBankAddress: formData.providerBankAddress,
-      providerAccountType: formData.providerAccountType,
-    });
+    // Helper function to format numbers to words
+    const numberToWords = (num: number): string => {
+      if (!num || isNaN(num)) return "cero";
+
+      const units = [
+        "",
+        "uno",
+        "dos",
+        "tres",
+        "cuatro",
+        "cinco",
+        "seis",
+        "siete",
+        "ocho",
+        "nueve",
+      ];
+      const teens = [
+        "diez",
+        "once",
+        "doce",
+        "trece",
+        "catorce",
+        "quince",
+        "dieciséis",
+        "diecisiete",
+        "dieciocho",
+        "diecinueve",
+      ];
+      const tens = [
+        "",
+        "",
+        "veinte",
+        "treinta",
+        "cuarenta",
+        "cincuenta",
+        "sesenta",
+        "setenta",
+        "ochenta",
+        "noventa",
+      ];
+
+      if (num === 0) return "cero";
+      if (num < 10) return units[num];
+      if (num < 20) return teens[num - 10];
+      if (num < 100) {
+        const unit = num % 10;
+        const ten = Math.floor(num / 10);
+        return unit === 0 ? tens[ten] : `${tens[ten]} y ${units[unit]}`;
+      }
+      if (num < 1000) {
+        const hundred = Math.floor(num / 100);
+        const remainder = num % 100;
+        return remainder === 0
+          ? `${units[hundred]}cientos`
+          : `${units[hundred]}cientos ${numberToWords(remainder)}`;
+      }
+      if (num < 1000000) {
+        const thousand = Math.floor(num / 1000);
+        const remainder = num % 1000;
+        return remainder === 0
+          ? `${numberToWords(thousand)} mil`
+          : `${numberToWords(thousand)} mil ${numberToWords(remainder)}`;
+      }
+
+      return num.toString();
+    };
+
+    // Helper function to format date
+    const formatDate = (dateString: string): string => {
+      if (!dateString) return "___/___/____";
+      try {
+        return format(new Date(dateString), "dd 'de' MMMM 'de' yyyy", {
+          locale: es,
+        });
+      } catch {
+        return "___/___/____";
+      }
+    };
+
+    // Helper function to safely get banking details
+    const getBankingDetails = (bankingDetails: any) => {
+      if (!bankingDetails) return {};
+      if (typeof bankingDetails === "string") {
+        try {
+          return JSON.parse(bankingDetails);
+        } catch {
+          return {};
+        }
+      }
+      if (typeof bankingDetails === "object") {
+        return bankingDetails;
+      }
+      return {};
+    };
+
+    const providerBankingDetails = getBankingDetails(
+      request?.provider?.bankingDetails
+    );
 
     const replacements = {
       "{importer.company}": formData.companyName || "_________________",
@@ -514,40 +622,34 @@ export default function ContractPreviewForm({
       "{importer.representative.name}":
         formData.contactName || "_________________",
       "{importer.ci}": formData.contactCI || "_________________",
-      "{beneficiary.name}": formData.beneficiaryName || "_________________",
-      "{provider.name}": formData.providerName || "_________________",
-      "{provider.bankName}": formData.providerBankName || "_________________",
+      "{beneficiary.name}": request?.provider?.name || "_________________",
+      "{provider.name}": request?.provider?.name || "_________________",
+      "{provider.bankName}":
+        providerBankingDetails.bankName || "_________________",
       "{provider.accountNumber}":
-        formData.providerAccountNumber || "_________________",
-      "{provider.swiftCode}": formData.providerSwiftCode || "_________________",
+        providerBankingDetails.accountNumber || "_________________",
+      "{provider.swiftCode}":
+        providerBankingDetails.swiftCode || "_________________",
       "{provider.beneficiaryName}":
-        formData.providerBeneficiaryName || "_________________",
+        providerBankingDetails.beneficiaryName || "_________________",
       "{provider.bankAddress}":
-        formData.providerBankAddress || "_________________",
+        providerBankingDetails.bankAddress || "_________________",
       "{provider.accountType}":
         formData.providerAccountType || "_________________",
-      "{reference.name}": quotation.code || "_________________",
+      "{reference.name}": quotation?.code || "_________________",
       "{quotation.date}": format(
-        new Date(quotation.createdAt || Date.now()),
+        new Date(quotation?.createdAt || new Date()),
         "dd/MM/yyyy",
         { locale: es }
       ),
-      "{service.amountWords}": numberToWords(quotation.totalInBs || 0),
-      "{service.amount}": (quotation.totalInBs || 0).toLocaleString(),
+      "{service.amountWords}": numberToWords(quotation?.amount || 0),
+      "{service.amount}": (quotation?.amount || 0).toLocaleString(),
       "{service.feeWords}": numberToWords(
-        Math.round((quotation.totalInBs || 0) * 0.05)
+        Math.round((quotation?.amount || 0) * 0.05)
       ), // 5% fee
       "{service.fee}": Math.round(
-        (quotation.totalInBs || 0) * 0.05
+        (quotation?.amount || 0) * 0.05
       ).toLocaleString(),
-      "{provider.bankName}": formData.providerBankName || "_________________",
-      "{provider.beneficiaryName}":
-        formData.providerBeneficiaryName || "_________________",
-      "{provider.accountNumber}":
-        formData.providerAccountNumber || "_________________",
-      "{provider.swiftCode}": formData.providerSwiftCode || "_________________",
-      "{provider.bankAddress}":
-        formData.providerBankAddress || "_________________",
       "{contract.startDate}": formatDate(formData.contractStartDate),
       "{contract.endDate}": formatDate(formData.contractEndDate),
       "{contract.date}": formatDate(new Date().toISOString()),
@@ -555,14 +657,6 @@ export default function ContractPreviewForm({
 
     let contractText = CONTRACT_TEMPLATE;
     Object.entries(replacements).forEach(([placeholder, value]) => {
-      if (placeholder === "{provider.accountType}") {
-        console.log(
-          "Replacing provider account type:",
-          placeholder,
-          "with value:",
-          value
-        );
-      }
       contractText = contractText.replace(
         new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"),
         value
@@ -577,32 +671,59 @@ export default function ContractPreviewForm({
     setIsLoading(true);
 
     try {
-      // TODO: Implement API call to create contract
-      // const response = await fetch(`/api/contracts`, {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: JSON.stringify({
-      //     solicitudId,
-      //     quotationId: quotation.id,
-      //     ...formData,
-      //   }),
-      // });
+      // Update the existing contract with the form data
+      const response = await fetch(
+        `/api/contracts/${contractStatus?.contractId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            // Include all the form data for the contract
+            companyData: {
+              name: formData.companyName,
+              address: formData.companyAddress,
+              phone: formData.companyPhone,
+              email: formData.companyEmail,
+              nit: formData.companyRif,
+              city: formData.companyCity,
+            },
+            contactData: {
+              name: formData.contactName,
+              phone: formData.contactPhone,
+              email: formData.contactEmail,
+              position: formData.contactPosition,
+              ci: formData.contactCI,
+            },
+            providerData: {
+              accountType: formData.providerAccountType,
+            },
+          }),
+        }
+      );
 
-      // Simulate API call for now
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      if (!response.ok) {
+        throw new Error("Error al actualizar el contrato");
+      }
 
       toast({
-        title: "Contrato creado exitosamente",
-        description: "El contrato ha sido generado y está listo para revisión.",
+        title: "Contrato enviado al administrador",
+        description:
+          "El contrato ha sido enviado al administrador para revisión y completación.",
+      });
+
+      // Refetch contract status to update the UI
+      await queryClient.invalidateQueries({
+        queryKey: ["contract-status", quotation.id],
       });
 
       setIsOpen(false);
       onContractCreated?.();
     } catch (error) {
+      console.error("Error updating contract:", error);
       toast({
-        title: "Error al crear contrato",
+        title: "Error al completar contrato",
         description: "Hubo un problema al procesar la solicitud.",
         variant: "destructive",
       });
@@ -622,13 +743,20 @@ export default function ContractPreviewForm({
       "contactPhone",
       "contactEmail",
       "contactCI",
-      "contractStartDate",
-      "contractEndDate",
       "providerAccountType",
     ];
 
-    return requiredFields.every((field) =>
+    // Check if all required fields are filled (excluding contract dates since they're set by admin)
+    const allFieldsFilled = requiredFields.every((field) =>
       formData[field as keyof ContractFormData]?.trim()
+    );
+
+    // Contract must exist and dates must be set by admin
+    return (
+      contractExists &&
+      formData.contractStartDate &&
+      formData.contractEndDate &&
+      allFieldsFilled
     );
   };
 
@@ -644,108 +772,61 @@ export default function ContractPreviewForm({
     setContractPreview(preview);
   }, [formData]);
 
-  // Download functions
-  const handleDownloadTXT = () => {
-    const filename = `Contrato_${solicitudId}_${format(new Date(), "yyyy-MM-dd")}.txt`;
-    // Use the same template generation as the preview
-    const contractContent = generateContractPreview();
-    downloadTextAsFile(contractContent, filename, "text/plain;charset=utf-8");
-  };
-
+  // Download DOCX function
   const handleDownloadDOCX = async () => {
     try {
-      // For now, we'll download as a .doc file (RTF format) which is more compatible
-      const filename = `Contrato_${solicitudId}_${format(new Date(), "yyyy-MM-dd")}.doc`;
+      if (!contractStatus?.exists || !contractStatus?.contractId) {
+        toast({
+          title: "Error al descargar",
+          description: "El contrato debe estar creado antes de descargar.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      // Use the same template generation as the preview
-      const contractContent = generateContractPreview();
+      if (contractStatus?.status !== "COMPLETED") {
+        toast({
+          title: "Error al descargar",
+          description:
+            "El administrador debe completar el contrato antes de descargar.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      // Create a simple RTF document that Word can open
-      const rtfContent = `{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Times New Roman;}}
-\\f0\\fs24
-${contractContent
-  .split("\n")
-  .map((line) => line.replace(/[\\{}]/g, "\\\\$&"))
-  .join("\\par ")}
-}`;
-
-      downloadTextAsFile(rtfContent, filename, "application/msword");
-    } catch (error) {
-      console.error("Error generating DOC:", error);
-      toast({
-        title: "Error al generar DOC",
-        description: "Hubo un problema al generar el documento DOC.",
-        variant: "destructive",
+      const response = await fetch("/api/contracts/generate-docx", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contractId: contractStatus.contractId,
+        }),
       });
-    }
-  };
 
-  const handleDownloadPDF = async () => {
-    try {
-      // For now, we'll download as a text file
-      // In a real implementation, you'd use a library like jsPDF or make an API call
-      const filename = `Contrato_${solicitudId}_${format(new Date(), "yyyy-MM-dd")}.pdf`;
+      if (!response.ok) {
+        throw new Error("Error al generar el documento");
+      }
 
-      // Use the same template generation as the preview
-      const contractContent = generateContractPreview();
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Contrato_${solicitudId}_${format(new Date(), "yyyy-MM-dd")}.docx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
 
-      // Create a simple PDF-like structure (this is a basic implementation)
-      const pdfContent = `%PDF-1.4
-1 0 obj
-<<
-/Type /Catalog
-/Pages 2 0 R
->>
-endobj
-
-2 0 obj
-<<
-/Type /Pages
-/Kids [3 0 R]
-/Count 1
->>
-endobj
-
-3 0 obj
-<<
-/Type /Page
-/Parent 2 0 R
-/MediaBox [0 0 612 792]
-/Contents 4 0 R
->>
-endobj
-
-4 0 obj
-<<
-/Length ${contractContent.length}
->>
-stream
-${contractContent}
-endstream
-endobj
-
-xref
-0 5
-0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000115 00000 n 
-0000000204 00000 n 
-trailer
-<<
-/Size 5
-/Root 1 0 R
->>
-startxref
-${contractContent.length + 300}
-%%EOF`;
-
-      downloadTextAsFile(pdfContent, filename, "application/pdf");
-    } catch (error) {
-      console.error("Error generating PDF:", error);
       toast({
-        title: "Error al generar PDF",
-        description: "Hubo un problema al generar el documento PDF.",
+        title: "Documento descargado",
+        description: "El contrato ha sido descargado exitosamente.",
+      });
+    } catch (error) {
+      console.error("Error downloading DOCX:", error);
+      toast({
+        title: "Error al descargar",
+        description: "Hubo un problema al generar el documento DOCX.",
         variant: "destructive",
       });
     }
@@ -784,28 +865,47 @@ ${contractContent.length + 300}
                   <Eye className="h-4 w-4 mr-1" />
                   Vista Completa
                 </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <Download className="h-4 w-4 mr-1" />
-                      Descargar
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={handleDownloadTXT}>
-                      <FileText className="h-4 w-4 mr-2" />
-                      Descargar como TXT
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleDownloadDOCX}>
-                      <FileText className="h-4 w-4 mr-2" />
-                      Descargar como DOC
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleDownloadPDF}>
-                      <FileText className="h-4 w-4 mr-2" />
-                      Descargar como PDF
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                {contractStatus?.exists && (
+                  <Badge
+                    variant={
+                      contractStatus?.status === "COMPLETED"
+                        ? "default"
+                        : contractStatus?.status === "ACTIVE"
+                          ? "secondary"
+                          : "outline"
+                    }
+                    className="text-xs"
+                  >
+                    {contractStatus?.status === "COMPLETED"
+                      ? "Completado por Admin"
+                      : contractStatus?.status === "ACTIVE"
+                        ? "Enviado al Admin"
+                        : contractStatus?.status || "Borrador"}
+                  </Badge>
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownloadDOCX}
+                  disabled={
+                    !contractStatus?.exists ||
+                    !contractStatus?.contractId ||
+                    contractStatus?.status !== "COMPLETED"
+                  }
+                  title={
+                    !contractStatus?.exists
+                      ? "El contrato debe ser creado por el administrador"
+                      : !contractStatus?.contractId
+                        ? "Error al obtener información del contrato"
+                        : contractStatus?.status !== "COMPLETED"
+                          ? "El administrador debe completar el contrato antes de descargar"
+                          : "Descargar contrato en formato DOCX"
+                  }
+                >
+                  <Download className="h-4 w-4 mr-1" />
+                  Descargar DOCX
+                </Button>
               </div>
             </div>
             <div className="p-6 overflow-y-auto h-full">
@@ -1103,7 +1203,12 @@ ${contractContent.length + 300}
                     }
                     className="text-sm"
                     required
+                    disabled
                   />
+                  <p className="text-xs text-amber-600 mt-1">
+                    ⚠️ Las fechas del contrato deben ser establecidas por el
+                    administrador
+                  </p>
                 </div>
 
                 <div>
@@ -1123,8 +1228,52 @@ ${contractContent.length + 300}
                     }
                     className="text-sm"
                     required
+                    disabled
                   />
+                  <p className="text-xs text-amber-600 mt-1">
+                    ⚠️ Las fechas del contrato deben ser establecidas por el
+                    administrador
+                  </p>
                 </div>
+
+                {/* Admin Notice */}
+                {contractExists &&
+                formData.contractStartDate &&
+                formData.contractEndDate ? (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <div className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs font-medium text-green-900 mb-1">
+                          Contrato Listo para Enviar al Admin
+                        </p>
+                        <p className="text-xs text-green-800">
+                          El contrato ha sido creado y las fechas han sido
+                          establecidas. Complete el formulario para enviar al
+                          administrador.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs font-medium text-amber-900 mb-1">
+                          {contractExists
+                            ? "Fechas del Contrato Pendientes"
+                            : "Contrato Pendiente de Creación"}
+                        </p>
+                        <p className="text-xs text-amber-800">
+                          {contractExists
+                            ? "El contrato ha sido creado pero el administrador aún debe establecer las fechas de inicio y finalización."
+                            : "El administrador debe crear el contrato y establecer las fechas de inicio y finalización antes de que pueda completar este formulario."}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Provider Information (Read-only) */}
@@ -1389,10 +1538,21 @@ ${contractContent.length + 300}
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       Generando...
                     </>
+                  ) : !contractExists ? (
+                    <>
+                      <AlertTriangle className="h-4 w-4 mr-2" />
+                      Esperando Creación del Contrato
+                    </>
+                  ) : !formData.contractStartDate ||
+                    !formData.contractEndDate ? (
+                    <>
+                      <Clock className="h-4 w-4 mr-2" />
+                      Esperando Fechas del Contrato
+                    </>
                   ) : (
                     <>
                       <FileText className="h-4 w-4 mr-2" />
-                      Generar Contrato
+                      Enviar al Admin
                     </>
                   )}
                 </Button>

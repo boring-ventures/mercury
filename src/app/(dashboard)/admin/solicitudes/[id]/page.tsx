@@ -693,20 +693,6 @@ function QuotationGenerator({
     calculateTotalInBs();
   }, [calculateTotalInBs]);
 
-  // Fetch Binance price when amount changes (but not when it's being set from prop)
-  useEffect(() => {
-    const amount = parseFloat(quotationData.amount);
-    if (amount > 0 && amount !== requestAmount) {
-      const timeoutId = setTimeout(() => {
-        fetchBinancePrice(amount);
-      }, 1000); // 1 second debounce
-
-      return () => clearTimeout(timeoutId);
-    } else if (amount === 0) {
-      setBinancePrice(null);
-    }
-  }, [quotationData.amount, requestAmount]);
-
   // Function to fetch exchange rate from Binance P2P API
   const fetchExchangeRate = async () => {
     setIsLoadingExchangeRate(true);
@@ -740,61 +726,84 @@ function QuotationGenerator({
   };
 
   // Function to fetch Binance price for specific amount
-  const fetchBinancePrice = async (amount: number) => {
-    if (!amount || amount <= 0) {
-      setBinancePrice(null);
-      return;
-    }
+  const fetchBinancePrice = useCallback(
+    async (amount: number) => {
+      if (!amount || amount <= 0) {
+        setBinancePrice(null);
+        return;
+      }
 
-    setIsLoadingExchangeRate(true);
-    try {
-      const response = await fetch(
-        `/api/binance/exchange-rate?amount=${amount}`
-      );
-      const data = await response.json();
+      setIsLoadingExchangeRate(true);
+      try {
+        const response = await fetch(
+          `/api/binance/exchange-rate?amount=${amount}`
+        );
+        const data = await response.json();
 
-      if (data.success && data.data) {
-        setBinancePrice({
-          price: data.data.usdt_bob,
-          available: data.data.available_amount,
-          coverage: data.data.coverage_percentage,
-          offers: data.data.offers_count,
-          offers_used: data.data.offers_used || [],
-        });
+        if (data.success && data.data) {
+          setBinancePrice({
+            price: data.data.usdt_bob,
+            available: data.data.available_amount,
+            coverage: data.data.coverage_percentage,
+            offers: data.data.offers_count,
+            offers_used: data.data.offers_used || [],
+          });
 
-        // Update exchange rate with the fetched price
-        setQuotationData((prev: any) => ({
-          ...prev,
-          exchangeRate: data.data.usdt_bob.toString(),
-        }));
+          // Update exchange rate with the fetched price
+          setQuotationData((prev: any) => ({
+            ...prev,
+            exchangeRate: data.data.usdt_bob.toString(),
+          }));
 
-        // Ensure collapsible stays closed when data is fetched
-        setIsBinanceCollapsed(false);
+          // Ensure collapsible stays closed when data is fetched
+          setIsBinanceCollapsed(false);
 
-        toast({
-          title: "Precio actualizado",
-          description: `Precio promedio: ${data.data.usdt_bob.toFixed(2)} BOB/USDT (${data.data.offers_count} ofertas)`,
-        });
-      } else {
+          toast({
+            title: "Precio actualizado",
+            description: `Precio promedio: ${data.data.usdt_bob.toFixed(2)} BOB/USDT (${data.data.offers_count} ofertas)`,
+          });
+        } else {
+          setBinancePrice(null);
+          toast({
+            title: "Error",
+            description: data.error || "No se pudo obtener el precio",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching Binance price:", error);
         setBinancePrice(null);
         toast({
           title: "Error",
-          description: data.error || "No se pudo obtener el precio",
+          description: "No se pudo obtener el precio desde Binance P2P",
           variant: "destructive",
         });
+      } finally {
+        setIsLoadingExchangeRate(false);
       }
-    } catch (error) {
-      console.error("Error fetching Binance price:", error);
+    },
+    [
+      setBinancePrice,
+      setIsLoadingExchangeRate,
+      setQuotationData,
+      setIsBinanceCollapsed,
+      toast,
+    ]
+  );
+
+  // Fetch Binance price when amount changes (but not when it's being set from prop)
+  useEffect(() => {
+    const amount = parseFloat(quotationData.amount);
+    if (amount > 0 && amount !== requestAmount) {
+      const timeoutId = setTimeout(() => {
+        fetchBinancePrice(amount);
+      }, 1000); // 1 second debounce
+
+      return () => clearTimeout(timeoutId);
+    } else if (amount === 0) {
       setBinancePrice(null);
-      toast({
-        title: "Error",
-        description: "No se pudo obtener el precio desde Binance P2P",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoadingExchangeRate(false);
     }
-  };
+  }, [quotationData.amount, requestAmount, fetchBinancePrice]);
 
   const handleGenerate = async () => {
     const amount = parseFloat(quotationData.amount);

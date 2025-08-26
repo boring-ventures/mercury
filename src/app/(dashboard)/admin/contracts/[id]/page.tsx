@@ -32,6 +32,9 @@ import { es } from "date-fns/locale";
 import { useParams } from "next/navigation";
 import { Loader } from "@/components/ui/loader";
 import { useAdminContract } from "@/hooks/use-admin-contracts";
+import { useToast } from "@/components/ui/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
+import ContractPreview from "@/components/admin/contracts/contract-preview";
 
 function StatusBadge({ status }: { status: string }) {
   const getStatusConfig = (status: string) => {
@@ -123,6 +126,8 @@ export default function AdminContractDetail() {
   const contract = data?.contract;
 
   const [isActivating, setIsActivating] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
+
   const handleActivate = async () => {
     try {
       setIsActivating(true);
@@ -137,6 +142,26 @@ export default function AdminContractDetail() {
       console.error(err);
     } finally {
       setIsActivating(false);
+    }
+  };
+
+  const handleComplete = async () => {
+    try {
+      setIsCompleting(true);
+      const res = await fetch(`/api/contracts/${contractId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "COMPLETED",
+          adminCompleted: true,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to complete contract");
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsCompleting(false);
     }
   };
 
@@ -318,6 +343,15 @@ export default function AdminContractDetail() {
               )}
             </CardContent>
           </Card>
+
+          {/* Contract Preview */}
+          {(() => {
+            console.log(
+              "Admin Contract Detail - Contract data being passed to preview:",
+              contract
+            );
+            return <ContractPreview contract={contract} />;
+          })()}
         </div>
 
         {/* Sidebar */}
@@ -502,6 +536,16 @@ export default function AdminContractDetail() {
                 <Trash2 className="h-4 w-4 mr-2" />
                 Eliminar
               </Button>
+              {contract.status === "ACTIVE" && (
+                <Button
+                  className="w-full"
+                  onClick={handleComplete}
+                  disabled={isCompleting}
+                >
+                  <CheckSquare className="h-4 w-4 mr-2" />
+                  {isCompleting ? "Completando..." : "Completar Contrato"}
+                </Button>
+              )}
               <Button
                 className="w-full"
                 onClick={handleActivate}
