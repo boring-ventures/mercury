@@ -170,6 +170,11 @@ export async function POST(request: NextRequest) {
     const banking = additionalData.banking || {};
     const additional = additionalData.additional || {};
 
+    // Extract comprehensive form data we're now storing
+    const companyData = additionalData.companyData || {};
+    const contactData = additionalData.contactData || {};
+    const providerData = additionalData.providerData || {};
+
     const providerBankingDetails = getBankingDetails(
       contract.request?.provider?.bankingDetails
     );
@@ -177,29 +182,62 @@ export async function POST(request: NextRequest) {
     // Prepare template data
     const templateData = {
       importer: {
-        company: contract.request?.company?.name || "_________________",
-        nit: "_________________", // NIT not available in company object
-        address: "_________________", // Address not available in company object
-        city: contract.request?.company?.country || "_________________",
+        company:
+          companyData.name ||
+          contract.request?.company?.name ||
+          "_________________",
+        nit: companyData.nit || "_________________",
+        address: companyData.address || "_________________",
+        city:
+          companyData.city ||
+          contract.request?.company?.country ||
+          "_________________",
+        phone: companyData.phone || "_________________",
+        email: companyData.email || "_________________",
         representative: {
-          role: representative.role || "_________________",
-          name: representative.name || "_________________",
+          role:
+            contactData.position || representative.role || "_________________",
+          name: contactData.name || representative.name || "_________________",
+          phone: contactData.phone || "_________________",
+          email: contactData.email || "_________________",
         },
-        ci: representative.ci || "_________________",
+        ci: contactData.ci || representative.ci || "_________________",
       },
       beneficiary: {
         name: contract.request?.provider?.name || "_________________",
       },
       provider: {
-        name: contract.request?.provider?.name || "_________________",
-        bankName: providerBankingDetails.bankName || "_________________",
+        name:
+          providerData.name ||
+          contract.request?.provider?.name ||
+          "_________________",
+        bankName:
+          providerData.bankName ||
+          providerBankingDetails.bankName ||
+          "_________________",
         accountNumber:
-          providerBankingDetails.accountNumber || "_________________",
-        swiftCode: providerBankingDetails.swiftCode || "_________________",
+          providerData.accountNumber ||
+          providerBankingDetails.accountNumber ||
+          "_________________",
+        swiftCode:
+          providerData.swiftCode ||
+          providerBankingDetails.swiftCode ||
+          "_________________",
         beneficiaryName:
-          providerBankingDetails.beneficiaryName || "_________________",
-        bankAddress: providerBankingDetails.bankAddress || "_________________",
-        accountType: banking.accountType || "_________________",
+          providerData.beneficiaryName ||
+          providerBankingDetails.beneficiaryName ||
+          "_________________",
+        bankAddress:
+          providerData.bankAddress ||
+          providerBankingDetails.bankAddress ||
+          "_________________",
+        accountType:
+          providerData.accountType ||
+          banking.accountType ||
+          "_________________",
+        email: providerData.email || "_________________",
+        phone: providerData.phone || "_________________",
+        country: providerData.country || "_________________",
       },
       reference: {
         name: contract.quotation?.code || "_________________",

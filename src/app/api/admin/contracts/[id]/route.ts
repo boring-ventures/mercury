@@ -179,10 +179,21 @@ export async function PATCH(
       );
     }
 
-    // Update contract with additional data
-    const updatedContract = await prisma.contract.update({
-      where: { id },
-      data: {
+    // Determine update type based on request body
+    const isDateUpdate = body.startDate && body.endDate;
+    const isFormDataUpdate = body.companyData || body.contactData || body.providerData;
+
+    let updateData: any = {};
+
+    if (isDateUpdate) {
+      // Admin date update - only update dates
+      updateData = {
+        startDate: new Date(body.startDate),
+        endDate: new Date(body.endDate),
+      };
+    } else if (isFormDataUpdate) {
+      // Importador form submission - update additional data and mark as active
+      updateData = {
         additionalData: {
           companyData: body.companyData || {},
           contactData: body.contactData || {},
@@ -190,7 +201,17 @@ export async function PATCH(
         },
         status: "ACTIVE", // Mark as active when completed
         signedAt: new Date(), // Mark as signed
-      },
+      };
+    } else {
+      return NextResponse.json(
+        { error: "Invalid update data" },
+        { status: 400 }
+      );
+    }
+
+    const updatedContract = await prisma.contract.update({
+      where: { id },
+      data: updateData,
     });
 
     return NextResponse.json({

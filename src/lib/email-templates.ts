@@ -1063,6 +1063,252 @@ interface QuotationNotificationData {
   link: string;
 }
 
+export const generateContractCompletedEmail = (data: {
+  importerName: string;
+  contractCode: string;
+  quotationCode: string;
+  requestCode: string;
+  companyName: string;
+  amount: number;
+  currency: string;
+  startDate: string;
+  endDate: string;
+  completedBy: string;
+  completedAt: string;
+  link: string;
+}): string => {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("es-BO", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
+
+  const formatCurrency = (amount: number, currency: string) => {
+    return new Intl.NumberFormat("es-BO", {
+      style: "currency",
+      currency: currency === "USD" ? "USD" : "BOB",
+    }).format(amount);
+  };
+
+  return `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Contrato Completado - NORDEX Platform</title>
+      <style>
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+          background-color: #f8f9fa;
+        }
+        .container {
+          background-color: #ffffff;
+          border-radius: 10px;
+          padding: 30px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+          text-align: center;
+          border-bottom: 3px solid #2563eb;
+          padding-bottom: 20px;
+          margin-bottom: 30px;
+        }
+        .logo {
+          font-size: 28px;
+          font-weight: bold;
+          color: #2563eb;
+          margin-bottom: 10px;
+        }
+        .subtitle {
+          color: #6b7280;
+          font-size: 16px;
+        }
+        .success-icon {
+          font-size: 48px;
+          color: #10b981;
+          margin: 20px 0;
+        }
+        .main-title {
+          color: #1f2937;
+          font-size: 24px;
+          font-weight: 600;
+          margin: 20px 0;
+          text-align: center;
+        }
+        .contract-details {
+          background-color: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          padding: 20px;
+          margin: 20px 0;
+        }
+        .detail-row {
+          display: flex;
+          justify-content: space-between;
+          margin: 10px 0;
+          padding: 8px 0;
+          border-bottom: 1px solid #e2e8f0;
+        }
+        .detail-row:last-child {
+          border-bottom: none;
+        }
+        .detail-label {
+          font-weight: 600;
+          color: #374151;
+        }
+        .detail-value {
+          color: #1f2937;
+          text-align: right;
+        }
+        .cta-button {
+          display: inline-block;
+          background-color: #2563eb;
+          color: #ffffff;
+          padding: 12px 24px;
+          text-decoration: none;
+          border-radius: 6px;
+          font-weight: 600;
+          margin: 20px 0;
+          text-align: center;
+        }
+        .cta-button:hover {
+          background-color: #1d4ed8;
+        }
+        .footer {
+          margin-top: 30px;
+          padding-top: 20px;
+          border-top: 1px solid #e2e8f0;
+          text-align: center;
+          color: #6b7280;
+          font-size: 14px;
+        }
+        .highlight {
+          background-color: #dbeafe;
+          padding: 15px;
+          border-radius: 6px;
+          border-left: 4px solid #2563eb;
+          margin: 20px 0;
+        }
+        .date-info {
+          background-color: #f0fdf4;
+          border: 1px solid #bbf7d0;
+          border-radius: 6px;
+          padding: 15px;
+          margin: 20px 0;
+        }
+        .date-label {
+          font-weight: 600;
+          color: #166534;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <div class="logo">NORDEX Platform</div>
+          <div class="subtitle">Plataforma de Importación y Comercio Exterior</div>
+        </div>
+
+        <div style="text-align: center;">
+          <div class="success-icon">✅</div>
+        </div>
+
+        <h1 class="main-title">¡Contrato Completado Exitosamente!</h1>
+
+        <p>Estimado/a <strong>${data.importerName}</strong>,</p>
+
+        <p>Nos complace informarle que su contrato ha sido completado por nuestro equipo administrativo. El contrato ahora está listo para proceder con la siguiente fase del proceso de importación.</p>
+
+        <div class="highlight">
+          <strong>📋 Resumen del Contrato:</strong>
+          <p>Su contrato ha sido marcado como <strong>COMPLETED</strong> y está listo para continuar con el flujo de trabajo.</p>
+        </div>
+
+        <div class="contract-details">
+          <h3 style="margin-top: 0; color: #1f2937;">Detalles del Contrato</h3>
+          
+          <div class="detail-row">
+            <span class="detail-label">Código del Contrato:</span>
+            <span class="detail-value"><strong>${data.contractCode}</strong></span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">Código de Cotización:</span>
+            <span class="detail-value">${data.quotationCode}</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">Código de Solicitud:</span>
+            <span class="detail-value">${data.requestCode}</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">Empresa:</span>
+            <span class="detail-value">${data.companyName}</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">Monto:</span>
+            <span class="detail-value"><strong>${formatCurrency(data.amount, data.currency)}</strong></span>
+          </div>
+        </div>
+
+        <div class="date-info">
+          <h4 style="margin-top: 0; color: #166534;">📅 Fechas del Contrato</h4>
+          
+          <div class="detail-row">
+            <span class="date-label">Fecha de Inicio:</span>
+            <span class="detail-value"><strong>${formatDate(data.startDate)}</strong></span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="date-label">Fecha de Fin:</span>
+            <span class="detail-value"><strong>${formatDate(data.endDate)}</strong></span>
+          </div>
+        </div>
+
+        <div class="highlight">
+          <strong>👤 Completado por:</strong> ${data.completedBy}<br>
+          <strong>📅 Fecha de Completado:</strong> ${formatDate(data.completedAt)}
+        </div>
+
+        <p><strong>Próximos pasos:</strong></p>
+        <ul>
+          <li>Su contrato está ahora en estado <strong>COMPLETED</strong></li>
+          <li>Puede proceder con la siguiente fase del proceso de importación</li>
+          <li>El sistema ha sido actualizado con las fechas del contrato</li>
+          <li>Recibirá notificaciones sobre el progreso del proceso</li>
+        </ul>
+
+        <div style="text-align: center;">
+          <a href="${data.link}" class="cta-button">
+            Ver Contrato en la Plataforma
+          </a>
+        </div>
+
+        <p><strong>¿Tiene alguna pregunta?</strong></p>
+        <p>Si tiene alguna consulta sobre su contrato o el proceso de importación, no dude en contactarnos. Estamos aquí para ayudarle en cada paso del proceso.</p>
+
+        <div class="footer">
+          <p><strong>NORDEX Platform</strong></p>
+          <p>Plataforma de Importación y Comercio Exterior</p>
+          <p>Este es un email automático, por favor no responda a este mensaje.</p>
+          <p>Si necesita asistencia, contacte a nuestro equipo de soporte.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+};
+
 export const generateQuotationNotificationEmail = (
   data: QuotationNotificationData
 ): string => {

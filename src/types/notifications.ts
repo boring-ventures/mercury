@@ -59,6 +59,7 @@ export interface SystemNotificationTemplates {
   CONTRACT_SIGNED: NotificationTemplate;
   CONTRACT_GENERATED: NotificationTemplate;
   CONTRACT_ACCEPTED: NotificationTemplate;
+  CONTRACT_COMPLETED: NotificationTemplate;
   PAYMENT_RECEIVED: NotificationTemplate;
   DOCUMENT_APPROVED: NotificationTemplate;
   DOCUMENT_REJECTED: NotificationTemplate;

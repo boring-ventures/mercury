@@ -35,6 +35,8 @@ import { useAdminContract } from "@/hooks/use-admin-contracts";
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import ContractPreview from "@/components/admin/contracts/contract-preview";
+import { ContractDateEdit } from "@/components/admin/contracts/contract-date-edit";
+import { ContractCompletionForm } from "@/components/admin/contracts/contract-completion-form";
 
 function StatusBadge({ status }: { status: string }) {
   const getStatusConfig = (status: string) => {
@@ -126,7 +128,7 @@ export default function AdminContractDetail() {
   const contract = data?.contract;
 
   const [isActivating, setIsActivating] = useState(false);
-  const [isCompleting, setIsCompleting] = useState(false);
+  const [showDateEdit, setShowDateEdit] = useState(false);
 
   const handleActivate = async () => {
     try {
@@ -142,26 +144,6 @@ export default function AdminContractDetail() {
       console.error(err);
     } finally {
       setIsActivating(false);
-    }
-  };
-
-  const handleComplete = async () => {
-    try {
-      setIsCompleting(true);
-      const res = await fetch(`/api/contracts/${contractId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          status: "COMPLETED",
-          adminCompleted: true,
-        }),
-      });
-      if (!res.ok) throw new Error("Failed to complete contract");
-      window.location.reload();
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsCompleting(false);
     }
   };
 
@@ -528,24 +510,19 @@ export default function AdminContractDetail() {
                 <Download className="h-4 w-4 mr-2" />
                 Descargar DOCX
               </Button>
-              <Button className="w-full" variant="outline">
+              <Button
+                className="w-full"
+                variant="outline"
+                onClick={() => setShowDateEdit(true)}
+              >
                 <Edit className="h-4 w-4 mr-2" />
-                Editar
+                Editar Fechas
               </Button>
               <Button className="w-full" variant="outline" disabled>
                 <Trash2 className="h-4 w-4 mr-2" />
                 Eliminar
               </Button>
-              {contract.status === "ACTIVE" && (
-                <Button
-                  className="w-full"
-                  onClick={handleComplete}
-                  disabled={isCompleting}
-                >
-                  <CheckSquare className="h-4 w-4 mr-2" />
-                  {isCompleting ? "Completando..." : "Completar Contrato"}
-                </Button>
-              )}
+
               <Button
                 className="w-full"
                 onClick={handleActivate}
@@ -557,7 +534,41 @@ export default function AdminContractDetail() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Contract Completion Form - Only show for ACTIVE contracts */}
+        {contract && contract.status === "ACTIVE" && (
+          <div className="mt-6">
+            <ContractCompletionForm
+              contractId={contract.id}
+              contractCode={contract.code}
+              currentStartDate={contract.startDate}
+              currentEndDate={contract.endDate}
+              onCompleted={() => {
+                // Refresh the page to show updated status
+                window.location.reload();
+              }}
+            />
+          </div>
+        )}
       </div>
+
+      {/* Contract Date Edit Modal */}
+      {contract && showDateEdit && (
+        <ContractDateEdit
+          contract={{
+            id: contract.id,
+            code: contract.code,
+            startDate: contract.startDate,
+            endDate: contract.endDate,
+          }}
+          isOpen={showDateEdit}
+          onClose={() => setShowDateEdit(false)}
+          onSave={() => {
+            // Refresh the contract data
+            window.location.reload();
+          }}
+        />
+      )}
     </div>
   );
 }

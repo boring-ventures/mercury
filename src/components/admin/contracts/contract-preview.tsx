@@ -228,6 +228,10 @@ interface ContractPreviewProps {
         country: string;
         email: string;
         phone: string;
+        nit?: string;
+        city?: string;
+        address?: string;
+        contactName?: string;
       };
       provider?: {
         name: string;
@@ -265,6 +269,7 @@ export default function ContractPreview({ contract }: ContractPreviewProps) {
     const power = additionalData.power || {};
     const banking = additionalData.banking || {};
     const additional = additionalData.additional || {};
+    const companyData = additionalData.companyData || {};
 
     console.log("Admin Contract Preview - Parsed data:", {
       representative,
@@ -272,6 +277,7 @@ export default function ContractPreview({ contract }: ContractPreviewProps) {
       power,
       banking,
       additional,
+      companyData,
       requestProvider: contract.request?.provider,
     });
 
@@ -298,26 +304,58 @@ export default function ContractPreview({ contract }: ContractPreviewProps) {
     const replacements = {
       "{importer.company}":
         contract.request?.company?.name || "_________________",
-      "{importer.nit}": "_________________", // NIT not available in company object
-      "{importer.address}": "_________________", // Address not available in company object
+      "{importer.nit}":
+        companyData.nit || additional.nit || contract.request?.company?.nit || "_________________",
+      "{importer.address}":
+        companyData.address || additional.address ||
+        contract.request?.company?.address ||
+        "_________________",
       "{importer.city}":
-        contract.request?.company?.country || "_________________",
+        companyData.city || additional.city ||
+        contract.request?.company?.city ||
+        contract.request?.company?.country ||
+        "_________________",
       "{importer.representative.role}":
-        representative.role || "_________________",
+        representative.role ||
+        additional.representative?.role ||
+        "_________________",
       "{importer.representative.name}":
-        representative.name || "_________________",
-      "{importer.ci}": representative.ci || "_________________",
+        representative.name ||
+        additional.representative?.name ||
+        contract.request?.company?.contactName ||
+        "_________________",
+      "{importer.ci}":
+        representative.ci ||
+        additional.representative?.ci ||
+        "_________________",
       "{beneficiary.name}":
         contract.request?.provider?.name || "_________________",
       "{provider.name}":
         contract.request?.provider?.name || "_________________",
-      "{provider.bankName}": banking.bankName || "_________________",
-      "{provider.accountNumber}": banking.accountNumber || "_________________",
-      "{provider.swiftCode}": banking.swiftCode || "_________________",
+      "{provider.bankName}":
+        banking.bankName ||
+        providerBankingDetails.bankName ||
+        "_________________",
+      "{provider.accountNumber}":
+        banking.accountNumber ||
+        providerBankingDetails.accountNumber ||
+        "_________________",
+      "{provider.swiftCode}":
+        banking.swiftCode ||
+        providerBankingDetails.swiftCode ||
+        "_________________",
       "{provider.beneficiaryName}":
-        banking.accountHolder || "_________________",
-      "{provider.bankAddress}": banking.bankAddress || "_________________",
-      "{provider.accountType}": banking.accountType || "_________________",
+        banking.accountHolder ||
+        providerBankingDetails.accountHolder ||
+        "_________________",
+      "{provider.bankAddress}":
+        banking.bankAddress ||
+        providerBankingDetails.bankAddress ||
+        "_________________",
+      "{provider.accountType}":
+        banking.accountType ||
+        providerBankingDetails.accountType ||
+        "_________________",
       "{reference.name}": contract.quotation?.code || "_________________",
       "{quotation.date}": format(new Date(contract.createdAt), "dd/MM/yyyy", {
         locale: es,

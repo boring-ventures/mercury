@@ -76,6 +76,7 @@ interface ContractPreviewFormProps {
     totalInBs: number;
     terms?: string;
     notes?: string;
+    description?: string;
     createdAt?: string;
   };
   company?: {
@@ -127,6 +128,11 @@ interface ContractFormData {
   contactEmail: string;
   contactPosition: string;
   contactCI: string;
+
+  // Notary Information
+  notaryName: string;
+  testimonioNumber: string;
+  powerNumber: string;
 
   // Contract Details
   contractStartDate: string;
@@ -408,6 +414,11 @@ export default function ContractPreviewForm({
     contactPosition: company?.contactPosition || "",
     contactCI: getCIFromDocuments(),
 
+    // Notary Information
+    notaryName: "",
+    testimonioNumber: "",
+    powerNumber: "",
+
     // Contract Details
     contractStartDate: contractStatus?.startDate
       ? format(new Date(contractStatus.startDate), "yyyy-MM-dd")
@@ -666,8 +677,83 @@ export default function ContractPreviewForm({
     return contractText;
   };
 
+  // Generate initial contract if it doesn't exist
+  const handleGenerateContract = async () => {
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(
+        `/api/quotations/${quotation.id}/generate-contract`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            // Required fields for API validation
+            representativeName: formData.contactName,
+            representativeCI: formData.contactCI,
+            representativeRole: formData.contactPosition,
+            notaryName: formData.notaryName || "Por definir",
+            testimonioNumber: formData.testimonioNumber || "000/0000",
+            testimonioDate: new Date().toISOString(),
+            powerNumber: formData.powerNumber || "000/0000",
+            powerDate: new Date().toISOString(),
+            bankName: formData.providerBankName,
+            accountHolder: formData.providerBeneficiaryName,
+            accountNumber: formData.providerAccountNumber,
+            accountType: formData.providerAccountType,
+            contractTitle: `Contrato de Servicio - ${quotation.code}`,
+            contractDescription: quotation.description,
+            startDate: new Date().toISOString(), // Will be updated by admin
+            endDate: new Date(
+              Date.now() + 30 * 24 * 60 * 60 * 1000
+            ).toISOString(), // 30 days from now, will be updated by admin
+
+            // Complete form data to save in additionalData
+            formData: formData,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Error al generar el contrato");
+      }
+
+      toast({
+        title: "Contrato generado",
+        description:
+          "El contrato ha sido generado exitosamente. Ahora puede completar los datos.",
+      });
+
+      // Refresh contract status
+      await queryClient.invalidateQueries({
+        queryKey: ["contract-status", quotation.id],
+      });
+    } catch (error) {
+      console.error("Error generating contract:", error);
+      toast({
+        title: "Error al generar contrato",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Hubo un problema al generar el contrato.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // If contract doesn't exist, generate it first
+    if (!contractExists) {
+      await handleGenerateContract();
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -732,6 +818,23 @@ export default function ContractPreviewForm({
     }
   };
 
+  // Validation for initial contract generation (minimal required fields)
+  const canGenerateContract = () => {
+    const requiredForGeneration = [
+      "contactName",
+      "contactCI",
+      "providerBankName",
+      "providerBeneficiaryName",
+      "providerAccountNumber",
+      "providerAccountType",
+    ];
+
+    return requiredForGeneration.every((field) =>
+      formData[field as keyof ContractFormData]?.trim()
+    );
+  };
+
+  // Validation for final contract completion (all fields required)
   const isFormValid = () => {
     const requiredFields = [
       "companyName",
@@ -1263,12 +1366,12 @@ export default function ContractPreviewForm({
                         <p className="text-xs font-medium text-amber-900 mb-1">
                           {contractExists
                             ? "Fechas del Contrato Pendientes"
-                            : "Contrato Pendiente de Creación"}
+                            : "Listo para Generar Contrato"}
                         </p>
                         <p className="text-xs text-amber-800">
                           {contractExists
                             ? "El contrato ha sido creado pero el administrador aún debe establecer las fechas de inicio y finalización."
-                            : "El administrador debe crear el contrato y establecer las fechas de inicio y finalización antes de que pueda completar este formulario."}
+                            : "Complete los datos del formulario y haga clic en 'Generar Contrato' para crear el contrato inicial."}
                         </p>
                       </div>
                     </div>
@@ -1530,7 +1633,10 @@ export default function ContractPreviewForm({
                 </Button>
                 <Button
                   type="submit"
-                  disabled={isLoading || !isFormValid()}
+                  disabled={
+                    isLoading ||
+                    (!contractExists ? !canGenerateContract() : !isFormValid())
+                  }
                   className="flex-1 bg-blue-600 hover:bg-blue-700"
                 >
                   {isLoading ? (
@@ -1540,8 +1646,8 @@ export default function ContractPreviewForm({
                     </>
                   ) : !contractExists ? (
                     <>
-                      <AlertTriangle className="h-4 w-4 mr-2" />
-                      Esperando Creación del Contrato
+                      <FileText className="h-4 w-4 mr-2" />
+                      Generar Contrato
                     </>
                   ) : !formData.contractStartDate ||
                     !formData.contractEndDate ? (
