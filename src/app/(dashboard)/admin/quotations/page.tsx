@@ -26,6 +26,7 @@ import {
   Calendar,
   Building,
   User,
+  Building2,
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -35,6 +36,8 @@ import {
   useQuotationStatusConfig,
   type QuotationFilters,
 } from "@/hooks/use-admin-quotations";
+import { formatCurrency } from "@/lib/utils";
+import { CreateContractDialog } from "@/components/admin/contracts/create-contract-dialog";
 
 const STATUS_FILTERS = [
   { value: "todos", label: "Todos" },
@@ -103,8 +106,15 @@ export default function AdminQuotations() {
     search: "",
   });
   const [searchTerm, setSearchTerm] = useState("");
+  const [createContractDialog, setCreateContractDialog] = useState<{
+    open: boolean;
+    quotation: any;
+  }>({
+    open: false,
+    quotation: null,
+  });
 
-  const { data, isLoading, error } = useAdminQuotations(filters);
+  const { data, isLoading, error, refetch } = useAdminQuotations(filters);
 
   const handleFilterChange = (key: keyof QuotationFilters, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -113,6 +123,17 @@ export default function AdminQuotations() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setFilters((prev) => ({ ...prev, search: searchTerm }));
+  };
+
+  const handleCreateContract = (quotation: any) => {
+    setCreateContractDialog({
+      open: true,
+      quotation,
+    });
+  };
+
+  const handleContractCreated = () => {
+    refetch();
   };
 
   if (isLoading) {
@@ -296,10 +317,10 @@ export default function AdminQuotations() {
                 <div className="flex items-center space-x-4">
                   <div className="text-right">
                     <div className="font-medium">
-                      {quotation.amount.toLocaleString()} {quotation.currency}
+                      {formatCurrency(quotation.amount, quotation.currency)}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {quotation.totalInBs.toLocaleString()} Bs
+                      {formatCurrency(quotation.totalInBs, "Bs")}
                     </div>
                   </div>
 
@@ -315,12 +336,24 @@ export default function AdminQuotations() {
                     </div>
                   </div>
 
-                  <Link href={`/admin/quotations/${quotation.id}`}>
-                    <Button variant="outline" size="sm">
-                      <Eye className="h-4 w-4 mr-2" />
-                      Ver
-                    </Button>
-                  </Link>
+                  <div className="flex gap-2">
+                    {quotation.status === "ACCEPTED" && (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => handleCreateContract(quotation)}
+                      >
+                        <Building2 className="h-4 w-4 mr-2" />
+                        Crear Contrato
+                      </Button>
+                    )}
+                    <Link href={`/admin/quotations/${quotation.id}`}>
+                      <Button variant="outline" size="sm">
+                        <Eye className="h-4 w-4 mr-2" />
+                        Ver
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </div>
             ))}
@@ -339,6 +372,18 @@ export default function AdminQuotations() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Create Contract Dialog */}
+      {createContractDialog.quotation && (
+        <CreateContractDialog
+          open={createContractDialog.open}
+          onOpenChange={(open) =>
+            setCreateContractDialog((prev) => ({ ...prev, open }))
+          }
+          quotation={createContractDialog.quotation}
+          onSuccess={handleContractCreated}
+        />
+      )}
     </div>
   );
 }

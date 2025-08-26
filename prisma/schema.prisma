@@ -100,6 +100,7 @@ model Provider {
   country        String
   email          String?
   phone          String?
+  additionalInfo String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   bankingDetails Json?
@@ -153,6 +154,7 @@ model Document {
   reviewNotes           String?
   reviewedAt            DateTime?
   reviewedBy            String?
+  documentInfo          String?              // Additional text information about the document
   createdAt             DateTime             @default(now())
   updatedAt             DateTime             @updatedAt
   companyId             String?
@@ -360,6 +362,7 @@ enum DocumentType {
   FACTURA_COMERCIAL
   CONTRATO
   COMPROBANTE_PAGO
+  COMPROBANTE_PAGO_PROVEEDOR
   OTHER
 }
 
@@ -382,6 +385,10 @@ enum ContractStatus {
   DRAFT
   ACTIVE
   COMPLETED
+  PAYMENT_PENDING
+  PAYMENT_REVIEWED
+  PROVIDER_PAID
+  PAYMENT_COMPLETED
   CANCELLED
   EXPIRED
 }

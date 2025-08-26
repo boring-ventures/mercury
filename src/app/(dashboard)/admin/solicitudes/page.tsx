@@ -32,6 +32,8 @@ import {
 } from "@/hooks/use-requests";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { formatCurrency } from "@/lib/utils";
+import SetContractDatesDialog from "@/components/admin/contracts/set-contract-dates-dialog";
 
 const STATUS_FILTERS = [
   { value: "todos", label: "Todos" },
@@ -45,13 +47,13 @@ const STATUS_FILTERS = [
 
 const COUNTRY_FILTERS = [
   { value: "todos", label: "Todos" },
-  { value: "china", label: "China" },
-  { value: "colombia", label: "Colombia" },
-  { value: "ecuador", label: "Ecuador" },
-  { value: "peru", label: "Perú" },
-  { value: "bolivia", label: "Bolivia" },
-  { value: "usa", label: "Estados Unidos" },
-  { value: "germany", label: "Alemania" },
+  { value: "China", label: "China" },
+  { value: "Colombia", label: "Colombia" },
+  { value: "Ecuador", label: "Ecuador" },
+  { value: "Perú", label: "Perú" },
+  { value: "Bolivia", label: "Bolivia" },
+  { value: "USA", label: "Estados Unidos" },
+  { value: "Germany", label: "Alemania" },
 ];
 
 // Interface for admin request list items
@@ -62,9 +64,11 @@ interface AdminRequestItem {
   amount: number;
   currency: string;
   createdAt: string;
+  description?: string;
   rejectionCount?: number;
   company?: {
     name: string;
+    email?: string;
   };
   provider?: {
     country: string;
@@ -331,7 +335,7 @@ export default function AdminSolicitudes() {
                           {request.provider?.country || "N/A"}
                         </td>
                         <td className="py-3 px-4">
-                          ${request.amount?.toLocaleString()} {request.currency}
+                          {formatCurrency(request.amount, request.currency)}
                         </td>
                         <td className="py-3 px-4">
                           {request.rejectionCount ? (
@@ -401,18 +405,47 @@ export default function AdminSolicitudes() {
                           })}
                         </td>
                         <td className="py-3 px-4">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-8 px-2"
-                            asChild
-                          >
-                            <Link
-                              href={`/admin/solicitudes/${request.code || request.id}`}
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 px-2"
+                              asChild
                             >
-                              <Eye className="h-4 w-4" />
-                            </Link>
-                          </Button>
+                              <Link
+                                href={`/admin/solicitudes/${request.code || request.id}`}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Link>
+                            </Button>
+
+                            {/* Show contract dates dialog for accepted quotations */}
+                            {request.quotations?.some(
+                              (q) => q.status === "ACCEPTED"
+                            ) && (
+                              <SetContractDatesDialog
+                                quotation={
+                                  request.quotations.find(
+                                    (q) => q.status === "ACCEPTED"
+                                  )!
+                                }
+                                request={{
+                                  id: request.id,
+                                  code: request.code,
+                                  description: request.description || "",
+                                  company: {
+                                    name: request.company?.name || "",
+                                    email: request.company?.email || "",
+                                  },
+                                  provider: request.provider,
+                                }}
+                                onDatesSet={() => {
+                                  // Refresh the page to show updated data
+                                  window.location.reload();
+                                }}
+                              />
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );

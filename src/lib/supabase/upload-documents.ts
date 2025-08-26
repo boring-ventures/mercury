@@ -1,7 +1,7 @@
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 const STORAGE_BUCKET =
-  process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET || "mercury";
+  process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET || "nordex";
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_DOCUMENT_TYPES = [
   "application/pdf",

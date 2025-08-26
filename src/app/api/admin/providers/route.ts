@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { capitalizeCountry } from "@/lib/utils";
 
 // GET: Fetch all providers with filters and pagination
 export async function GET(request: NextRequest) {
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
     const provider = await prisma.provider.create({
       data: {
         name,
-        country,
+        country: capitalizeCountry(country),
         bankingDetails: bankingDetails || null,
         email: email || null,
         phone: phone || null,

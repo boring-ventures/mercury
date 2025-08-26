@@ -25,12 +25,14 @@ export interface CreateRequestData {
   providerBeneficiaryName: string;
   providerEmail?: string;
   providerPhone?: string;
+  providerAdditionalInfo?: string;
   documents?: Array<{
     filename: string;
     fileUrl: string;
     fileSize: number;
     mimeType: string;
     type?: string;
+    documentInfo?: string; // Add document text information
   }>;
 }
 
@@ -354,8 +356,14 @@ export function useRequestWorkflow() {
     const hasActiveQuotation =
       hasQuotation &&
       request.quotations?.some(
-        (q: WorkflowQuotation) =>
-          q.status === "SENT" || q.status === "ACCEPTED" || q.status === "DRAFT"
+        (q: WorkflowQuotation) => q.status === "SENT" || q.status === "DRAFT"
+      );
+
+    // Check if has approved quotation (should move to contract step)
+    const hasApprovedQuotation =
+      hasQuotation &&
+      request.quotations?.some(
+        (q: WorkflowQuotation) => q.status === "ACCEPTED"
       );
 
     // Check if has contracts
@@ -385,6 +393,8 @@ export function useRequestWorkflow() {
       step = 4; // Pago a Proveedor
     else if (hasActiveContract || hasDraftContract)
       step = 3; // Contrato
+    else if (hasApprovedQuotation)
+      step = 3; // Contrato (quotation approved, ready for contract)
     else if (hasActiveQuotation)
       step = 2; // Cotización
     else step = 1; // Nueva Solicitud
@@ -393,6 +403,7 @@ export function useRequestWorkflow() {
       requestId: request.id || request.code,
       hasQuotation,
       hasActiveQuotation,
+      hasApprovedQuotation,
       quotations: request.quotations,
       step,
       requestStatus: request.status,
@@ -413,7 +424,7 @@ export function useRequestWorkflow() {
         href: `/importador/solicitudes/${request?.code || request?.id}`,
       },
       3: {
-        text: "Revisar Contrato",
+        text: "Generar Contrato",
         href: `/importador/solicitudes/${request?.code || request?.id}/contrato`,
       },
       4: {

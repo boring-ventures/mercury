@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/providers/auth-provider";
 import { ThemeProvider } from "@/context/theme-context";
 
-const APP_NAME = "Mercury Platform";
+const APP_NAME = "NORDEX Platform";
 const APP_DESCRIPTION =
   "Gestión de Envíos Internacionales Simplificada - Plataforma especializada para importadores";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";

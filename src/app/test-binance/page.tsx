@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { formatCurrency } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import {
   Card,

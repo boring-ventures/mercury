@@ -39,6 +39,7 @@ import {
   useContractStatusConfig,
   type ContractFilters,
 } from "@/hooks/use-admin-contracts";
+import { formatCurrency } from "@/lib/utils";
 
 const STATUS_FILTERS = [
   { value: "todos", label: "Todos" },
@@ -319,7 +320,7 @@ export default function AdminContracts() {
                 <div className="flex items-center space-x-4">
                   <div className="text-right">
                     <div className="font-medium">
-                      {contract.amount.toLocaleString()} {contract.currency}
+                      {formatCurrency(contract.amount, contract.currency)}
                     </div>
                   </div>
 

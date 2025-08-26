@@ -12,9 +12,9 @@ export function FaqsSection() {
 
   const faqs = [
     {
-      question: "¿Qué tipos de envíos puedo gestionar con Mercury Platform?",
+      question: "¿Qué tipos de envíos puedo gestionar con NORDEX Platform?",
       answer:
-        "Mercury Platform soporta todo tipo de envíos internacionales: mercancías generales, productos perecederos, materiales peligrosos, equipos industriales y más. Trabajamos con todos los modos de transporte: marítimo, aéreo y terrestre.",
+        "NORDEX Platform soporta todo tipo de envíos internacionales: mercancías generales, productos perecederos, materiales peligrosos, equipos industriales y más. Trabajamos con todos los modos de transporte: marítimo, aéreo y terrestre.",
     },
     {
       question: "¿Cuánto tiempo toma obtener una cotización?",
@@ -42,9 +42,9 @@ export function FaqsSection() {
         "Ofrecemos planes escalables según el volumen de envíos. El plan básico incluye hasta 10 envíos mensuales sin costo inicial. Para volúmenes mayores, contacte a nuestro equipo comercial para una cotización personalizada.",
     },
     {
-      question: "¿Puedo integrar Mercury con mi sistema ERP actual?",
+      question: "¿Puedo integrar NORDEX con mi sistema ERP actual?",
       answer:
-        "Absolutamente. Mercury Platform cuenta con APIs robustas y conectores pre-construidos para SAP, Oracle, QuickBooks y otros sistemas ERP populares. Nuestro equipo técnico asiste en la integración sin costo adicional.",
+        "Absolutamente. NORDEX Platform cuenta con APIs robustas y conectores pre-construidos para SAP, Oracle, QuickBooks y otros sistemas ERP populares. Nuestro equipo técnico asiste en la integración sin costo adicional.",
     },
     {
       question: "¿Qué documentación necesito para comenzar?",
@@ -68,7 +68,7 @@ export function FaqsSection() {
               </h2>
             </BoxReveal>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Resolvemos las dudas más comunes sobre Mercury Platform y nuestros
+              Resolvemos las dudas más comunes sobre NORDEX Platform y nuestros
               servicios
             </p>
           </div>

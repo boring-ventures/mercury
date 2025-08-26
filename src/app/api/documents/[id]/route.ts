@@ -146,7 +146,7 @@ export async function GET(
       }
 
       // It's a storage path, try to download from Supabase
-      const bucketNames = ["mercury", "registration-documents", "documents"];
+      const bucketNames = ["nordex", "registration-documents", "documents"];
 
       for (const bucketName of bucketNames) {
         try {
@@ -211,7 +211,7 @@ export async function GET(
         console.log(`Trying to get public URL for path: ${document.fileUrl}`);
         const {
           data: { publicUrl },
-        } = supabase.storage.from("mercury").getPublicUrl(document.fileUrl);
+        } = supabase.storage.from("nordex").getPublicUrl(document.fileUrl);
 
         if (publicUrl) {
           console.log(`Redirecting to public URL: ${publicUrl}`);

@@ -138,6 +138,11 @@ export interface AdminContractDetail {
   terms: string;
   conditions: string | null;
   createdAt: string;
+  additionalData?: {
+    companyData?: any;
+    contactData?: any;
+    providerData?: any;
+  };
   request: {
     id: string;
     code: string;
@@ -150,6 +155,13 @@ export interface AdminContractDetail {
       email: string;
       phone: string;
     };
+    provider?: {
+      name: string;
+      country: string;
+      email: string;
+      phone: string;
+      bankingDetails: any;
+    } | null;
   } | null;
   quotation: {
     id: string;

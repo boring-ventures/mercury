@@ -99,17 +99,17 @@ export function analyzeBinanceOffers(
 
 export function formatBinanceAnalysis(analysis: BinanceOfferAnalysis): string {
   const lines = [
-    `📊 Binance P2P Analysis for ${analysis.targetAmount.toLocaleString()} USDT`,
-    `💰 Available: ${analysis.availableAmount.toLocaleString()} USDT (${analysis.coveragePercentage}% coverage)`,
+    `📊 Binance P2P Analysis for {formatCurrency(analysis.targetAmount, "USD")}T`,
+    `💰 Available: {formatCurrency(analysis.availableAmount, "USD")}T (${analysis.coveragePercentage}% coverage)`,
     `📈 Weighted Average Price: ${analysis.weightedAveragePrice} BOB`,
     `📊 Price Range: ${analysis.priceRange.min} - ${analysis.priceRange.max} BOB`,
-    `💵 Total Cost: ${analysis.totalCost.toLocaleString()} BOB`,
+    `💵 Total Cost: {formatCurrency(analysis.totalCost, "BOB")}`,
     `🤝 Offers Used: ${analysis.offersUsed.length}`,
     "",
     "📋 Cost Breakdown:",
     ...analysis.costBreakdown.map(
       (item, index) =>
-        `${index + 1}. ${item.advertiser} - ${item.amount.toLocaleString()} USDT @ ${item.price} BOB = ${item.cost.toLocaleString()} BOB`
+        `${index + 1}. ${item.advertiser} - {formatCurrency(item.amount, "USD")}T @ ${item.price} BOB = {formatCurrency(item.cost, "BOB")}`
     ),
     "",
     "💡 Strategy: Aggregated multiple offers to meet large order requirements",

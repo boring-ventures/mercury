@@ -58,8 +58,30 @@ export async function GET(
             id: true,
             name: true,
             country: true,
+            nit: true,
+            city: true,
+            contactName: true,
+            contactPosition: true,
             email: true,
             phone: true,
+            bankingDetails: true,
+            documents: {
+              select: {
+                id: true,
+                type: true,
+                documentInfo: true,
+              },
+              where: {
+                type: {
+                  in: [
+                    "CARNET_IDENTIDAD",
+                    "NIT",
+                    "MATRICULA_COMERCIO",
+                    "PODER_REPRESENTANTE",
+                  ],
+                },
+              },
+            },
           },
         },
         provider: {
@@ -94,6 +116,17 @@ export async function GET(
             type: true,
             status: true,
             createdAt: true,
+            documentInfo: true, // Include document text information
+          },
+          where: {
+            type: {
+              in: [
+                "CARNET_IDENTIDAD",
+                "NIT",
+                "MATRICULA_COMERCIO",
+                "PODER_REPRESENTANTE",
+              ],
+            },
           },
         },
         quotations: {

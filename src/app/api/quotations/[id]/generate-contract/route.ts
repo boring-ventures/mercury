@@ -26,6 +26,8 @@ export async function POST(
       "powerDate",
       "bankName",
       "accountNumber",
+      "accountType",
+      "accountHolder",
     ];
 
     for (const field of requiredFields) {
@@ -165,6 +167,44 @@ export async function POST(
             referenceName: body.referenceName,
             referenceDate: body.referenceDate,
           },
+          // Store all form data for future use
+          formData: body.formData || {},
+          // Store company data extracted from form
+          companyData: body.formData
+            ? {
+                name: body.formData.companyName,
+                address: body.formData.companyAddress,
+                phone: body.formData.companyPhone,
+                email: body.formData.companyEmail,
+                nit: body.formData.companyRif,
+                city: body.formData.companyCity,
+              }
+            : {},
+          // Store contact data extracted from form
+          contactData: body.formData
+            ? {
+                name: body.formData.contactName,
+                phone: body.formData.contactPhone,
+                email: body.formData.contactEmail,
+                position: body.formData.contactPosition,
+                ci: body.formData.contactCI,
+              }
+            : {},
+          // Store provider data extracted from form
+          providerData: body.formData
+            ? {
+                name: body.formData.providerName,
+                country: body.formData.providerCountry,
+                email: body.formData.providerEmail,
+                phone: body.formData.providerPhone,
+                bankName: body.formData.providerBankName,
+                accountNumber: body.formData.providerAccountNumber,
+                swiftCode: body.formData.providerSwiftCode,
+                bankAddress: body.formData.providerBankAddress,
+                beneficiaryName: body.formData.providerBeneficiaryName,
+                accountType: body.formData.providerAccountType,
+              }
+            : {},
         },
       },
       include: {

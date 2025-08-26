@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import prisma from "@/lib/prisma";
 import { createSystemNotification } from "@/lib/notifications";
+import { notifyQuotationReceived } from "@/lib/notification-events";
 
 // API route for creating quotations for a request
 export async function POST(
@@ -168,23 +169,37 @@ export async function POST(
       },
     });
 
-    // Step 2: Notify the importador about the new quotation
+    // Step 2: Notify the importador about the new quotation (in-app + email)
     try {
-      if (requestData.createdBy) {
-        await createSystemNotification(
-          "QUOTATION_RECEIVED",
-          requestData.createdBy.id,
-          {
-            requestId: requestData.id,
-            requestCode: requestData.code,
-            quotationId: quotation.id,
-            quotationCode: quotation.code,
-            totalInBs: quotation.totalInBs,
-            currency: quotation.currency,
-            validUntil: quotation.validUntil.toISOString(),
-          }
-        );
-      }
+      // Get the admin who created the quotation
+      const adminProfile = await prisma.profile.findUnique({
+        where: { id: profile.id },
+        select: {
+          firstName: true,
+          lastName: true,
+        },
+      });
+
+      const createdBy = adminProfile
+        ? `${adminProfile.firstName} ${adminProfile.lastName}`.trim()
+        : "Administrador";
+
+      await notifyQuotationReceived({
+        quotationId: quotation.id,
+        code: quotation.code,
+        requestId: requestData.id,
+        companyId: requestData.companyId,
+        amount: Number(quotation.amount),
+        currency: quotation.currency,
+        totalInBs: Number(quotation.totalInBs),
+        exchangeRate: Number(quotation.exchangeRate),
+        validUntil: quotation.validUntil.toISOString(),
+        createdBy: createdBy,
+        createdAt: quotation.createdAt.toISOString(),
+        companyName: requestData.company?.name,
+        requestCode: requestData.code,
+        status: quotation.status,
+      });
     } catch (notificationError) {
       console.error(
         "Error sending notification to importador:",

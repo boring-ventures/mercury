@@ -52,6 +52,10 @@ import {
   Check,
   X,
   AlertTriangle,
+  TrendingUp,
+  Banknote,
+  Calculator,
+  Info,
 } from "lucide-react";
 import { useState } from "react";
 import {
@@ -64,6 +68,8 @@ import {
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/components/ui/use-toast";
+import { formatCurrency, formatExchangeRate } from "@/lib/utils";
+import ContractPreviewForm from "@/components/importador/contract-preview-form";
 
 // Updated workflow steps (removed Pago Inicial)
 const WORKFLOW_STEPS = [
@@ -124,20 +130,49 @@ interface ImportadorSolicitudItem {
   createdAt: string;
   description: string;
   rejectionCount?: number;
+  company?: {
+    name?: string;
+    nit?: string;
+    city?: string;
+    contactName?: string;
+    contactPosition?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    bankingDetails?: any;
+    documents?: Array<{
+      id: string;
+      type: string;
+      documentInfo?: string;
+    }>;
+  };
+  provider?: {
+    name?: string;
+    country?: string;
+    bankingDetails?: any;
+    email?: string;
+    phone?: string;
+  };
   quotations?: Array<{
     id: string;
     code: string;
     status: string;
-    totalAmount: number;
-    baseAmount: number;
-    fees: number;
-    taxes: number;
+    amount: number;
     currency: string;
     validUntil: string;
     createdAt: string;
     notes?: string;
     terms?: string;
     rejectionReason?: string;
+    exchangeRate?: number;
+    managementServiceBs?: number;
+    managementServicePercentage?: number;
+    totalInBs?: number;
+    amountInBs?: number;
+    correspondentBankBs?: number;
+    correspondentBankUSD?: number;
+    swiftBankBs?: number;
+    swiftBankUSD?: number;
   }>;
   contracts?: Array<{
     status: string;
@@ -145,6 +180,11 @@ interface ImportadorSolicitudItem {
   payments?: Array<{
     type: string;
     status: string;
+  }>;
+  documents?: Array<{
+    id: string;
+    type: string;
+    documentInfo?: string;
   }>;
 }
 
@@ -194,9 +234,21 @@ function WorkflowSteps({
               >
                 {step.name}
               </p>
-              <p className="text-xs text-gray-500 max-w-20">
+              <p
+                className={`text-xs max-w-20 ${isCurrent ? "text-blue-600 font-medium" : "text-gray-500"}`}
+              >
                 {step.description}
               </p>
+              {isCurrent && (
+                <div className="mt-1">
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-blue-50 text-blue-700 border-blue-200"
+                  >
+                    Paso Actual
+                  </Badge>
+                </div>
+              )}
             </div>
           </div>
         );
@@ -374,14 +426,43 @@ function QuotationReviewModal({
               </div>
             )}
 
+          {/* Quotation Summary */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="text-center">
+                <p className="text-xs text-blue-600 mb-1">Monto Principal</p>
+                <p className="font-bold text-lg text-blue-900">
+                  {formatCurrency(quotation.amount, quotation.currency)}
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-blue-600 mb-1">Total en Bs</p>
+                <p className="font-bold text-lg text-blue-900">
+                  {formatCurrency(quotation.totalInBs, "Bs")}
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-blue-600 mb-1">Estado</p>
+                <Badge className={getStatusColor(quotation.status)}>
+                  {getStatusLabel(quotation.status)}
+                </Badge>
+              </div>
+            </div>
+          </div>
+
           {/* Status and Date */}
           <div className="flex items-center justify-between">
-            <Badge className={getStatusColor(quotation.status)}>
-              {getStatusLabel(quotation.status)}
-            </Badge>
             <div className="text-sm text-gray-600">
               <Calendar className="h-4 w-4 inline mr-1" />
+              Creada el:{" "}
               {format(new Date(quotation.createdAt), "dd/MM/yyyy", {
+                locale: es,
+              })}
+            </div>
+            <div className="text-sm text-gray-600">
+              <Clock className="h-4 w-4 inline mr-1" />
+              Válida hasta:{" "}
+              {format(new Date(quotation.validUntil), "dd/MM/yyyy", {
                 locale: es,
               })}
             </div>
@@ -390,28 +471,101 @@ function QuotationReviewModal({
           {/* Amount Breakdown */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-gray-50 p-3 rounded-lg">
-              <p className="text-xs text-gray-600 mb-1">Monto Base</p>
+              <p className="text-xs text-gray-600 mb-1">Monto Principal</p>
               <p className="font-semibold">
-                ${quotation.baseAmount?.toLocaleString()} {quotation.currency}
+                {formatCurrency(quotation.amount, quotation.currency)}
               </p>
             </div>
             <div className="bg-gray-50 p-3 rounded-lg">
-              <p className="text-xs text-gray-600 mb-1">Comisiones</p>
+              <p className="text-xs text-gray-600 mb-1">Servicio de Gestión</p>
               <p className="font-semibold">
-                ${quotation.fees?.toLocaleString()} {quotation.currency}
+                {formatCurrency(quotation.managementServiceBs, "Bs")}
+                {quotation.managementServicePercentage && (
+                  <span className="text-xs text-gray-500 block">
+                    ({quotation.managementServicePercentage}%)
+                  </span>
+                )}
               </p>
             </div>
             <div className="bg-gray-50 p-3 rounded-lg">
-              <p className="text-xs text-gray-600 mb-1">Impuestos</p>
+              <p className="text-xs text-gray-600 mb-1">Banco Corresponsal</p>
               <p className="font-semibold">
-                ${quotation.taxes?.toLocaleString()} {quotation.currency}
+                {formatCurrency(quotation.correspondentBankUSD, "USD")}
               </p>
             </div>
             <div className="bg-blue-50 p-3 rounded-lg">
-              <p className="text-xs text-blue-600 mb-1">Total</p>
+              <p className="text-xs text-blue-600 mb-1">Total en Bs</p>
               <p className="font-bold text-lg text-blue-900">
-                ${quotation.totalAmount?.toLocaleString()} {quotation.currency}
+                {formatCurrency(quotation.totalInBs, "Bs")}
               </p>
+            </div>
+          </div>
+
+          {/* Exchange Rate and Banking Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-green-50 p-3 rounded-lg">
+              <div className="flex items-center gap-2 mb-1">
+                <TrendingUp className="h-4 w-4 text-green-600" />
+                <p className="text-xs text-green-600 font-medium">
+                  Tipo de Cambio
+                </p>
+              </div>
+              <p className="font-semibold text-green-900">
+                {quotation.exchangeRate
+                  ? `1 USD = ${formatExchangeRate(quotation.exchangeRate)} Bs`
+                  : "No disponible"}
+              </p>
+            </div>
+            <div className="bg-purple-50 p-3 rounded-lg">
+              <div className="flex items-center gap-2 mb-1">
+                <Banknote className="h-4 w-4 text-purple-600" />
+                <p className="text-xs text-purple-600 font-medium">
+                  Monto en Bs
+                </p>
+              </div>
+              <p className="font-semibold text-purple-900">
+                {formatCurrency(quotation.amountInBs, "Bs")}
+              </p>
+            </div>
+          </div>
+
+          {/* Banking Fees Breakdown */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="flex items-center gap-2 mb-3">
+              <Calculator className="h-5 w-5 text-gray-700" />
+              <h4 className="font-medium text-gray-900">
+                Desglose de Comisiones Bancarias
+              </h4>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">
+                  Banco Corresponsal (Bs)
+                </p>
+                <p className="font-semibold">
+                  {formatCurrency(quotation.correspondentBankBs, "Bs")}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">
+                  Banco Corresponsal (USD)
+                </p>
+                <p className="font-semibold">
+                  {formatCurrency(quotation.correspondentBankUSD, "USD")}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">SWIFT Bank (Bs)</p>
+                <p className="font-semibold">
+                  {formatCurrency(quotation.swiftBankBs, "Bs")}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">SWIFT Bank (USD)</p>
+                <p className="font-semibold">
+                  {formatCurrency(quotation.swiftBankUSD, "USD")}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -439,9 +593,12 @@ function QuotationReviewModal({
           {/* Terms and Notes */}
           {quotation.terms && (
             <div>
-              <p className="text-sm font-medium text-gray-700 mb-2">
-                Términos y Condiciones:
-              </p>
+              <div className="flex items-center gap-2 mb-2">
+                <FileText className="h-4 w-4 text-gray-700" />
+                <p className="text-sm font-medium text-gray-700">
+                  Términos y Condiciones:
+                </p>
+              </div>
               <div className="bg-gray-50 p-3 rounded-lg">
                 <p className="text-sm text-gray-800 whitespace-pre-wrap">
                   {quotation.terms}
@@ -452,10 +609,27 @@ function QuotationReviewModal({
 
           {quotation.notes && (
             <div>
-              <p className="text-sm font-medium text-gray-700 mb-2">Notas:</p>
+              <div className="flex items-center gap-2 mb-2">
+                <Info className="h-4 w-4 text-gray-700" />
+                <p className="text-sm font-medium text-gray-700">Notas:</p>
+              </div>
               <div className="bg-gray-50 p-3 rounded-lg">
                 <p className="text-sm text-gray-800 whitespace-pre-wrap">
                   {quotation.notes}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {quotation.rejectionReason && (
+            <div>
+              <p className="text-sm font-medium text-red-700 mb-2 flex items-center gap-2">
+                <X className="h-4 w-4" />
+                Motivo de Rechazo Anterior:
+              </p>
+              <div className="bg-red-50 border border-red-200 p-3 rounded-lg">
+                <p className="text-sm text-red-800 whitespace-pre-wrap">
+                  {quotation.rejectionReason}
                 </p>
               </div>
             </div>
@@ -490,11 +664,30 @@ function QuotationReviewModal({
           )}
 
           {quotation.status === "ACCEPTED" && (
-            <div className="flex items-center gap-2 pt-4 border-t text-green-700">
-              <CheckCircle className="h-4 w-4" />
-              <span className="text-sm font-medium">
-                Cotización aprobada - Procediendo al siguiente paso
-              </span>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                <div>
+                  <h4 className="font-medium text-green-900">
+                    ¡Cotización Aprobada!
+                  </h4>
+                  <p className="text-sm text-green-800 mt-1">
+                    La cotización ha sido aprobada exitosamente. El siguiente
+                    paso es completar los datos del contrato.
+                  </p>
+                  <div className="mt-3 p-3 bg-white rounded border border-green-200">
+                    <p className="text-xs text-green-700 font-medium mb-2">
+                      Próximo paso:
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-4 w-4 text-green-600" />
+                      <span className="text-sm text-green-800">
+                        Completar datos del contrato de servicio
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -517,6 +710,24 @@ function QuotationReviewModal({
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
+              {/* Terms Acceptance Message */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <Check className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs font-medium text-blue-900 mb-1">
+                      Aceptación de Términos
+                    </p>
+                    <p className="text-xs text-blue-800">
+                      Al aprobar esta cotización, confirma que acepta todos los
+                      términos y condiciones establecidos, incluyendo los costos
+                      detallados, el tipo de cambio aplicado y las condiciones
+                      de servicio.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <Label htmlFor="approve-notes">
                   Notas adicionales (opcional)
@@ -596,6 +807,23 @@ function QuotationReviewModal({
               </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="space-y-4 py-4">
+              {/* Terms Acceptance Message */}
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <X className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs font-medium text-red-900 mb-1">
+                      Confirmación de Rechazo
+                    </p>
+                    <p className="text-xs text-red-800">
+                      Al rechazar esta cotización, confirma que no acepta los
+                      términos y condiciones ofrecidos. Debe proporcionar una
+                      razón válida para el rechazo.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {solicitud.rejectionCount !== undefined &&
                 solicitud.rejectionCount > 0 && (
                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
@@ -689,6 +917,13 @@ function SolicitudCard({ solicitud }: { solicitud: ImportadorSolicitudItem }) {
     solicitud.quotations &&
     solicitud.quotations.length > 0;
 
+  // Check if this is a contract step (quotation approved)
+  const isContractStep =
+    currentStep === 3 &&
+    solicitud.quotations &&
+    solicitud.quotations.length > 0 &&
+    solicitud.quotations.some((q) => q.status === "ACCEPTED");
+
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-4">
@@ -716,7 +951,7 @@ function SolicitudCard({ solicitud }: { solicitud: ImportadorSolicitudItem }) {
           <div className="flex items-center gap-2">
             <DollarSign className="h-4 w-4 text-gray-600" />
             <span className="font-medium">
-              ${solicitud.amount?.toLocaleString()} {solicitud.currency}
+              {formatCurrency(solicitud.amount, solicitud.currency)}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -733,6 +968,24 @@ function SolicitudCard({ solicitud }: { solicitud: ImportadorSolicitudItem }) {
             {solicitud.description}
           </p>
         </div>
+
+        {/* Success Message for Approved Quotation */}
+        {isContractStep && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+            <div className="flex items-start gap-2">
+              <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-green-900">
+                  ¡Cotización Aprobada!
+                </p>
+                <p className="text-xs text-green-700 mt-1">
+                  Ahora puede completar los datos del contrato para continuar
+                  con el proceso.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Workflow Steps */}
         <WorkflowSteps
@@ -757,6 +1010,47 @@ function SolicitudCard({ solicitud }: { solicitud: ImportadorSolicitudItem }) {
               solicitud={solicitud}
               onUpdate={() => {
                 // This will trigger a refetch when quotation is updated
+                window.location.reload(); // Simple approach for now
+              }}
+            />
+          ) : isContractStep ? (
+            <ContractPreviewForm
+              solicitudId={solicitud.code || solicitud.id}
+              quotation={{
+                id: solicitud.quotations![0].id,
+                code: solicitud.quotations![0].code,
+                amount: solicitud.quotations![0].amount,
+                currency: solicitud.quotations![0].currency,
+                totalInBs: solicitud.quotations![0].totalInBs || 0,
+                terms: solicitud.quotations![0].terms,
+                notes: solicitud.quotations![0].notes,
+                createdAt: solicitud.quotations![0].createdAt,
+              }}
+              company={{
+                name: solicitud.company?.name,
+                nit: solicitud.company?.nit,
+                city: solicitud.company?.city,
+                contactName: solicitud.company?.contactName,
+                contactPosition: solicitud.company?.contactPosition,
+                email: solicitud.company?.email,
+                phone: solicitud.company?.phone,
+                address: solicitud.company?.address,
+                bankingDetails: solicitud.company?.bankingDetails,
+                documents: solicitud.company?.documents,
+              }}
+              request={{
+                description: solicitud.description,
+                provider: {
+                  name: solicitud.provider?.name,
+                  country: solicitud.provider?.country,
+                  bankingDetails: solicitud.provider?.bankingDetails,
+                  email: solicitud.provider?.email,
+                  phone: solicitud.provider?.phone,
+                },
+                documents: solicitud.documents,
+              }}
+              onContractCreated={() => {
+                // This will trigger a refetch when contract is created
                 window.location.reload(); // Simple approach for now
               }}
             />
