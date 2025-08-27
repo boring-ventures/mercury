@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
+
 import {
   Select,
   SelectContent,
@@ -31,6 +31,8 @@ import {
   X,
 } from "lucide-react";
 import { useCreateRequest } from "@/hooks/use-requests";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { useProviders } from "@/hooks/use-providers";
 import { toast } from "@/components/ui/use-toast";
 import { uploadDocument } from "@/lib/supabase/upload-documents";
 
@@ -42,10 +44,13 @@ interface DocumentFile {
   type: string;
   fileUrl?: string;
   previewUrl?: string;
+  documentInfo?: string; // Add text information field
 }
 
 export default function NuevaSolicitud() {
   const router = useRouter();
+  const { isLoading: userLoading } = useCurrentUser();
+  const { data: providersData, isLoading: providersLoading } = useProviders();
 
   // Custom success handler for redirecting after successful creation
   const { createRequest, isLoading } = useCreateRequest({
@@ -61,8 +66,14 @@ export default function NuevaSolicitud() {
     description: "",
     providerName: "",
     providerCountry: "",
-    providerBankingDetails: "",
-    terms: false,
+    providerBankName: "",
+    providerAccountNumber: "",
+    providerSwiftCode: "",
+    providerBankAddress: "",
+    providerBeneficiaryName: "",
+    providerEmail: "",
+    providerPhone: "",
+    providerAdditionalInfo: "",
   });
 
   const [documents, setDocuments] = useState<{
@@ -88,6 +99,34 @@ export default function NuevaSolicitud() {
       ...prev,
       [field]: value,
     }));
+  };
+
+  const handleProviderSelect = (providerId: string) => {
+    const selectedProvider = providersData?.providers.find(
+      (p) => p.id === providerId
+    );
+    if (!selectedProvider) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      providerName: selectedProvider.name,
+      providerCountry: selectedProvider.country,
+      providerBankName: selectedProvider.bankingDetails?.bankName || "",
+      providerAccountNumber:
+        selectedProvider.bankingDetails?.accountNumber || "",
+      providerSwiftCode: selectedProvider.bankingDetails?.swiftCode || "",
+      providerBankAddress: selectedProvider.bankingDetails?.bankAddress || "",
+      providerBeneficiaryName:
+        selectedProvider.bankingDetails?.beneficiaryName || "",
+      providerEmail: selectedProvider.email || "",
+      providerPhone: selectedProvider.phone || "",
+    }));
+
+    toast({
+      title: "Proveedor cargado",
+      description: `Se han cargado los datos de ${selectedProvider.name}`,
+      variant: "default",
+    });
   };
 
   const uploadFile = async (
@@ -160,6 +199,7 @@ export default function NuevaSolicitud() {
         type: type === "proforma" ? "PROFORMA_INVOICE" : "FACTURA_COMERCIAL",
         fileUrl: fileUrl || undefined,
         previewUrl,
+        documentInfo: documents[type]?.documentInfo || "", // Preserve existing text
       };
 
       setDocuments((prev) => ({
@@ -195,6 +235,16 @@ export default function NuevaSolicitud() {
     }
   };
 
+  const handleDocumentTextChange = (
+    type: "proforma" | "factura",
+    text: string
+  ) => {
+    setDocuments((prev) => ({
+      ...prev,
+      [type]: prev[type] ? { ...prev[type]!, documentInfo: text } : undefined,
+    }));
+  };
+
   const removeFile = (type: "proforma" | "factura") => {
     // Clean up preview URL
     const fileToRemove = documents[type];
@@ -218,7 +268,10 @@ export default function NuevaSolicitud() {
       !formData.description ||
       !formData.providerName ||
       !formData.providerCountry ||
-      !formData.providerBankingDetails
+      !formData.providerBankName ||
+      !formData.providerAccountNumber ||
+      !formData.providerSwiftCode ||
+      !formData.providerBeneficiaryName
     ) {
       toast({
         title: "Campos requeridos",
@@ -228,19 +281,12 @@ export default function NuevaSolicitud() {
       return;
     }
 
-    if (!formData.terms) {
-      toast({
-        title: "Términos requeridos",
-        description: "Debes aceptar los términos y condiciones",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!documents.proforma) {
+    // Check that at least one document is uploaded
+    if (!documents.proforma && !documents.factura) {
       toast({
         title: "Documento requerido",
-        description: "La Proforma Invoice es obligatoria",
+        description:
+          "Debes subir al menos un documento: Proforma Invoice o Factura Comercial",
         variant: "destructive",
       });
       return;
@@ -253,6 +299,7 @@ export default function NuevaSolicitud() {
       fileSize: doc.fileSize,
       mimeType: doc.mimeType,
       type: doc.type,
+      documentInfo: doc.documentInfo || "", // Include document text
     }));
 
     // Create request - redirect will happen in onSuccess callback
@@ -262,7 +309,14 @@ export default function NuevaSolicitud() {
       description: formData.description,
       providerName: formData.providerName,
       providerCountry: formData.providerCountry,
-      providerBankingDetails: formData.providerBankingDetails,
+      providerBankName: formData.providerBankName,
+      providerAccountNumber: formData.providerAccountNumber,
+      providerSwiftCode: formData.providerSwiftCode,
+      providerBankAddress: formData.providerBankAddress,
+      providerBeneficiaryName: formData.providerBeneficiaryName,
+      providerEmail: formData.providerEmail,
+      providerPhone: formData.providerPhone,
+      providerAdditionalInfo: formData.providerAdditionalInfo,
       documents: documentsForSubmission,
     });
   };
@@ -281,97 +335,153 @@ export default function NuevaSolicitud() {
     inputId: string;
     required?: boolean;
     isUploading?: boolean;
-  }) => (
-    <div>
-      <Label>
-        {title} {required && "*"}
-      </Label>
-      <div className="mt-2 border-2 border-dashed rounded-md p-4 text-center">
-        {isUploading ? (
-          <div className="space-y-2">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
-            <p className="text-sm text-gray-600">Subiendo archivo...</p>
-          </div>
-        ) : file ? (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium">{file.filename}</p>
+  }) => {
+    // Use local state for the textarea to prevent re-renders
+    const [localDocumentInfo, setLocalDocumentInfo] = useState(
+      file?.documentInfo || ""
+    );
+
+    // Sync local state with file state when it changes
+    useEffect(() => {
+      setLocalDocumentInfo(file?.documentInfo || "");
+    }, [file?.documentInfo]);
+
+    return (
+      <div>
+        <Label>
+          {title} {required && "*"}
+        </Label>
+        <div className="mt-2 border-2 border-dashed rounded-md p-4 text-center">
+          {isUploading ? (
+            <div className="space-y-2">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
+              <p className="text-sm text-gray-600">Subiendo archivo...</p>
+            </div>
+          ) : file ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">{file.filename}</p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeFile(inputId as "proforma" | "factura")}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {(file.fileSize / 1024 / 1024).toFixed(2)} MB
+              </p>
+
+              {/* File Preview */}
+              {file.previewUrl && file.mimeType.startsWith("image/") ? (
+                <div className="relative w-full max-w-xs mx-auto">
+                  <Image
+                    src={file.previewUrl}
+                    alt={`Vista previa de ${file.filename}`}
+                    width={300}
+                    height={200}
+                    className="w-full h-32 object-cover rounded-lg border"
+                    unoptimized
+                  />
+                  <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors rounded-lg flex items-center justify-center opacity-0 hover:opacity-100">
+                    <Eye className="h-6 w-6 text-white" />
+                  </div>
+                </div>
+              ) : file.mimeType === "application/pdf" ? (
+                <div className="flex items-center justify-center w-full h-32 bg-gray-100 rounded-lg border">
+                  <div className="text-center">
+                    <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-xs text-gray-600">Archivo PDF</p>
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Document Text Input */}
+              <div className="mt-4">
+                <Label
+                  htmlFor={`${inputId}-text`}
+                  className="text-sm font-medium"
+                >
+                  Información adicional del documento
+                </Label>
+                <Textarea
+                  id={`${inputId}-text`}
+                  placeholder="Introduce el número del documento, productos, montos, fechas, términos de pago, o cualquier información relevante del documento..."
+                  rows={3}
+                  value={localDocumentInfo}
+                  onChange={(e) => {
+                    setLocalDocumentInfo(e.target.value);
+                  }}
+                  onBlur={() => {
+                    handleDocumentTextChange(
+                      inputId as "proforma" | "factura",
+                      localDocumentInfo
+                    );
+                  }}
+                  className="mt-1"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Esta información ayudará a los administradores a revisar el
+                  documento más eficientemente
+                </p>
+              </div>
+
               <Button
                 type="button"
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={() => removeFile(inputId as "proforma" | "factura")}
               >
-                <X className="h-4 w-4" />
+                Cambiar archivo
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground">
-              {(file.fileSize / 1024 / 1024).toFixed(2)} MB
-            </p>
-
-            {/* File Preview */}
-            {file.previewUrl && file.mimeType.startsWith("image/") ? (
-              <div className="relative w-full max-w-xs mx-auto">
-                <Image
-                  src={file.previewUrl}
-                  alt={`Vista previa de ${file.filename}`}
-                  width={300}
-                  height={200}
-                  className="w-full h-32 object-cover rounded-lg border"
-                  unoptimized
-                />
-                <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors rounded-lg flex items-center justify-center opacity-0 hover:opacity-100">
-                  <Eye className="h-6 w-6 text-white" />
-                </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex justify-center">
+                <Upload className="h-8 w-8 text-muted-foreground" />
               </div>
-            ) : file.mimeType === "application/pdf" ? (
-              <div className="flex items-center justify-center w-full h-32 bg-gray-100 rounded-lg border">
-                <div className="text-center">
-                  <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-xs text-gray-600">Archivo PDF</p>
-                </div>
+              <div>
+                <p className="text-sm font-medium">Arrastra tu archivo aquí</p>
+                <p className="text-xs text-muted-foreground">o</p>
               </div>
-            ) : null}
-
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => removeFile(inputId as "proforma" | "factura")}
-            >
-              Cambiar archivo
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <div className="flex justify-center">
-              <Upload className="h-8 w-8 text-muted-foreground" />
+              <Button type="button" variant="outline" size="sm" asChild>
+                <Label htmlFor={inputId} className="cursor-pointer">
+                  SELECCIONAR ARCHIVO
+                </Label>
+              </Button>
+              <Input
+                id={inputId}
+                type="file"
+                className="hidden"
+                onChange={onFileChange}
+                accept=".pdf,.jpg,.jpeg,.png"
+                required={required}
+              />
+              <p className="text-xs text-muted-foreground">
+                Formatos: PDF, JPG, PNG • Máx: 5MB
+              </p>
             </div>
-            <div>
-              <p className="text-sm font-medium">Arrastra tu archivo aquí</p>
-              <p className="text-xs text-muted-foreground">o</p>
-            </div>
-            <Button type="button" variant="outline" size="sm" asChild>
-              <Label htmlFor={inputId} className="cursor-pointer">
-                SELECCIONAR ARCHIVO
-              </Label>
-            </Button>
-            <Input
-              id={inputId}
-              type="file"
-              className="hidden"
-              onChange={onFileChange}
-              accept=".pdf,.jpg,.jpeg,.png"
-              required={required}
-            />
-            <p className="text-xs text-muted-foreground">
-              Formatos: PDF, JPG, PNG • Máx: 5MB
-            </p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
+
+  // Show loading state while user data is being fetched
+  if (userLoading || providersLoading) {
+    return (
+      <ImportadorLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span>Cargando...</span>
+          </div>
+        </div>
+      </ImportadorLayout>
+    );
+  }
 
   return (
     <ImportadorLayout>
@@ -455,7 +565,49 @@ export default function NuevaSolicitud() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Cargar Proveedor Existente */}
+            {providersData?.providers && providersData.providers.length > 0 && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="font-medium text-blue-900 mb-3">
+                  🏢 Cargar Proveedor Existente
+                </h4>
+                <div className="flex items-center gap-3">
+                  <Select onValueChange={handleProviderSelect}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Seleccionar proveedor existente..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {providersData?.providers?.map((provider) => (
+                        <SelectItem key={provider.id} value={provider.id}>
+                          {provider.name} - {provider.country}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {providersLoading && (
+                    <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                  )}
+                </div>
+                <p className="text-xs text-blue-700 mt-2">
+                  Selecciona un proveedor para cargar automáticamente sus datos
+                </p>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="proveedor-empresa">
+                  Nombre de la Empresa Beneficiaria*
+                </Label>
+                <Input
+                  id="proveedor-empresa"
+                  placeholder="Ej: Shanghai Trading Co., Ltd."
+                  required
+                  value={formData.providerName}
+                  onChange={(e) =>
+                    handleInputChange("providerName", e.target.value)
+                  }
+                />
+              </div>
               <div>
                 <Label htmlFor="proveedor-pais">País del Proveedor *</Label>
                 <Select
@@ -468,56 +620,137 @@ export default function NuevaSolicitud() {
                     <SelectValue placeholder="Seleccionar país" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="china">🇨🇳 China</SelectItem>
-                    <SelectItem value="usa">🇺🇸 Estados Unidos</SelectItem>
-                    <SelectItem value="germany">🇩🇪 Alemania</SelectItem>
-                    <SelectItem value="japan">🇯🇵 Japón</SelectItem>
-                    <SelectItem value="south-korea">
+                    <SelectItem value="China">🇨🇳 China</SelectItem>
+                    <SelectItem value="USA">🇺🇸 Estados Unidos</SelectItem>
+                    <SelectItem value="Germany">🇩🇪 Alemania</SelectItem>
+                    <SelectItem value="Japan">🇯🇵 Japón</SelectItem>
+                    <SelectItem value="South Korea">
                       🇰🇷 Corea del Sur
                     </SelectItem>
-                    <SelectItem value="italy">🇮🇹 Italia</SelectItem>
-                    <SelectItem value="france">🇫🇷 Francia</SelectItem>
-                    <SelectItem value="spain">🇪🇸 España</SelectItem>
-                    <SelectItem value="brazil">🇧🇷 Brasil</SelectItem>
-                    <SelectItem value="mexico">🇲🇽 México</SelectItem>
-                    <SelectItem value="other">🌍 Otro</SelectItem>
+                    <SelectItem value="Italy">🇮🇹 Italia</SelectItem>
+                    <SelectItem value="France">🇫🇷 Francia</SelectItem>
+                    <SelectItem value="Spain">🇪🇸 España</SelectItem>
+                    <SelectItem value="Brazil">🇧🇷 Brasil</SelectItem>
+                    <SelectItem value="Mexico">🇲🇽 México</SelectItem>
+                    <SelectItem value="Other">🌍 Otro</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="proveedor-empresa">
-                  Nombre de la Empresa *
+                <Label htmlFor="provider-bank-name">
+                  Nombre del Banco del Beneficiario *
                 </Label>
                 <Input
-                  id="proveedor-empresa"
+                  id="provider-bank-name"
+                  placeholder="Ej: Bank of China"
+                  required
+                  value={formData.providerBankName}
+                  onChange={(e) =>
+                    handleInputChange("providerBankName", e.target.value)
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="provider-account-number">
+                  Número de Cuenta del Beneficiario *
+                </Label>
+                <Input
+                  id="provider-account-number"
+                  placeholder="Ej: 1234567890"
+                  required
+                  value={formData.providerAccountNumber}
+                  onChange={(e) =>
+                    handleInputChange("providerAccountNumber", e.target.value)
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="provider-swift-code">Código SWIFT/BIC *</Label>
+                <Input
+                  id="provider-swift-code"
+                  placeholder="Ej: BKCHCNBJ"
+                  required
+                  value={formData.providerSwiftCode}
+                  onChange={(e) =>
+                    handleInputChange("providerSwiftCode", e.target.value)
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="provider-beneficiary-name">
+                  Nombre del Beneficiario *
+                </Label>
+                <Input
+                  id="provider-beneficiary-name"
                   placeholder="Ej: Shanghai Trading Co., Ltd."
                   required
-                  value={formData.providerName}
+                  value={formData.providerBeneficiaryName}
                   onChange={(e) =>
-                    handleInputChange("providerName", e.target.value)
+                    handleInputChange("providerBeneficiaryName", e.target.value)
                   }
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="datos-bancarios">
-                Datos Bancarios del Proveedor *
-              </Label>
+              <Label htmlFor="provider-bank-address">Dirección del Banco</Label>
               <Textarea
-                id="datos-bancarios"
-                placeholder="Incluye: Nombre del banco, número de cuenta, código SWIFT/BIC, dirección del banco, nombre del beneficiario, etc."
-                rows={4}
-                required
-                value={formData.providerBankingDetails}
+                id="provider-bank-address"
+                placeholder="Dirección completa del banco"
+                rows={2}
+                value={formData.providerBankAddress}
                 onChange={(e) =>
-                  handleInputChange("providerBankingDetails", e.target.value)
+                  handleInputChange("providerBankAddress", e.target.value)
                 }
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                Proporciona toda la información bancaria necesaria para realizar
-                la transferencia
-              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="provider-email">Email del Proveedor</Label>
+                <Input
+                  id="provider-email"
+                  type="email"
+                  placeholder="proveedor@ejemplo.com"
+                  value={formData.providerEmail}
+                  onChange={(e) =>
+                    handleInputChange("providerEmail", e.target.value)
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="provider-phone">Teléfono del Proveedor</Label>
+                <Input
+                  id="provider-phone"
+                  type="tel"
+                  placeholder="+86 123 4567 8900"
+                  value={formData.providerPhone}
+                  onChange={(e) =>
+                    handleInputChange("providerPhone", e.target.value)
+                  }
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="provider-additional-info">
+                Información Adicional del Proveedor
+              </Label>
+              <Textarea
+                id="provider-additional-info"
+                placeholder="Información adicional relevante sobre el proveedor, instrucciones especiales, notas, etc."
+                rows={3}
+                value={formData.providerAdditionalInfo}
+                onChange={(e) =>
+                  handleInputChange("providerAdditionalInfo", e.target.value)
+                }
+              />
             </div>
           </CardContent>
         </Card>
@@ -537,7 +770,7 @@ export default function NuevaSolicitud() {
                 onFileChange={(e) => handleFileChange(e, "proforma")}
                 title="Proforma Invoice"
                 inputId="proforma"
-                required={true}
+                required={false}
                 isUploading={uploadingFiles.has("proforma")}
               />
 
@@ -546,6 +779,7 @@ export default function NuevaSolicitud() {
                 onFileChange={(e) => handleFileChange(e, "factura")}
                 title="Factura Comercial"
                 inputId="factura"
+                required={false}
                 isUploading={uploadingFiles.has("factura")}
               />
             </div>
@@ -556,38 +790,23 @@ export default function NuevaSolicitud() {
               </h4>
               <ul className="text-sm text-blue-800 space-y-1">
                 <li>
-                  • <strong>Proforma Invoice:</strong> Documento obligatorio que
-                  detalla los productos y precios
+                  • <strong>Proforma Invoice:</strong> Documento que detalla los
+                  productos y precios (al menos uno de los dos documentos es
+                  requerido)
                 </li>
                 <li>
                   • <strong>Factura Comercial:</strong> Documento oficial de
-                  venta (opcional si solo tienes proforma)
+                  venta (al menos uno de los dos documentos es requerido)
                 </li>
                 <li>• Ambos documentos deben estar en inglés o español</li>
                 <li>
                   • Asegúrate de que los montos coincidan con el valor declarado
                 </li>
+                <li>
+                  • <strong>Importante:</strong> Debes subir al menos uno de los
+                  dos documentos
+                </li>
               </ul>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Términos y Condiciones */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="terms"
-                required
-                checked={formData.terms}
-                onCheckedChange={(checked) =>
-                  handleInputChange("terms", !!checked)
-                }
-              />
-              <Label htmlFor="terms" className="text-sm">
-                He leído y acepto los términos del servicio y confirmo que toda
-                la información proporcionada es veraz
-              </Label>
             </div>
           </CardContent>
         </Card>

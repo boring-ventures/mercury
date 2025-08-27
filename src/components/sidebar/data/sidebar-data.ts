@@ -17,13 +17,13 @@ import type { SidebarData } from "../types";
 // Base sidebar data - can be extended per role
 export const baseSidebarData: SidebarData = {
   user: {
-    name: "Mercury User",
-    email: "user@mercury.com",
+    name: "NORDEX User",
+    email: "user@nordex.com",
     avatar: "/avatars/default.jpg",
   },
   teams: [
     {
-      name: "Mercury Platform",
+      name: "NORDEX Platform",
       logo: Ship,
       plan: "Gestión de Envíos Internacionales",
     },
@@ -55,17 +55,17 @@ export const adminSidebarData: SidebarData = {
         },
         {
           title: "Cotizaciones",
-          url: "/admin/cotizaciones",
+          url: "/admin/quotations",
           icon: FileText,
         },
         {
           title: "Contratos",
-          url: "/admin/contratos",
+          url: "/admin/contracts",
           icon: Building2,
         },
         {
-          title: "Reportes",
-          url: "/admin/reportes",
+          title: "Pagos",
+          url: "/admin/payments",
           icon: TrendingUp,
         },
       ],
@@ -80,7 +80,7 @@ export const adminSidebarData: SidebarData = {
         },
         {
           title: "Empresas",
-          url: "/admin/empresas",
+          url: "/admin/companies",
           icon: Building2,
         },
         {
@@ -90,7 +90,7 @@ export const adminSidebarData: SidebarData = {
         },
         {
           title: "Proveedores",
-          url: "/admin/proveedores",
+          url: "/admin/providers",
           icon: Ship,
         },
       ],

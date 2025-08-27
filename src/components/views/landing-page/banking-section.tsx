@@ -1,4 +1,4 @@
-import { CheckCircle, Globe, CreditCard, Banknote } from "lucide-react";
+import { Globe, CreditCard, Banknote } from "lucide-react";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import { ShineBorder } from "@/components/magicui/shine-border";
 
@@ -89,7 +89,7 @@ export function BankingSection() {
                   "Meru App Deposits",
                   "Meru App Bitcoin",
                   "Meru App MoneyGram",
-                ].map((screen, index) => (
+                ].map((screen) => (
                   <div
                     key={screen}
                     className="bg-white/20 rounded-2xl p-4 h-32 flex items-center justify-center"

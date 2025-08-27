@@ -65,7 +65,7 @@ export function TestimonialsSection() {
                     </div>
                   </div>
                   <p className="text-gray-600 dark:text-gray-300 italic">
-                    "{testimonial.content}"
+                    &ldquo;{testimonial.content}&rdquo;
                   </p>
                 </div>
               </BlurFade>

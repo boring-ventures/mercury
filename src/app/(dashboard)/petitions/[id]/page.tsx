@@ -49,14 +49,13 @@ import Image from "next/image";
 interface RegistrationPetition {
   id: string;
   companyName: string;
-  ruc: string;
+  nit: string;
   country: string;
   activity: string;
   contactName: string;
   contactPosition: string;
   email: string;
   phone: string;
-  bankingDetails: string;
   status: "PENDING" | "APPROVED" | "REJECTED";
   reviewedAt?: string;
   reviewedBy?: string;
@@ -118,6 +117,20 @@ const activityLabels = {
   COMERCIO_MAYORISTA: "Comercio Mayorista",
   COMERCIO_MINORISTA: "Comercio Minorista",
   OTROS: "Otros",
+};
+
+// Add document type labels mapping
+const documentTypeLabels = {
+  MATRICULA_COMERCIO: "Matrícula de Comercio",
+  NIT: "NIT",
+  CERTIFICADO_ADUANA: "Certificado de Aduana",
+  PODER_REPRESENTANTE: "Poder de Representante",
+  CARNET_IDENTIDAD: "Carnet de Identidad",
+  PROFORMA_INVOICE: "Proforma Invoice",
+  FACTURA_COMERCIAL: "Factura Comercial",
+  CONTRATO: "Contrato",
+  COMPROBANTE_PAGO: "Comprobante de Pago",
+  OTHER: "Otro",
 };
 
 interface DocumentViewerProps {
@@ -774,8 +787,8 @@ function PetitionDetailPageContent() {
                     <span>{petition.companyName}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">RUC/NIT:</span>
-                    <span>{petition.ruc}</span>
+                    <span className="font-medium">NIT:</span>
+                    <span>{petition.nit}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
@@ -1155,16 +1168,6 @@ function PetitionDetailPageContent() {
         </Card>
       </div>
 
-      {/* Banking Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle>INFORMACIÓN BANCARIA</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="whitespace-pre-wrap">{petition.bankingDetails}</p>
-        </CardContent>
-      </Card>
-
       {/* Documents Section */}
       <Card>
         <CardHeader>
@@ -1179,35 +1182,59 @@ function PetitionDetailPageContent() {
               No hay documentos adjuntos
             </p>
           ) : (
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {petition.documents.map((doc) => (
-                <div key={doc.id} className="border rounded-lg p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-5 w-5 text-blue-500" />
-                      <div>
-                        <h3 className="font-medium">{doc.filename}</h3>
-                        <p className="text-sm text-gray-500">{doc.mimeType}</p>
-                      </div>
+                <div
+                  key={doc.id}
+                  className="border rounded-lg p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
+                >
+                  {/* Document Type Badge */}
+                  <div className="mb-3">
+                    <Badge variant="secondary" className="text-md font-bold">
+                      {documentTypeLabels[
+                        doc.type as keyof typeof documentTypeLabels
+                      ] || "Sin tipo"}
+                    </Badge>
+                  </div>
+
+                  {/* Document Icon and Info */}
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="flex-shrink-0">
+                      <FileText className="h-8 w-8 text-blue-500" />
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleOpenDocumentModal(doc.id)}
+                    <div className="flex-1 min-w-0">
+                      <h3
+                        className="font-medium text-sm truncate"
+                        title={doc.filename}
                       >
-                        <Eye className="h-4 w-4 mr-1" />
-                        Abrir
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDocumentDownload(doc)}
-                      >
-                        <Download className="h-4 w-4 mr-1" />
-                        Descargar
-                      </Button>
+                        {doc.filename}
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {doc.mimeType}
+                      </p>
                     </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleOpenDocumentModal(doc.id)}
+                      className="flex-1 text-xs"
+                    >
+                      <Eye className="h-3 w-3 mr-1" />
+                      Ver
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDocumentDownload(doc)}
+                      className="flex-1 text-xs"
+                    >
+                      <Download className="h-3 w-3 mr-1" />
+                      Descargar
+                    </Button>
                   </div>
 
                   {/* Document Viewer */}

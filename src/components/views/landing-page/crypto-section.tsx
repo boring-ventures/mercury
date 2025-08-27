@@ -1,6 +1,5 @@
 import { Bitcoin, TrendingUp, Wallet } from "lucide-react";
 import { BlurFade } from "@/components/magicui/blur-fade";
-import { ShineBorder } from "@/components/magicui/shine-border";
 
 export function CryptoSection() {
   return (

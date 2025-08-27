@@ -22,15 +22,17 @@ model Profile {
   phone              String?
   lastLogin          DateTime?
   companyId          String?
+  email              String?
   auditLogs          AuditLog[]
   assignedContracts  Contract[]     @relation("ContractAssignedTo")
   createdContracts   Contract[]     @relation("ContractCreatedBy")
   notifications      Notification[]
-  company            Company?       @relation(fields: [companyId], references: [id])
+  providers          Provider[]
   assignedQuotations Quotation[]    @relation("QuotationAssignedTo")
   createdQuotations  Quotation[]    @relation("QuotationCreatedBy")
   assignedRequests   Request[]      @relation("RequestAssignedTo")
   createdRequests    Request[]      @relation("RequestCreatedBy")
+  company            Company?       @relation(fields: [companyId], references: [id])
 
   @@index([userId])
   @@index([role])
@@ -42,40 +44,40 @@ model Profile {
 model Company {
   id                  String               @id @default(cuid())
   name                String
-  ruc                 String               @unique
   country             String
   activity            ActivityType
   contactName         String
   contactPosition     String
   email               String
   phone               String
-  bankingDetails      String?
   status              UserStatus           @default(ACTIVE)
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
+  companyType         CompanyType
+  nit                 String               @unique
+  bankingDetails      Json?
+  city                String
   contracts           Contract[]
   documents           Document[]
   payments            Payment[]
-  users               Profile[]
   quotations          Quotation[]
   registrationRequest RegistrationRequest?
   requests            Request[]
+  users               Profile[]
 
-  @@index([ruc])
+  @@index([nit])
   @@index([status])
 }
 
 model RegistrationRequest {
   id                String             @id @default(cuid())
   companyName       String
-  ruc               String
   country           String
   activity          ActivityType
   contactName       String
   contactPosition   String
   email             String
   phone             String
-  bankingDetails    String
   status            RegistrationStatus @default(PENDING)
   reviewedAt        DateTime?
   reviewedBy        String?
@@ -85,6 +87,9 @@ model RegistrationRequest {
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   companyId         String?            @unique
+  city              String
+  companyType       CompanyType
+  nit               String
   documents         Document[]
   company           Company?           @relation(fields: [companyId], references: [id])
 }
@@ -93,12 +98,17 @@ model Provider {
   id             String    @id @default(cuid())
   name           String
   country        String
-  bankingDetails String
   email          String?
   phone          String?
+  additionalInfo String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+  bankingDetails Json?
+  userId         String?
+  user           Profile?  @relation(fields: [userId], references: [id])
   requests       Request[]
+
+  @@index([userId])
 }
 
 model Request {
@@ -108,7 +118,6 @@ model Request {
   currency       Currency      @default(USDT)
   description    String
   status         RequestStatus @default(PENDING)
-  rejectionCount Int           @default(0)
   reviewNotes    String?
   reviewedAt     DateTime?
   createdAt      DateTime      @default(now())
@@ -117,6 +126,7 @@ model Request {
   companyId      String
   createdById    String
   assignedToId   String?
+  rejectionCount Int           @default(0)
   contracts      Contract[]
   documents      Document[]
   payments       Payment[]
@@ -144,6 +154,7 @@ model Document {
   reviewNotes           String?
   reviewedAt            DateTime?
   reviewedBy            String?
+  documentInfo          String?              // Additional text information about the document
   createdAt             DateTime             @default(now())
   updatedAt             DateTime             @updatedAt
   companyId             String?
@@ -166,34 +177,39 @@ model Document {
 }
 
 model Quotation {
-  id              String          @id @default(cuid())
-  code            String          @unique
-  amount          Decimal         @db.Decimal(15, 2)
-  currency        Currency        @default(USD)
-  description     String
-  validUntil      DateTime
-  status          QuotationStatus @default(DRAFT)
-  baseAmount      Decimal         @default(0) @db.Decimal(15, 2)
-  fees            Decimal         @default(0) @db.Decimal(15, 2)
-  taxes           Decimal         @default(0) @db.Decimal(15, 2)
-  totalAmount     Decimal         @db.Decimal(15, 2)
-  terms           String?
-  notes           String?
-  rejectionReason String?
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  sentAt          DateTime?
-  respondedAt     DateTime?
-  requestId       String
-  companyId       String
-  createdById     String
-  assignedToId    String?
-  contracts       Contract[]
-  documents       Document[]
-  assignedTo      Profile?        @relation("QuotationAssignedTo", fields: [assignedToId], references: [id])
-  company         Company         @relation(fields: [companyId], references: [id])
-  createdBy       Profile         @relation("QuotationCreatedBy", fields: [createdById], references: [id])
-  request         Request         @relation(fields: [requestId], references: [id])
+  id                          String          @id @default(cuid())
+  code                        String          @unique
+  amount                      Decimal         @db.Decimal(15, 2)
+  currency                    Currency        @default(USD)
+  description                 String
+  validUntil                  DateTime
+  status                      QuotationStatus @default(DRAFT)
+  terms                       String?
+  notes                       String?
+  createdAt                   DateTime        @default(now())
+  updatedAt                   DateTime        @updatedAt
+  sentAt                      DateTime?
+  respondedAt                 DateTime?
+  requestId                   String
+  companyId                   String
+  createdById                 String
+  assignedToId                String?
+  rejectionReason             String?
+  exchangeRate                Decimal         @default(0) @db.Decimal(10, 4)
+  managementServiceBs         Decimal         @default(0) @db.Decimal(15, 2)
+  managementServicePercentage Decimal         @default(0) @db.Decimal(5, 2)
+  totalInBs                   Decimal         @default(0) @db.Decimal(15, 2)
+  amountInBs                  Decimal         @default(0) @db.Decimal(15, 2)
+  correspondentBankBs         Decimal         @default(0) @db.Decimal(15, 2)
+  correspondentBankUSD        Decimal         @default(0) @db.Decimal(15, 2)
+  swiftBankBs                 Decimal         @default(0) @db.Decimal(15, 2)
+  swiftBankUSD                Decimal         @default(0) @db.Decimal(15, 2)
+  contracts                   Contract[]
+  documents                   Document[]
+  assignedTo                  Profile?        @relation("QuotationAssignedTo", fields: [assignedToId], references: [id])
+  company                     Company         @relation(fields: [companyId], references: [id])
+  createdBy                   Profile         @relation("QuotationCreatedBy", fields: [createdById], references: [id])
+  request                     Request         @relation(fields: [requestId], references: [id])
 
   @@index([code])
   @@index([status])
@@ -202,32 +218,33 @@ model Quotation {
 }
 
 model Contract {
-  id           String         @id @default(cuid())
-  code         String         @unique
-  title        String
-  description  String
-  amount       Decimal        @db.Decimal(15, 2)
-  currency     Currency       @default(USD)
-  status       ContractStatus @default(DRAFT)
-  startDate    DateTime
-  endDate      DateTime
-  terms        String
-  conditions   String?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  signedAt     DateTime?
-  requestId    String?
-  quotationId  String?
-  companyId    String
-  createdById  String
-  assignedToId String?
-  assignedTo   Profile?       @relation("ContractAssignedTo", fields: [assignedToId], references: [id])
-  company      Company        @relation(fields: [companyId], references: [id])
-  createdBy    Profile        @relation("ContractCreatedBy", fields: [createdById], references: [id])
-  quotation    Quotation?     @relation(fields: [quotationId], references: [id])
-  request      Request?       @relation(fields: [requestId], references: [id])
-  documents    Document[]
-  payments     Payment[]
+  id             String         @id @default(cuid())
+  code           String         @unique
+  title          String
+  description    String
+  amount         Decimal        @db.Decimal(15, 2)
+  currency       Currency       @default(USD)
+  status         ContractStatus @default(DRAFT)
+  startDate      DateTime
+  endDate        DateTime
+  terms          String
+  conditions     String?
+  additionalData Json?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  signedAt       DateTime?
+  requestId      String?
+  quotationId    String?
+  companyId      String
+  createdById    String
+  assignedToId   String?
+  assignedTo     Profile?       @relation("ContractAssignedTo", fields: [assignedToId], references: [id])
+  company        Company        @relation(fields: [companyId], references: [id])
+  createdBy      Profile        @relation("ContractCreatedBy", fields: [createdById], references: [id])
+  quotation      Quotation?     @relation(fields: [quotationId], references: [id])
+  request        Request?       @relation(fields: [requestId], references: [id])
+  documents      Document[]
+  payments       Payment[]
 
   @@index([code])
   @@index([status])
@@ -345,6 +362,7 @@ enum DocumentType {
   FACTURA_COMERCIAL
   CONTRATO
   COMPROBANTE_PAGO
+  COMPROBANTE_PAGO_PROVEEDOR
   OTHER
 }
 
@@ -367,6 +385,10 @@ enum ContractStatus {
   DRAFT
   ACTIVE
   COMPLETED
+  PAYMENT_PENDING
+  PAYMENT_REVIEWED
+  PROVIDER_PAID
+  PAYMENT_COMPLETED
   CANCELLED
   EXPIRED
 }
@@ -415,4 +437,10 @@ enum ActivityType {
   COMERCIO_MAYORISTA
   COMERCIO_MINORISTA
   OTROS
+}
+
+enum CompanyType {
+  UNIPERSONAL
+  SRL
+  SA
 }

@@ -1,6 +1,12 @@
 import React from "react";
 import {
+<<<<<<< HEAD
   Shield,
+=======
+  MessageCircle,
+  Star,
+  Building,
+>>>>>>> 4bcdf987d50ed381ca33f2f6a2e4356a3502b30f
   Users,
   Globe,
   Clock,
@@ -108,9 +114,65 @@ export default function NordexCharacteristicsSection() {
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+<<<<<<< HEAD
             <div className="text-center">
               <div className="text-4xl font-bold mb-2">+50</div>
               <div className="text-[#FCFDFD] opacity-90">Países conectados</div>
+=======
+            {testimonials.map((testimonial, index) => (
+              <div
+                key={index}
+                className="bg-white/10 backdrop-blur-sm rounded-xl p-8 hover:bg-white/20 transition-all duration-300 transform hover:scale-105 border border-white/20"
+              >
+                <div className="flex items-center mb-4">
+                  {[...Array(testimonial.rating)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className="w-5 h-5 text-yellow-400 fill-current"
+                    />
+                  ))}
+                </div>
+
+                <blockquote className="text-gray-200 leading-relaxed mb-6 italic">
+                  &ldquo;{testimonial.quote}&rdquo;
+                </blockquote>
+
+                <div className="border-t border-white/20 pt-4">
+                  <div className="font-semibold text-white">
+                    {testimonial.author}
+                  </div>
+                  <div className="text-sm text-gray-300">
+                    {testimonial.position}
+                  </div>
+                  <div className="text-sm text-gray-400">
+                    {testimonial.company}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Contact Information */}
+        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-12 border border-white/20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h3 className="text-3xl font-bold text-white mb-6">
+                ¿Listo para transformar tu comercio internacional?
+              </h3>
+              <p className="text-xl text-gray-300 mb-8">
+                Únete a más de 150 empresas bolivianas que ya confían en NORDEX
+                para sus operaciones internacionales.
+              </p>
+
+              <a
+                href="#contacto"
+                className="inline-flex items-center justify-center px-8 py-4 bg-white hover:bg-gray-100 text-[#051D67] rounded-lg text-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+              >
+                <MessageCircle className="w-6 h-6 mr-3" />
+                Solicitar Consultoría Gratuita
+              </a>
+>>>>>>> 4bcdf987d50ed381ca33f2f6a2e4356a3502b30f
             </div>
             <div className="text-center">
               <div className="text-4xl font-bold mb-2">24/7</div>

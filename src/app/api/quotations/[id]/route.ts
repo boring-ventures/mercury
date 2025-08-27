@@ -3,7 +3,13 @@ import { cookies } from "next/headers";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import prisma from "@/lib/prisma";
 import { createSystemNotification } from "@/lib/notifications";
-import { RequestStatus, QuotationStatus } from "@prisma/client";
+import { resend, FROM_EMAIL } from "@/lib/resend";
+import {
+  generateQuotationAcceptedAdminEmail,
+  generateQuotationRejectedAdminEmail,
+} from "@/lib/email-templates";
+import { notifyQuotationReceived } from "@/lib/notification-events";
+import { RequestStatus, QuotationStatus, Currency } from "@prisma/client";
 
 // API route for updating quotation status (approve/reject)
 export async function PUT(
@@ -175,10 +181,11 @@ export async function PUT(
           },
           select: {
             id: true,
+            email: true,
           },
         });
 
-        // Notify all admin users
+        // Notify all admin users (in-app notification)
         await Promise.all(
           adminUsers.map((admin) =>
             createSystemNotification("REQUEST_APPROVED", admin.id, {
@@ -187,13 +194,37 @@ export async function PUT(
               quotationId: quotationId,
               quotationCode: quotation.code,
               companyName: quotation.request.company.name,
-              amount: quotation.totalAmount,
+              amount: quotation.amount,
             })
           )
         );
+
+        // Send email to admins who have an email configured
+        const adminEmails = adminUsers
+          .map((a) => a.email)
+          .filter((e): e is string => Boolean(e));
+        if (adminEmails.length > 0) {
+          const appUrl =
+            process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+          const html = generateQuotationAcceptedAdminEmail({
+            companyName: quotation.request.company.name,
+            requestCode: quotation.request.code,
+            quotationCode: quotation.code,
+            amount: quotation.amount.toString(),
+            currency: quotation.currency,
+            acceptedAt: new Date().toISOString(),
+            link: `${appUrl}/admin/quotations/${quotationId}`,
+          });
+          await resend.emails.send({
+            from: FROM_EMAIL,
+            to: adminEmails,
+            subject: `Cotización aceptada • ${quotation.code}`,
+            html,
+          });
+        }
       } catch (notificationError) {
         console.error(
-          "Error sending notification to admin:",
+          "Error sending notification/email to admin:",
           notificationError
         );
         // Don't fail the quotation update if notification fails
@@ -222,9 +253,11 @@ export async function PUT(
           },
           select: {
             id: true,
+            email: true,
           },
         });
 
+        // Notify all admin users (in-app notification)
         await Promise.all(
           adminUsers.map((admin) =>
             createSystemNotification("REQUEST_REJECTED", admin.id, {
@@ -237,11 +270,37 @@ export async function PUT(
             })
           )
         );
+
+        // Send email to admins who have an email configured
+        const adminEmails = adminUsers
+          .map((a) => a.email)
+          .filter((e): e is string => Boolean(e));
+        if (adminEmails.length > 0) {
+          const appUrl =
+            process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+          const html = generateQuotationRejectedAdminEmail({
+            companyName: quotation.request.company.name,
+            requestCode: quotation.request.code,
+            quotationCode: quotation.code,
+            amount: quotation.amount.toString(),
+            currency: quotation.currency,
+            rejectedAt: new Date().toISOString(),
+            reason: notes || "No reason provided",
+            link: `${appUrl}/admin/quotations/${quotationId}`,
+          });
+          await resend.emails.send({
+            from: FROM_EMAIL,
+            to: adminEmails,
+            subject: `Cotización rechazada • ${quotation.code}`,
+            html,
+          });
+        }
       } catch (notificationError) {
         console.error(
-          "Error sending notification to admin:",
+          "Error sending notification/email to admin:",
           notificationError
         );
+        // Don't fail the quotation update if notification fails
       }
     }
 
@@ -341,7 +400,7 @@ export async function DELETE(
         oldValues: {
           code: quotation.code,
           status: quotation.status,
-          totalAmount: quotation.totalAmount,
+          amount: quotation.amount,
         },
         profileId: profile.id,
       },
@@ -369,10 +428,17 @@ export async function PATCH(
     const { id: quotationId } = await params;
     const body = await request.json();
     const {
-      baseAmount,
-      fees,
-      taxes,
-      totalAmount,
+      amount,
+      currency,
+      exchangeRate,
+      amountInBs,
+      swiftBankUSD,
+      correspondentBankUSD,
+      swiftBankBs,
+      correspondentBankBs,
+      managementServiceBs,
+      managementServicePercentage,
+      totalInBs,
       validUntil,
       terms,
       notes,
@@ -413,9 +479,9 @@ export async function PATCH(
     }
 
     // Validate required fields
-    if (!baseAmount || !validUntil || !status) {
+    if (!amount || !validUntil || !status) {
       return NextResponse.json(
-        { error: "Base amount, valid until date, and status are required" },
+        { error: "Amount, valid until date, and status are required" },
         { status: 400 }
       );
     }
@@ -435,21 +501,35 @@ export async function PATCH(
 
     // Prepare update data
     const updateData: {
-      baseAmount: number;
-      fees: number;
-      taxes: number;
-      totalAmount: number;
+      amount: number;
+      currency: Currency;
+      exchangeRate: number;
+      amountInBs: number;
+      swiftBankUSD: number;
+      correspondentBankUSD: number;
+      swiftBankBs: number;
+      correspondentBankBs: number;
+      managementServiceBs: number;
+      managementServicePercentage: number;
+      totalInBs: number;
       validUntil: Date;
       status: QuotationStatus;
       terms?: string;
       notes?: string;
       sentAt?: Date;
     } = {
-      baseAmount: parseFloat(baseAmount),
-      fees: parseFloat(fees) || 0,
-      taxes: parseFloat(taxes) || 0,
-      totalAmount: parseFloat(totalAmount),
-      validUntil: new Date(validUntil + "T23:59:59"), // Set to end of day
+      amount: parseFloat(amount),
+      currency: (currency || "USD") as Currency,
+      exchangeRate: parseFloat(exchangeRate) || 0,
+      amountInBs: parseFloat(amountInBs) || 0,
+      swiftBankUSD: parseFloat(swiftBankUSD) || 0,
+      correspondentBankUSD: parseFloat(correspondentBankUSD) || 0,
+      swiftBankBs: parseFloat(swiftBankBs) || 0,
+      correspondentBankBs: parseFloat(correspondentBankBs) || 0,
+      managementServiceBs: parseFloat(managementServiceBs) || 0,
+      managementServicePercentage: parseFloat(managementServicePercentage) || 0,
+      totalInBs: parseFloat(totalInBs) || 0,
+      validUntil: new Date(validUntil), // Now handles datetime string correctly
       status: status as QuotationStatus,
     };
 
@@ -482,20 +562,59 @@ export async function PATCH(
         entity: "Quotation",
         entityId: quotationId,
         oldValues: {
-          baseAmount: quotation.baseAmount,
-          totalAmount: quotation.totalAmount,
+          amount: quotation.amount,
           status: quotation.status,
           validUntil: quotation.validUntil,
         },
         newValues: {
-          baseAmount: updateData.baseAmount,
-          totalAmount: updateData.totalAmount,
+          amount: updateData.amount,
           status: updateData.status,
           validUntil: updateData.validUntil,
         },
         profileId: profile.id,
       },
     });
+
+    // Send notifications if status is changed to SENT
+    if (quotation.status !== "SENT" && status === "SENT") {
+      try {
+        // Get the admin who updated the quotation
+        const adminProfile = await prisma.profile.findUnique({
+          where: { id: profile.id },
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        });
+
+        const createdBy = adminProfile
+          ? `${adminProfile.firstName} ${adminProfile.lastName}`.trim()
+          : "Administrador";
+
+        await notifyQuotationReceived({
+          quotationId: updatedQuotation.id,
+          code: updatedQuotation.code,
+          requestId: updatedQuotation.requestId,
+          companyId: updatedQuotation.companyId,
+          amount: Number(updatedQuotation.amount),
+          currency: updatedQuotation.currency,
+          totalInBs: Number(updatedQuotation.totalInBs),
+          exchangeRate: Number(updatedQuotation.exchangeRate),
+          validUntil: updatedQuotation.validUntil.toISOString(),
+          createdBy: createdBy,
+          createdAt: updatedQuotation.createdAt.toISOString(),
+          companyName: updatedQuotation.request?.company?.name,
+          requestCode: updatedQuotation.request?.code,
+          status: updatedQuotation.status,
+        });
+      } catch (notificationError) {
+        console.error(
+          "Error sending notification for quotation status change:",
+          notificationError
+        );
+        // Don't fail the quotation update if notification fails
+      }
+    }
 
     return NextResponse.json({
       success: true,

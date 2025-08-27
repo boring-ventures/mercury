@@ -1,18 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: [
-      // Add your Supabase project domain
-      "swfgvfhpmicwptupjyko.supabase.co",
-      "xqakfzhkeiongvzgbhji.supabase.co",
-      "hhineqbtekizcogikaef.supabase.co",
-      // Add placeholder image domains for fallbacks
-      "via.placeholder.com",
-      "www.w3.org",
-    ],
+    domains: ["hhineqbtekizcogikaef.supabase.co"],
   },
-  output: "standalone",
-  // Security headers configuration
   async headers() {
     return [
       {

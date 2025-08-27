@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
           company: {
             OR: [
               { name: { contains: search, mode: "insensitive" } },
-              { ruc: { contains: search, mode: "insensitive" } },
+              { nit: { contains: search, mode: "insensitive" } },
               { email: { contains: search, mode: "insensitive" } },
             ],
           },
@@ -77,8 +77,10 @@ export async function GET(req: NextRequest) {
           select: {
             id: true,
             name: true,
-            ruc: true,
+            nit: true,
+            companyType: true,
             country: true,
+            city: true,
             activity: true,
             contactName: true,
             contactPosition: true,

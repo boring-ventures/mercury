@@ -82,7 +82,7 @@ export function SocialProofSection() {
               { value: "+150", label: "Empresas atendidas" },
               { value: "+500", label: "Transacciones procesadas" },
               { value: "98%", label: "Satisfacción del cliente" },
-            ].map((stat, index) => (
+            ].map((stat) => (
               <div key={stat.label} className="text-center">
                 <div className="text-2xl md:text-3xl font-bold text-primary mb-1">
                   {stat.value}

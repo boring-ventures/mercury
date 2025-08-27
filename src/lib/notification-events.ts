@@ -1,4 +1,6 @@
 import { createSystemNotification, notifyAllAdmins } from "@/lib/notifications";
+import { generateQuotationNotificationEmail } from "@/lib/email-templates";
+import { resend, FROM_EMAIL } from "@/lib/resend";
 
 // Helper to notify when a new request is created
 export async function notifyRequestCreated(requestData: {
@@ -72,6 +74,15 @@ export async function notifyQuotationReceived(quotationData: {
   requestId: string;
   companyId: string;
   amount: number;
+  currency?: string;
+  totalInBs?: number;
+  exchangeRate?: number;
+  validUntil?: string;
+  createdBy?: string;
+  createdAt?: string;
+  companyName?: string;
+  requestCode?: string;
+  status?: string;
 }) {
   try {
     // Get the company's users to notify
@@ -83,10 +94,11 @@ export async function notifyQuotationReceived(quotationData: {
       },
       select: {
         id: true,
+        email: true,
       },
     });
 
-    // Notify all company users
+    // Notify all company users (in-app notification)
     await Promise.all(
       companyUsers.map((user) =>
         createSystemNotification("QUOTATION_RECEIVED", user.id, {
@@ -97,6 +109,49 @@ export async function notifyQuotationReceived(quotationData: {
         })
       )
     );
+
+    // Send email notifications to users with email addresses (only for SENT quotations)
+    const usersWithEmail = companyUsers.filter((user) => user.email);
+
+    if (
+      usersWithEmail.length > 0 &&
+      quotationData.createdBy &&
+      quotationData.status === "SENT"
+    ) {
+      // Generate email content
+      const emailHtml = generateQuotationNotificationEmail({
+        companyName: quotationData.companyName || "Empresa",
+        requestCode: quotationData.requestCode || "N/A",
+        quotationCode: quotationData.code,
+        amount: quotationData.amount.toString(),
+        currency: quotationData.currency || "USD",
+        totalInBs: quotationData.totalInBs?.toString() || "0",
+        exchangeRate: quotationData.exchangeRate?.toString() || "0",
+        validUntil: quotationData.validUntil || new Date().toISOString(),
+        createdBy: quotationData.createdBy,
+        createdAt: quotationData.createdAt || new Date().toISOString(),
+        link: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/importador/solicitudes/${quotationData.requestId}`,
+      });
+
+      // Send emails to all users with email addresses
+      await Promise.all(
+        usersWithEmail.map(async (user) => {
+          try {
+            await resend.emails.send({
+              from: FROM_EMAIL,
+              to: user.email!,
+              subject: `Nueva Cotización Disponible - ${quotationData.code} (Solicitud: ${quotationData.requestCode || "N/A"})`,
+              html: emailHtml,
+            });
+            console.log(
+              `Quotation notification email sent to ${user.email} for quotation ${quotationData.code}`
+            );
+          } catch (emailError) {
+            console.error(`Error sending email to ${user.email}:`, emailError);
+          }
+        })
+      );
+    }
   } catch (error) {
     console.error("Error sending quotation received notification:", error);
   }

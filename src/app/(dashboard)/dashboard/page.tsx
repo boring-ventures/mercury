@@ -46,7 +46,7 @@ export default function DashboardPage() {
       <div className="bg-card rounded-lg p-6">
         <h2 className="text-2xl font-semibold mb-4">Dashboard Overview</h2>
         <p className="text-muted-foreground">
-          Bienvenido a Mercury. Tu perfil está siendo configurado...
+          Bienvenido a NORDEX. Tu perfil está siendo configurado...
         </p>
       </div>
 

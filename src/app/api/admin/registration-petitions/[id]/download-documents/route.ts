@@ -72,7 +72,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // Common bucket names to try
     const bucketNames = [
-      "mercury",
+      "nordex",
       "registration-documents",
       "documents",
       "uploads",

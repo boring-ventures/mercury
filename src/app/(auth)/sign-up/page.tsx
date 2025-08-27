@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -32,7 +32,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
@@ -65,6 +64,7 @@ interface UploadedFile {
   type: string;
   file: File;
   previewUrl?: string;
+  documentInfo?: string; // Additional text information about the document
 }
 
 // Type for submitted data
@@ -76,6 +76,13 @@ interface SubmittedData {
     aduana: UploadedFile | null;
     poder: UploadedFile | null;
     carnet: UploadedFile | null;
+  };
+  documentInfo: {
+    matricula: string;
+    nit: string;
+    aduana: string;
+    poder: string;
+    carnet: string;
   };
   response?: {
     id: string;
@@ -92,11 +99,17 @@ const formSchema = z.object({
   companyName: z.string().min(3, {
     message: "El nombre de la empresa debe tener al menos 3 caracteres.",
   }),
-  ruc: z.string().min(5, {
-    message: "El RUC debe tener al menos 5 caracteres.",
+  nit: z.string().min(5, {
+    message: "El NIT debe tener al menos 5 caracteres.",
+  }),
+  companyType: z.string({
+    required_error: "Por favor seleccione el tipo de empresa.",
   }),
   country: z.string({
     required_error: "Por favor seleccione un país.",
+  }),
+  city: z.string({
+    required_error: "Por favor seleccione una ciudad.",
   }),
   activity: z.string({
     required_error: "Por favor seleccione una actividad económica.",
@@ -114,11 +127,6 @@ const formSchema = z.object({
   }),
   phone: z.string().min(8, {
     message: "El teléfono debe tener al menos 8 caracteres.",
-  }),
-
-  // Información bancaria
-  bankingDetails: z.string().min(10, {
-    message: "Los detalles bancarios deben tener al menos 10 caracteres.",
   }),
 
   // Términos y condiciones
@@ -158,23 +166,49 @@ export default function RegisterPage() {
     carnet: null,
   });
 
+  const [documentInfo, setDocumentInfo] = useState<{
+    matricula: string;
+    nit: string;
+    aduana: string;
+    poder: string;
+    carnet: string;
+  }>({
+    matricula: "",
+    nit: "",
+    aduana: "",
+    poder: "",
+    carnet: "",
+  });
+
+  // Memoized handler for document info changes to prevent re-renders
+  const handleDocumentInfoChange = useCallback(
+    (fileType: string, value: string) => {
+      setDocumentInfo((prev) => ({
+        ...prev,
+        [fileType]: value,
+      }));
+    },
+    []
+  );
+
   // Use registration hook
   const { validateEmail, submitRegistration, isLoading, clearError } =
     useRegistration();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    mode: "onChange", // Enable real-time validation but don't show errors yet
+    mode: "onBlur", // Change to onBlur to reduce re-renders during typing
     defaultValues: {
       companyName: "",
-      ruc: "",
+      nit: "",
+      companyType: "",
       country: "",
+      city: "",
       activity: "",
       contactName: "",
       contactPosition: "",
       email: "",
       phone: "",
-      bankingDetails: "",
       terms: false,
       privacy: false,
     },
@@ -211,15 +245,16 @@ export default function RegisterPage() {
 
   // Define step field groups for validation
   const stepFields = {
-    1: ["companyName", "ruc", "country", "activity"] as const,
-    2: [
-      "contactName",
-      "contactPosition",
-      "email",
-      "phone",
-      "bankingDetails",
+    1: [
+      "companyName",
+      "nit",
+      "companyType",
+      "country",
+      "city",
+      "activity",
     ] as const,
-    3: ["terms", "privacy"] as const,
+    2: ["contactName", "contactPosition", "email", "phone"] as const,
+    3: [] as const, // Step 3 is for documents, no form fields to validate
   };
 
   // Handle email validation on blur
@@ -252,8 +287,61 @@ export default function RegisterPage() {
 
     if (!fieldsToValidate) return true;
 
-    const result = await form.trigger(fieldsToValidate);
-    return result;
+    // For step 1, handle conditional validation for city field
+    if (currentStep === 1) {
+      const country = getCurrentCountry();
+      const fieldsToValidateFiltered = fieldsToValidate.filter(
+        (field) => field !== "city" || country
+      );
+
+      const result = await form.trigger(fieldsToValidateFiltered);
+
+      // If no country is selected, show a specific error
+      if (!country) {
+        toast({
+          title: "País requerido",
+          description: "Por favor seleccione un país antes de continuar.",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      return result;
+    }
+
+    // For step 2, validate form fields
+    if (currentStep === 2) {
+      const result = await form.trigger(fieldsToValidate);
+      return result;
+    }
+
+    // For step 3 (documents), validate required documents based on company type
+    if (currentStep === 3) {
+      const companyType = getCurrentCompanyType();
+      const requiredDocs: string[] = ["nit", "carnet"]; // Always required
+
+      // Add conditional required documents
+      if (companyType !== "UNIPERSONAL") {
+        requiredDocs.push("matricula", "poder");
+      }
+
+      const missingDocs = requiredDocs.filter(
+        (doc) => !uploadedFiles[doc as keyof typeof uploadedFiles]
+      );
+
+      if (missingDocs.length > 0) {
+        toast({
+          title: "Documentos faltantes",
+          description: `Faltan documentos requeridos: ${missingDocs.join(", ")}`,
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      return true; // Step 3 only validates documents, no form fields
+    }
+
+    return true;
   };
 
   // Manejar el envío del formulario
@@ -261,8 +349,21 @@ export default function RegisterPage() {
     try {
       setShowErrors(true);
 
-      // Final validation
-      const isValid = await form.trigger();
+      // Final validation - exclude terms and privacy as they are handled in the hook
+      const fieldsToValidate = [
+        "companyName",
+        "nit",
+        "companyType",
+        "country",
+        "city",
+        "activity",
+        "contactName",
+        "contactPosition",
+        "email",
+        "phone",
+      ] as const;
+
+      const isValid = await form.trigger(fieldsToValidate);
       if (!isValid) {
         toast({
           title: "Formulario incompleto",
@@ -291,13 +392,18 @@ export default function RegisterPage() {
       );
 
       // Submit using the hook
-      const result = await submitRegistration(values, documentsForSubmission);
+      const result = await submitRegistration(
+        values,
+        documentsForSubmission,
+        documentInfo
+      );
 
       if (result.success) {
         // Store submitted data and go to success step
         setSubmittedData({
           formData: values,
           documents: uploadedFiles,
+          documentInfo: documentInfo,
           response: result.registrationRequest,
         });
         setStep(4);
@@ -429,12 +535,8 @@ export default function RegisterPage() {
 
       setShowErrors(false); // Reset errors for next step
     } else {
-      toast({
-        title: "Campos requeridos",
-        description:
-          "Por favor complete todos los campos obligatorios antes de continuar.",
-        variant: "destructive",
-      });
+      // Don't show the generic error toast here since validateCurrentStep now handles specific errors
+      // The specific error messages are already shown in validateCurrentStep
     }
 
     setIsValidating(false);
@@ -455,14 +557,50 @@ export default function RegisterPage() {
     accept,
     label,
     description,
+    placeholder,
   }: {
     fileType: string;
     accept: string;
     label: string;
     description: string;
+    placeholder?: string;
   }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const uploadedFile = uploadedFiles[fileType as keyof typeof uploadedFiles];
+    // Use the companyType from parent component to avoid re-renders
+    const companyTypeForComponent = getCurrentCompanyType();
+
+    // Use local state for the input field to prevent re-renders
+    const [localDocumentInfo, setLocalDocumentInfo] = useState(
+      documentInfo[fileType as keyof typeof documentInfo] || ""
+    );
+
+    // Sync local state with parent state when it changes
+    const currentDocumentInfo =
+      documentInfo[fileType as keyof typeof documentInfo] || "";
+
+    useEffect(() => {
+      setLocalDocumentInfo(currentDocumentInfo);
+    }, [currentDocumentInfo, fileType]);
+
+    // Determine if document is required or optional based on company type
+    const isRequired = () => {
+      switch (fileType) {
+        case "nit":
+        case "carnet":
+          return true; // Always required
+        case "matricula":
+          return companyTypeForComponent !== "UNIPERSONAL"; // Required for SRL/SA, optional for UNIPERSONAL
+        case "poder":
+          return companyTypeForComponent !== "UNIPERSONAL"; // Required for SRL/SA, not shown for UNIPERSONAL
+        case "aduana":
+          return false; // Always optional
+        default:
+          return true; // Default to required
+      }
+    };
+
+    const isRequiredDocument = isRequired();
 
     return (
       <div className="border rounded-lg p-4">
@@ -474,8 +612,14 @@ export default function RegisterPage() {
               <p className="text-xs text-muted-foreground">{description}</p>
             </div>
           </div>
-          <div className="bg-destructive/10 text-destructive text-xs px-2 py-1 rounded">
-            {fileType === "aduana" ? "Opcional" : "Requerido"}
+          <div
+            className={`text-xs px-2 py-1 rounded ${
+              isRequiredDocument
+                ? "bg-destructive/10 text-destructive"
+                : "bg-blue-100 text-blue-700"
+            }`}
+          >
+            {isRequiredDocument ? "Requerido" : "Opcional"}
           </div>
         </div>
 
@@ -579,10 +723,91 @@ export default function RegisterPage() {
           <p className="text-xs text-muted-foreground mt-1">
             Formato: PDF, JPG, PNG (máx. 5MB)
           </p>
+
+          {/* Document Information Text Input */}
+          <div className="mt-3">
+            <label className="text-sm font-medium text-foreground mb-2 block">
+              Información adicional del documento
+            </label>
+            <Input
+              placeholder={placeholder || "Ej: Número de documento"}
+              value={localDocumentInfo}
+              onChange={(e) => {
+                setLocalDocumentInfo(e.target.value);
+              }}
+              onBlur={() => {
+                handleDocumentInfoChange(fileType, localDocumentInfo);
+              }}
+              className="h-9 text-sm"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Agregue información relevante como números de documento, fechas,
+              etc.
+            </p>
+          </div>
         </div>
       </div>
     );
   };
+
+  // Cities mapping based on country
+  const citiesByCountry = {
+    Bolivia: [
+      "La Paz",
+      "Santa Cruz",
+      "Cochabamba",
+      "Oruro",
+      "Potosí",
+      "Tarija",
+      "Chuquisaca",
+      "Beni",
+      "Pando",
+    ],
+    Perú: [
+      "Lima",
+      "Arequipa",
+      "Trujillo",
+      "Chiclayo",
+      "Piura",
+      "Iquitos",
+      "Cusco",
+      "Chimbote",
+      "Tacna",
+      "Ica",
+    ],
+    Colombia: [
+      "Bogotá",
+      "Medellín",
+      "Cali",
+      "Barranquilla",
+      "Cartagena",
+      "Cúcuta",
+      "Bucaramanga",
+      "Pereira",
+      "Ibagué",
+      "Pasto",
+    ],
+    Ecuador: [
+      "Guayaquil",
+      "Quito",
+      "Cuenca",
+      "Santo Domingo",
+      "Machala",
+      "Manta",
+      "Portoviejo",
+      "Ambato",
+      "Riobamba",
+      "Loja",
+    ],
+  };
+
+  // Get current form values directly when needed to avoid re-renders
+  const getCurrentCompanyType = () => form.getValues("companyType") || "";
+  const getCurrentCountry = () => form.getValues("country") || "";
+
+  // Get current cities based on selected country
+  const currentCities =
+    citiesByCountry[getCurrentCountry() as keyof typeof citiesByCountry] || [];
 
   return (
     <AuthLayout>
@@ -686,11 +911,11 @@ export default function RegisterPage() {
 
                         <FormField
                           control={form.control}
-                          name="ruc"
+                          name="nit"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="flex items-center">
-                                RUC
+                                NIT
                                 <span className="text-destructive ml-1">*</span>
                                 <TooltipProvider>
                                   <Tooltip>
@@ -720,11 +945,11 @@ export default function RegisterPage() {
 
                         <FormField
                           control={form.control}
-                          name="country"
+                          name="companyType"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="flex items-center">
-                                País
+                                Tipo de Empresa
                                 <span className="text-destructive ml-1">*</span>
                               </FormLabel>
                               <Select
@@ -733,34 +958,107 @@ export default function RegisterPage() {
                               >
                                 <FormControl>
                                   <SelectTrigger className="h-11">
+                                    <SelectValue placeholder="Seleccionar tipo de empresa" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="UNIPERSONAL">
+                                    Unipersonal
+                                  </SelectItem>
+                                  <SelectItem value="SRL">SRL</SelectItem>
+                                  <SelectItem value="SA">SA</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              {showErrors && <FormMessage />}
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="country"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="flex items-center">
+                                País
+                                <span className="text-destructive ml-1">*</span>
+                              </FormLabel>
+                              <Select
+                                onValueChange={(value) => {
+                                  field.onChange(value);
+                                  // Reset city when country changes
+                                  form.setValue("city", "");
+                                }}
+                                value={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger className="h-11">
                                     <SelectValue placeholder="Seleccionar país" />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="bolivia">
+                                  <SelectItem value="Bolivia">
                                     <div className="flex items-center">
                                       <span className="mr-2">🇧🇴</span>
                                       <span>Bolivia</span>
                                     </div>
                                   </SelectItem>
-                                  <SelectItem value="peru">
+                                  <SelectItem value="Perú">
                                     <div className="flex items-center">
                                       <span className="mr-2">🇵🇪</span>
                                       <span>Perú</span>
                                     </div>
                                   </SelectItem>
-                                  <SelectItem value="colombia">
+                                  <SelectItem value="Colombia">
                                     <div className="flex items-center">
                                       <span className="mr-2">🇨🇴</span>
                                       <span>Colombia</span>
                                     </div>
                                   </SelectItem>
-                                  <SelectItem value="ecuador">
+                                  <SelectItem value="Ecuador">
                                     <div className="flex items-center">
                                       <span className="mr-2">🇪🇨</span>
                                       <span>Ecuador</span>
                                     </div>
                                   </SelectItem>
+                                </SelectContent>
+                              </Select>
+                              {showErrors && <FormMessage />}
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="city"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="flex items-center">
+                                Ciudad
+                                <span className="text-destructive ml-1">*</span>
+                              </FormLabel>
+                              <Select
+                                onValueChange={field.onChange}
+                                value={field.value}
+                                disabled={!getCurrentCountry()}
+                              >
+                                <FormControl>
+                                  <SelectTrigger className="h-11">
+                                    <SelectValue
+                                      placeholder={
+                                        getCurrentCountry()
+                                          ? "Seleccionar ciudad"
+                                          : "Primero seleccione un país"
+                                      }
+                                    />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {currentCities.map((city) => (
+                                    <SelectItem key={city} value={city}>
+                                      {city}
+                                    </SelectItem>
+                                  ))}
                                 </SelectContent>
                               </Select>
                               {showErrors && <FormMessage />}
@@ -893,7 +1191,7 @@ export default function RegisterPage() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="flex items-center">
-                                Email Corporativo
+                                Email
                                 <span className="text-destructive ml-1">*</span>
                               </FormLabel>
                               <FormControl>
@@ -983,31 +1281,6 @@ export default function RegisterPage() {
                             </FormItem>
                           )}
                         />
-
-                        <div className="md:col-span-2">
-                          <FormField
-                            control={form.control}
-                            name="bankingDetails"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="flex items-center">
-                                  Detalles Bancarios
-                                  <span className="text-destructive ml-1">
-                                    *
-                                  </span>
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="Banco, número de cuenta, titular..."
-                                    className="h-11"
-                                    {...field}
-                                  />
-                                </FormControl>
-                                {showErrors && <FormMessage />}
-                              </FormItem>
-                            )}
-                          />
-                        </div>
                       </div>
                     </CardContent>
                   </motion.div>
@@ -1043,61 +1316,83 @@ export default function RegisterPage() {
                           </div>
                         </div>
 
-                        <Tabs defaultValue="required" className="w-full">
-                          <TabsList className="grid w-full grid-cols-2 mb-4">
-                            <TabsTrigger value="required">
-                              Documentos Obligatorios
-                            </TabsTrigger>
-                            <TabsTrigger value="optional">
-                              Documentos Opcionales
-                            </TabsTrigger>
-                          </TabsList>
-
-                          <TabsContent value="required" className="space-y-4">
+                        <div className="space-y-6">
+                          {/* Required Documents Section */}
+                          <div>
+                            <h3 className="text-lg font-semibold mb-4 text-foreground">
+                              Documentos Requeridos ({getCurrentCompanyType()})
+                            </h3>
                             <div className="grid grid-cols-1 gap-6">
-                              {/* Matrícula de Comercio */}
-                              <CustomFileUpload
-                                fileType="matricula"
-                                accept=".pdf,.jpg,.jpeg,.png"
-                                label="Matrícula de Comercio"
-                                description="Documento oficial de registro comercial"
-                              />
-
-                              {/* Documento NIT */}
+                              {/* Documento NIT - Always Required */}
                               <CustomFileUpload
                                 fileType="nit"
                                 accept=".pdf,.jpg,.jpeg,.png"
-                                label="Documento NIT"
+                                label="Certificado de NIT"
                                 description="Número de Identificación Tributaria"
+                                placeholder="Ej: NIT 1234567890"
                               />
 
-                              {/* Poder de Representante Legal */}
-                              <CustomFileUpload
-                                fileType="poder"
-                                accept=".pdf,.jpg,.jpeg,.png"
-                                label="Poder de Representante Legal"
-                                description="Documento que acredita al representante legal"
-                              />
-
-                              {/* Carnet de Identidad del RL */}
+                              {/* Carnet de Identidad del RL - Always Required */}
                               <CustomFileUpload
                                 fileType="carnet"
                                 accept=".pdf,.jpg,.jpeg,.png"
                                 label="Carnet de Identidad del Representante Legal"
                                 description="Documento de identidad del representante"
+                                placeholder="Ej: CI 12345678 LP"
+                              />
+
+                              {/* Matrícula de Comercio - Required except for UNIPERSONAL */}
+                              {getCurrentCompanyType() !== "UNIPERSONAL" && (
+                                <CustomFileUpload
+                                  fileType="matricula"
+                                  accept=".pdf,.jpg,.jpeg,.png"
+                                  label="Matrícula de Comercio"
+                                  description="Documento oficial de registro comercial"
+                                  placeholder="Ej: Matrícula N° 12345"
+                                />
+                              )}
+
+                              {/* Poder de Representante Legal - Only for SRL and SA */}
+                              {getCurrentCompanyType() !== "UNIPERSONAL" && (
+                                <CustomFileUpload
+                                  fileType="poder"
+                                  accept=".pdf,.jpg,.jpeg,.png"
+                                  label="Poder de Representante Legal"
+                                  description="Documento que acredita al representante legal"
+                                  placeholder="Ej: Poder N° 123"
+                                />
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Optional Documents Section */}
+                          <div>
+                            <h3 className="text-lg font-semibold mb-4 text-foreground">
+                              Documentos Opcionales
+                            </h3>
+                            <div className="grid grid-cols-1 gap-6">
+                              {/* Matrícula de Comercio - Optional for UNIPERSONAL */}
+                              {getCurrentCompanyType() === "UNIPERSONAL" && (
+                                <CustomFileUpload
+                                  fileType="matricula"
+                                  accept=".pdf,.jpg,.jpeg,.png"
+                                  label="Matrícula de Comercio"
+                                  description="Documento oficial de registro comercial"
+                                  placeholder="Ej: Matrícula N° 12345"
+                                />
+                              )}
+
+                              {/* Certificado de Aduana - Always Optional */}
+                              <CustomFileUpload
+                                fileType="aduana"
+                                accept=".pdf,.jpg,.jpeg,.png"
+                                label="Certificado de Aduana"
+                                description="Certificado de operador económico autorizado"
+                                placeholder="Ej: Certificado N° 789"
                               />
                             </div>
-                          </TabsContent>
-
-                          <TabsContent value="optional">
-                            <CustomFileUpload
-                              fileType="aduana"
-                              accept=".pdf,.jpg,.jpeg,.png"
-                              label="Certificado de Aduana"
-                              description="Certificado de operador económico autorizado"
-                            />
-                          </TabsContent>
-                        </Tabs>
+                          </div>
+                        </div>
 
                         <div className="space-y-4 pt-4">
                           <FormField
@@ -1120,7 +1415,7 @@ export default function RegisterPage() {
                                     >
                                       términos y condiciones
                                     </Link>{" "}
-                                    de Mercury Platform
+                                    de NORDEX Platform
                                   </FormLabel>
                                   {showErrors && <FormMessage />}
                                 </div>
@@ -1148,7 +1443,7 @@ export default function RegisterPage() {
                                     >
                                       política de privacidad
                                     </Link>{" "}
-                                    de Mercury Platform
+                                    de NORDEX Platform
                                   </FormLabel>
                                   {showErrors && <FormMessage />}
                                 </div>
@@ -1213,10 +1508,10 @@ export default function RegisterPage() {
                             </div>
                             <div>
                               <span className="font-medium text-muted-foreground">
-                                RUC:
+                                NIT:
                               </span>
                               <p className="font-medium">
-                                {submittedData.formData.ruc}
+                                {submittedData.formData.nit}
                               </p>
                             </div>
                             <div>
@@ -1321,10 +1616,10 @@ export default function RegisterPage() {
                                 Si tiene preguntas sobre su solicitud, puede
                                 contactarnos en{" "}
                                 <a
-                                  href="mailto:soporte@mercury.com"
+                                  href="mailto:soporte@nordex.com"
                                   className="text-primary hover:underline font-medium"
                                 >
-                                  soporte@mercury.com
+                                  soporte@nordex.com
                                 </a>{" "}
                                 o incluya su ID de solicitud en la consulta.
                               </p>
@@ -1409,6 +1704,13 @@ export default function RegisterPage() {
                           poder: null,
                           carnet: null,
                         });
+                        setDocumentInfo({
+                          matricula: "",
+                          nit: "",
+                          aduana: "",
+                          poder: "",
+                          carnet: "",
+                        });
                       }}
                       className="flex items-center"
                     >
@@ -1445,10 +1747,10 @@ export default function RegisterPage() {
           <p>
             ¿Necesitas ayuda? Contáctanos a{" "}
             <a
-              href="mailto:soporte@mercury.com"
+              href="mailto:soporte@nordex.com"
               className="text-primary hover:underline"
             >
-              soporte@mercury.com
+              soporte@nordex.com
             </a>
           </p>
         </div>
