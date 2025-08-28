@@ -13,7 +13,8 @@ export default function Features() {
     {
       icon: TrendingUp,
       title: "Nuevas Oportunidades de Exportación en Asia",
-      excerpt: "Descubre cómo las empresas bolivianas pueden aprovechar los acuerdos comerciales recientes con países asiáticos.",
+      excerpt:
+        "Descubre cómo las empresas bolivianas pueden aprovechar los acuerdos comerciales recientes con países asiáticos.",
       date: "15 Enero 2025",
       category: "Mercados Internacionales",
       color: "bg-[#051D67]",
@@ -22,7 +23,8 @@ export default function Features() {
     {
       icon: Globe,
       title: "Actualizaciones en Regulaciones ASFI",
-      excerpt: "Conoce los cambios más importantes en las regulaciones financieras que afectan el comercio internacional.",
+      excerpt:
+        "Conoce los cambios más importantes en las regulaciones financieras que afectan el comercio internacional.",
       date: "12 Enero 2025",
       category: "Regulaciones",
       color: "bg-[#81D843]",
@@ -31,7 +33,8 @@ export default function Features() {
     {
       icon: Users,
       title: "Casos de Éxito: Empresa Textil en Europa",
-      excerpt: "Historia inspiradora de cómo una empresa textil boliviana logró expandirse exitosamente al mercado europeo.",
+      excerpt:
+        "Historia inspiradora de cómo una empresa textil boliviana logró expandirse exitosamente al mercado europeo.",
       date: "10 Enero 2025",
       category: "Casos de Éxito",
       color: "bg-[#051D67]",
@@ -40,7 +43,8 @@ export default function Features() {
     {
       icon: Calendar,
       title: "Eventos de Networking Internacional 2025",
-      excerpt: "Calendario completo de ferias comerciales y eventos de networking para empresas bolivianas.",
+      excerpt:
+        "Calendario completo de ferias comerciales y eventos de networking para empresas bolivianas.",
       date: "8 Enero 2025",
       category: "Eventos",
       color: "bg-[#81D843]",
@@ -51,17 +55,20 @@ export default function Features() {
   const industryInsights = [
     {
       title: "Tendencias del Comercio Internacional",
-      description: "Análisis de las principales tendencias que están transformando el comercio global y cómo afectan a las empresas bolivianas.",
+      description:
+        "Análisis de las principales tendencias que están transformando el comercio global y cómo afectan a las empresas bolivianas.",
       icon: "📊",
     },
     {
       title: "Guías de Internacionalización",
-      description: "Recursos prácticos y guías paso a paso para empresas que buscan expandir sus operaciones internacionalmente.",
+      description:
+        "Recursos prácticos y guías paso a paso para empresas que buscan expandir sus operaciones internacionalmente.",
       icon: "📚",
     },
     {
       title: "Análisis de Mercados",
-      description: "Estudios detallados de mercados internacionales con oportunidades específicas para productos y servicios bolivianos.",
+      description:
+        "Estudios detallados de mercados internacionales con oportunidades específicas para productos y servicios bolivianos.",
       icon: "🔍",
     },
   ];
@@ -158,7 +165,9 @@ export default function Features() {
                 className="bg-[#051D67] rounded-lg p-8 text-[#FCFDFD] hover:scale-105 transition-all duration-300"
               >
                 <div className="text-4xl mb-4">{insight.icon}</div>
-                <h4 className="text-xl font-bold mb-4 font-['Helvetica']">{insight.title}</h4>
+                <h4 className="text-xl font-bold mb-4 font-['Helvetica']">
+                  {insight.title}
+                </h4>
                 <p className="text-[#FCFDFD] opacity-90 leading-relaxed font-['Helvetica']">
                   {insight.description}
                 </p>
@@ -171,7 +180,9 @@ export default function Features() {
         <div className="bg-[#81D843] rounded-lg p-12 text-[#051D67] text-center">
           <div className="max-w-2xl mx-auto">
             <Newspaper className="w-16 h-16 mx-auto mb-6 text-[#051D67]" />
-            <h3 className="text-3xl font-bold mb-4 font-['Helvetica']">Mantente Informado</h3>
+            <h3 className="text-3xl font-bold mb-4 font-['Helvetica']">
+              Mantente Informado
+            </h3>
             <p className="text-xl opacity-90 mb-8 font-['Helvetica']">
               Suscríbete a nuestro boletín para recibir las últimas noticias,
               insights y oportunidades de comercio internacional.
