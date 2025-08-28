@@ -9,7 +9,21 @@ export default {
   ],
   theme: {
   	extend: {
+      fontFamily: {
+        'sans': ['Geist Sans', 'sans-serif'],
+        'serif': ['Geist Sans', 'serif'],
+        'mono': ['Geist', 'monospace'],
+      },
   		colors: {
+        'nordex': {
+          'navy': '#051D67',
+          'navy-dark': '#041655',
+          'green': '#81D843',
+          'green-dark': '#6BC536',
+          'cream': '#F2EFE9',
+          'dark': '#1F1915',
+          'dark-70': '#1F1915B3',
+        },
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
