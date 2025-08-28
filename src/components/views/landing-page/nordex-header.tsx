@@ -28,19 +28,19 @@ export default function NordexHeader() {
               Inicio
             </Link>
             <Link 
-              href="#servicios" 
+              href="/servicios" 
               className="text-[#1F1915] hover:text-[#051D67] transition-colors duration-200 font-medium"
             >
               Servicios
             </Link>
             <Link 
-              href="#quienes-somos" 
+              href="/quienes-somos" 
               className="text-[#1F1915] hover:text-[#051D67] transition-colors duration-200 font-medium"
             >
               Quiénes somos
             </Link>
             <Link 
-              href="#noticias" 
+              href="/noticias" 
               className="text-[#1F1915] hover:text-[#051D67] transition-colors duration-200 font-medium"
             >
               Noticias
@@ -78,21 +78,21 @@ export default function NordexHeader() {
                 Inicio
               </Link>
               <Link 
-                href="#servicios" 
+                href="/servicios" 
                 className="text-[#1F1915] hover:text-[#051D67] transition-colors duration-200 font-medium px-2 py-1"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Servicios
               </Link>
               <Link 
-                href="#quienes-somos" 
+                href="/quienes-somos" 
                 className="text-[#1F1915] hover:text-[#051D67] transition-colors duration-200 font-medium px-2 py-1"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Quiénes somos
               </Link>
               <Link 
-                href="#noticias" 
+                href="/noticias" 
                 className="text-[#1F1915] hover:text-[#051D67] transition-colors duration-200 font-medium px-2 py-1"
                 onClick={() => setIsMenuOpen(false)}
               >
