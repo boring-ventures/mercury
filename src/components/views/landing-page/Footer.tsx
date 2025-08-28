@@ -1,36 +1,14 @@
 import React from "react";
 import {
   Globe,
-  Phone,
-  Mail,
   MapPin,
+  Phone,
   MessageCircle,
+  Mail,
   ArrowRight,
 } from "lucide-react";
 
-export default function NordexFooterSection() {
-  const footerLinks = {
-    servicios: [
-      "Intermediación Comercial",
-      "Gestión de Pagos",
-      "Comercio Exterior",
-      "Consultoría",
-    ],
-    recursos: ["Blog", "Guías", "Casos de Éxito", "Eventos"],
-    empresa: [
-      "Quienes Somos",
-      "Nuestro Equipo",
-      "Contacto",
-      "Trabaja con Nosotros",
-    ],
-    legal: [
-      "Términos y Condiciones",
-      "Política de Privacidad",
-      "Política de Cookies",
-      "Aviso Legal",
-    ],
-  };
-
+export default function Footer() {
   const contactInfo = {
     address: "Av. Principal, Zona Central, La Paz - Bolivia",
     phone: "+591 2 XXX-XXXX",
@@ -39,166 +17,116 @@ export default function NordexFooterSection() {
   };
 
   return (
-    <footer className="bg-[#051D67] text-[#FCFDFD]">
-      {/* Main Footer Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+    <footer id="contacto" className="bg-[#051D67] text-white py-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section Header */}
+        <div className="text-center mb-20">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 font-['Helvetica']">
+            Contacto
+          </h2>
+          <p className="text-xl text-white/80 max-w-4xl mx-auto font-['Helvetica']">
+            Ponte en contacto con nosotros para comenzar tu proceso de
+            internacionalización
+          </p>
+        </div>
+
+        {/* Contact Information */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 mb-16">
           {/* Company Info */}
           <div className="lg:col-span-2">
-            <div className="flex items-center space-x-2 mb-6">
+            <div className="flex items-center space-x-3 mb-6">
               <Globe className="h-8 w-8 text-[#81D843]" />
-              <span className="text-2xl font-bold">NORDEX Global</span>
+              <span className="text-2xl font-bold font-['Helvetica']">
+                NORDEX Global
+              </span>
             </div>
-            <p className="text-[#FCFDFD] opacity-90 mb-6 leading-relaxed">
+            <p className="text-white/80 mb-8 leading-relaxed font-['Helvetica'] max-w-2xl">
               Especialistas en internacionalización empresarial, facilitando
               operaciones internacionales y comercialización global para
               empresas bolivianas.
             </p>
 
-            {/* Contact Info */}
-            <div className="space-y-3">
+            {/* Contact Details */}
+            <div className="space-y-4">
               <div className="flex items-center space-x-3">
                 <MapPin className="w-5 h-5 text-[#81D843] flex-shrink-0" />
-                <span className="text-sm opacity-90">
+                <span className="text-white/80 font-['Helvetica']">
                   {contactInfo.address}
                 </span>
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="w-5 h-5 text-[#81D843] flex-shrink-0" />
-                <span className="text-sm opacity-90">{contactInfo.phone}</span>
+                <span className="text-white/80 font-['Helvetica']">
+                  {contactInfo.phone}
+                </span>
               </div>
               <div className="flex items-center space-x-3">
                 <MessageCircle className="w-5 h-5 text-[#81D843] flex-shrink-0" />
-                <span className="text-sm opacity-90">
+                <span className="text-white/80 font-['Helvetica']">
                   WhatsApp: {contactInfo.whatsapp}
                 </span>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="w-5 h-5 text-[#81D843] flex-shrink-0" />
-                <span className="text-sm opacity-90">{contactInfo.email}</span>
+                <span className="text-white/80 font-['Helvetica']">
+                  {contactInfo.email}
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Services Links */}
-          <div>
-            <h4 className="text-lg font-semibold mb-4">Servicios</h4>
-            <ul className="space-y-2">
-              {footerLinks.servicios.map((link, index) => (
-                <li key={index}>
-                  <a
-                    href="#"
-                    className="text-sm opacity-80 hover:opacity-100 hover:text-[#81D843] transition-all duration-300"
-                  >
-                    {link}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Resources Links */}
-          <div>
-            <h4 className="text-lg font-semibold mb-4">Recursos</h4>
-            <ul className="space-y-2">
-              {footerLinks.recursos.map((link, index) => (
-                <li key={index}>
-                  <a
-                    href="#"
-                    className="text-sm opacity-80 hover:opacity-100 hover:text-[#81D843] transition-all duration-300"
-                  >
-                    {link}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Company Links */}
-          <div>
-            <h4 className="text-lg font-semibold mb-4">Empresa</h4>
-            <ul className="space-y-2">
-              {footerLinks.empresa.map((link, index) => (
-                <li key={index}>
-                  <a
-                    href="#"
-                    className="text-sm opacity-80 hover:opacity-100 hover:text-[#81D843] transition-all duration-300"
-                  >
-                    {link}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        {/* Newsletter Signup */}
-        <div className="mt-12 pt-8 border-t border-[#81D843]/20">
-          <div className="max-w-2xl mx-auto text-center">
-            <h4 className="text-xl font-semibold mb-4">
-              Suscríbete a nuestro boletín
-            </h4>
-            <p className="text-sm opacity-80 mb-6">
-              Recibe las últimas noticias y oportunidades de comercio
-              internacional
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
+          {/* Quick Contact Form */}
+          <div className="bg-white/5 p-8 rounded-lg border border-white/10">
+            <h3 className="text-xl font-semibold mb-6 font-['Helvetica']">
+              Envíanos un mensaje
+            </h3>
+            <form className="space-y-4">
+              <input
+                type="text"
+                placeholder="Nombre completo"
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-[#81D843] font-['Helvetica']"
+              />
               <input
                 type="email"
-                placeholder="Tu correo electrónico"
-                className="flex-1 px-4 py-2 rounded-lg text-[#051D67] placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#81D843]"
+                placeholder="Correo electrónico"
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-[#81D843] font-['Helvetica']"
               />
-              <button className="px-6 py-2 bg-[#81D843] hover:bg-[#6BC035] text-[#051D67] rounded-lg font-semibold transition-all duration-300 transform hover:scale-105">
-                Suscribirse
+              <textarea
+                placeholder="Mensaje"
+                rows={4}
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-[#81D843] font-['Helvetica'] resize-none"
+              ></textarea>
+              <button
+                type="submit"
+                className="w-full px-6 py-3 bg-[#81D843] hover:bg-[#6BC035] text-[#051D67] rounded-lg font-semibold transition-all duration-300 font-['Helvetica']"
+              >
+                Enviar Mensaje
               </button>
-            </div>
+            </form>
           </div>
         </div>
-      </div>
 
-      {/* Bottom Footer */}
-      <div className="bg-[#051D67]/80 border-t border-[#81D843]/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Bottom Footer */}
+        <div className="border-t border-white/20 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <div className="flex items-center space-x-6">
-              <span className="text-sm opacity-80">
-                © 2025 NORDEX Global. Todos los derechos reservados.
-              </span>
+            <div className="text-white/60 font-['Helvetica']">
+              © 2025 NORDEX Global. Todos los derechos reservados.
             </div>
-
             <div className="flex items-center space-x-6">
-              {footerLinks.legal.map((link, index) => (
-                <a
-                  key={index}
-                  href="#"
-                  className="text-sm opacity-80 hover:opacity-100 hover:text-[#81D843] transition-all duration-300"
-                >
-                  {link}
-                </a>
-              ))}
+              <a
+                href="#"
+                className="text-white/60 hover:text-white transition-colors font-['Helvetica']"
+              >
+                Términos y Condiciones
+              </a>
+              <a
+                href="#"
+                className="text-white/60 hover:text-white transition-colors font-['Helvetica']"
+              >
+                Política de Privacidad
+              </a>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* CTA Section */}
-      <div className="bg-gradient-to-r from-[#81D843] to-[#051D67] py-12">
-        <div className="max-w-4xl mx-auto text-center px-4">
-          <h3 className="text-2xl font-bold text-[#FCFDFD] mb-4">
-            ¿Listo para internacionalizar tu empresa?
-          </h3>
-          <p className="text-lg opacity-90 mb-6">
-            Únete a más de 150 empresas bolivianas que ya confían en NORDEX
-            Global
-          </p>
-          <a
-            href="#contacto"
-            className="inline-flex items-center justify-center px-8 py-3 bg-[#FCFDFD] hover:bg-gray-100 text-[#051D67] rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg"
-          >
-            Comenzar Ahora
-            <ArrowRight className="w-5 h-5 ml-2" />
-          </a>
         </div>
       </div>
     </footer>

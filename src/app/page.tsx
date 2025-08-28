@@ -1,12 +1,12 @@
 import NordexHeroSection from "@/components/views/landing-page/obsidian-hero-section";
-import NordexSocialProofSection from "@/components/views/landing-page/obsidian-values-section";
-import NordexMetricsSection from "@/components/views/landing-page/obsidian-features-section";
+import { SocialProofSection } from "@/components/views/landing-page/social-proof-section";
+import NordexMetricsSection from "@/components/views/landing-page/obsidian-metrics-section";
 import NordexServicesSection from "@/components/views/landing-page/obsidian-sync-section";
 import NordexBannerSection from "@/components/views/landing-page/obsidian-publish-section";
 import NordexCharacteristicsSection from "@/components/views/landing-page/obsidian-community-section";
-import NordexAboutSection from "@/components/views/landing-page/About.tsx";
-import NordexNewsSection from "@/components/views/landing-page/Features.tsx";
-import NordexFooterSection from "@/components/views/landing-page/Footer.tsx";
+import NordexAboutSection from "@/components/views/landing-page/About";
+import NordexNewsSection from "@/components/views/landing-page/Features";
+import NordexFooterSection from "@/components/views/landing-page/Footer";
 import Header from "@/components/views/landing-page/Header";
 
 export default function Home() {
@@ -15,7 +15,7 @@ export default function Home() {
       <Header />
       <main className="bg-[#FCFDFD]">
         <NordexHeroSection />
-        <NordexSocialProofSection />
+        <SocialProofSection />
         <NordexMetricsSection />
         <NordexServicesSection />
         <NordexBannerSection />

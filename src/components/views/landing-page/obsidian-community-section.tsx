@@ -55,16 +55,16 @@ export default function NordexCharacteristicsSection() {
   ];
 
   return (
-    <section className="bg-[#FCFDFD] py-20">
+    <section id="quienes-somos" className="bg-[#FCFDFD] py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-[#051D67] mb-6">
+        <div className="text-center mb-20">
+          <h2 className="text-4xl md:text-5xl font-bold text-[#051D67] mb-6 font-['Helvetica']">
             Lo que nos hace únicos en el mercado
           </h2>
-          <p className="text-xl text-gray-600 max-w-4xl mx-auto">
-            Características distintivas que posicionan a NORDEX Global como
-            líder en facilitación comercial internacional en Bolivia.
+          <p className="text-xl text-gray-600 max-w-4xl mx-auto font-['Helvetica']">
+            Nuestras características distintivas que nos posicionan como líderes
+            en facilitación comercial internacional
           </p>
         </div>
 
