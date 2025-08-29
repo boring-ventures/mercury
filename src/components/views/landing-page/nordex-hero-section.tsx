@@ -80,7 +80,7 @@ export default function NordexHeroSection() {
   };
 
   return (
-    <section id="inicio" className="bg-[#F2EFE9] overflow-x-hidden">
+    <section id="inicio" className="bg-white overflow-x-hidden">
       {/* Hero Section with reduced spacing from navbar */}
       <div className="pt-20 pb-16 md:pt-24 md:pb-20 lg:pt-28 lg:pb-24">
         <div className="max-w-7xl mx-auto px-6">
@@ -143,7 +143,7 @@ export default function NordexHeroSection() {
       </div>
 
       {/* Company Logos Section with reduced spacing */}
-      <section className="bg-[#F2EFE9] py-12 border-t border-[#1F1915]/10">
+      <section className="bg-white py-12 border-t border-[#1F1915]/10">
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex flex-col items-center md:flex-row">
             <div className="md:max-w-48 md:border-r md:pr-8 mb-6 md:mb-0">
@@ -195,8 +195,8 @@ export default function NordexHeroSection() {
                 </div>
               </InfiniteSlider>
 
-              <div className="bg-gradient-to-r from-[#F2EFE9] absolute inset-y-0 left-0 w-20"></div>
-              <div className="bg-gradient-to-l from-[#F2EFE9] absolute inset-y-0 right-0 w-20"></div>
+              <div className="bg-gradient-to-r from-white absolute inset-y-0 left-0 w-20"></div>
+              <div className="bg-gradient-to-l from-white absolute inset-y-0 right-0 w-20"></div>
               <ProgressiveBlur
                 className="pointer-events-none absolute left-0 top-0 h-full w-20"
                 direction="left"

@@ -1,7 +1,15 @@
 "use client";
 
-import { Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import {
+  Building2,
+  CreditCard,
+  Ship,
+  Lightbulb,
+  GraduationCap,
+  Headphones,
+} from "lucide-react";
+import { WavePath } from "@/components/wave-path";
 
 export default function NordexServicesSection() {
   const advantages = [
@@ -9,31 +17,37 @@ export default function NordexServicesSection() {
       title: "Intermediación Comercial",
       description:
         "Negociación directa con proveedores internacionales y representación de tus intereses en el mercado global.",
+      icon: Building2,
     },
     {
       title: "Gestión de Pagos",
       description:
         "Procesamiento seguro de pagos internacionales con cumplimiento normativo ASFI y gestión de divisas.",
+      icon: CreditCard,
     },
     {
       title: "Operaciones de Comercio Exterior",
       description:
         "Gestión logística integral, trámites aduaneros y coordinación de envíos internacionales.",
+      icon: Ship,
     },
     {
       title: "Consultoría Especializada",
       description:
         "Asesoría en estrategias de internacionalización y análisis de mercados internacionales.",
+      icon: Lightbulb,
     },
     {
       title: "Capacitación Empresarial",
       description:
         "Programas de formación en comercio exterior y desarrollo de planes de expansión global.",
+      icon: GraduationCap,
     },
     {
       title: "Soporte Continuo",
       description:
         "Acompañamiento 24/7 en todo el proceso de internacionalización de tu empresa.",
+      icon: Headphones,
     },
   ];
 
@@ -57,44 +71,57 @@ export default function NordexServicesSection() {
           </div>
           <div className="flex gap-10 pt-12 flex-col w-full">
             <div className="grid grid-cols-2 items-start lg:grid-cols-3 gap-10">
-              {advantages.map((advantage, index) => (
-                <div
-                  key={index}
-                  className="flex flex-row gap-6 w-full items-start"
-                >
-                  <Check className="w-4 h-4 mt-2 text-[#051D67]" />
-                  <div className="flex flex-col gap-1">
-                    <p className="font-medium text-[#1F1915]">
-                      {advantage.title}
-                    </p>
-                    <p className="text-[#1F1915A3] text-sm leading-relaxed">
-                      {advantage.description}
-                    </p>
+              {advantages.map((advantage, index) => {
+                const IconComponent = advantage.icon;
+                return (
+                  <div
+                    key={index}
+                    className="flex flex-row gap-6 w-full items-start"
+                  >
+                    <div className="w-10 h-10 border-2 border-[#051D67] rounded-lg flex items-center justify-center mt-2 flex-shrink-0">
+                      <IconComponent className="w-5 h-5 text-[#051D67]" />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <p className="font-medium text-[#1F1915]">
+                        {advantage.title}
+                      </p>
+                      <p className="text-[#1F1915A3] text-sm leading-relaxed">
+                        {advantage.description}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
 
-        {/* CTA Section */}
+        {/* CTA Section with Wave Path */}
         <div className="mt-16 text-center">
-          <div className="bg-gradient-to-r from-[#051D67] to-[#041655] rounded-2xl p-8 text-white">
-            <h3 className="font-serif text-2xl md:text-3xl font-bold mb-4">
-              ¿Listo para expandir tu negocio globalmente?
-            </h3>
-            <p className="text-white/90 text-sm md:text-base mb-6 max-w-2xl mx-auto">
-              Nuestro equipo de expertos está listo para ayudarte a conectar con
-              el mundo. Agenda una consulta gratuita y descubre cómo podemos
-              impulsar tu crecimiento internacional.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-[#81D843] hover:bg-[#6BC536] text-[#051D67] px-8 py-3 rounded-md font-medium transition-all duration-200">
-                Consulta gratuita
-              </button>
-              <button className="border-white text-white hover:bg-white hover:text-[#051D67] px-8 py-3 rounded-md font-medium transition-all duration-200 border rounded-md">
-                Ver casos de éxito
-              </button>
+          <div className="relative">
+            {/* Wave Path Component */}
+            <div className="flex justify-center mb-8">
+              <WavePath className="text-[#051D67]" />
+            </div>
+
+            {/* CTA Banner with Minimalistic Border */}
+            <div className="border border-[#051D67] rounded-2xl p-8 bg-white relative">
+              <h3 className="font-serif text-2xl md:text-3xl font-bold mb-4 text-[#1F1915]">
+                ¿Listo para expandir tu negocio globalmente?
+              </h3>
+              <p className="text-[#1F1915A3] text-sm md:text-base mb-6 max-w-2xl mx-auto">
+                Nuestro equipo de expertos está listo para ayudarte a conectar
+                con el mundo. Agenda una consulta gratuita y descubre cómo
+                podemos impulsar tu crecimiento internacional.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button className="bg-[#051D67] hover:bg-[#041655] text-white px-8 py-3 rounded-md font-medium transition-all duration-200">
+                  Consulta gratuita
+                </button>
+                <button className="border-2 border-[#051D67] text-[#051D67] hover:bg-[#051D67] hover:text-white px-8 py-3 rounded-md font-medium transition-all duration-200">
+                  Ver casos de éxito
+                </button>
+              </div>
             </div>
           </div>
         </div>

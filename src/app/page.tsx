@@ -7,9 +7,9 @@ import NordexHeader from "@/components/views/landing-page/nordex-header";
 
 export default function Home() {
   return (
-    <div className="bg-[#F2EFE9]">
+    <div className="bg-white">
       <NordexHeader />
-      <main className="bg-[#F2EFE9]">
+      <main className="bg-white">
         <NordexHeroSection />
         <NordexServicesSection />
         <NordexAboutSection />
