@@ -30,18 +30,16 @@ export default function NordexAboutSection() {
           </div>
           <div className="border border-white/20 rounded-xl p-6 text-center bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all duration-300">
             <div className="text-2xl md:text-3xl font-bold text-white mb-2">
-              150+
+              30+
             </div>
-            <div className="text-white/80 text-sm font-medium">
-              Empresas conectadas
-            </div>
+            <div className="text-white/80 text-sm font-medium">Empresas</div>
           </div>
           <div className="border border-white/20 rounded-xl p-6 text-center bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all duration-300">
             <div className="text-2xl md:text-3xl font-bold text-white mb-2">
-              45+
+              10+
             </div>
             <div className="text-white/80 text-sm font-medium">
-              Países alcanzados
+              Países destino
             </div>
           </div>
           <div className="border border-white/20 rounded-xl p-6 text-center bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all duration-300">

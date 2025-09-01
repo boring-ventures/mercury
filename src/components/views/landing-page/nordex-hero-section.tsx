@@ -87,15 +87,6 @@ export default function NordexHeroSection() {
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             {/* Left Column - Text Content */}
             <div className="space-y-6">
-              {/* Top Button */}
-              <Button
-                variant="outline"
-                size="sm"
-                className="bg-[#051D67] hover:bg-[#041655] text-white border-[#051D67] rounded-full px-6 py-2 text-sm font-medium"
-              >
-                START YOUR SUCCESS JOURNEY
-              </Button>
-
               {/* Main Heading */}
               <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl text-[#1F1915] font-serif font-bold leading-tight">
                 Conectamos Bolivia con el Mundo

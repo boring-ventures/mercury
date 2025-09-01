@@ -97,27 +97,27 @@ export default function About() {
               </p>
               <div className="mt-8 grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <div className="font-bold font-['Helvetica']">+150</div>
+                  <div className="font-bold font-['Helvetica']">+10</div>
                   <div className="opacity-80 font-['Helvetica']">
-                    Empresas atendidas
+                    Años de experiencia
                   </div>
                 </div>
                 <div>
-                  <div className="font-bold font-['Helvetica']">+500</div>
+                  <div className="font-bold font-['Helvetica']">+30</div>
                   <div className="opacity-80 font-['Helvetica']">
-                    Operaciones exitosas
+                    Empresas
                   </div>
                 </div>
                 <div>
-                  <div className="font-bold font-['Helvetica']">+50</div>
+                  <div className="font-bold font-['Helvetica']">+10</div>
                   <div className="opacity-80 font-['Helvetica']">
-                    Países conectados
+                    Países destino
                   </div>
                 </div>
                 <div>
-                  <div className="font-bold font-['Helvetica']">98%</div>
+                  <div className="font-bold font-['Helvetica']">+50M$</div>
                   <div className="opacity-80 font-['Helvetica']">
-                    Satisfacción
+                    En transacciones gestionadas
                   </div>
                 </div>
               </div>
