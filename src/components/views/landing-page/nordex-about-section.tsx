@@ -11,7 +11,7 @@ export default function NordexAboutSection() {
           <h2 className="text-white font-serif text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-6">
             Quiénes somos
           </h2>
-          <p className="text-white/90 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed">
+          <p className="text-white/90 text-[18px] max-w-3xl mx-auto leading-relaxed">
             Somos el puente que conecta Bolivia con el mundo. NORDEX nació con
             la visión de transformar el panorama del comercio internacional en
             Bolivia, especializándonos en eliminar las barreras que limitan el

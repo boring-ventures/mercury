@@ -4,6 +4,8 @@ import NordexAboutSection from "@/components/views/landing-page/nordex-about-sec
 import NordexNewsSection from "@/components/views/landing-page/nordex-news-section";
 import NordexFooterSection from "@/components/views/landing-page/nordex-footer-section";
 import NordexHeader from "@/components/views/landing-page/nordex-header";
+import NordexTestimonialsSection from "@/components/views/landing-page/nordex-testimonials-section";
+import { Features } from "@/components/features-9";
 
 export default function Home() {
   return (
@@ -13,6 +15,8 @@ export default function Home() {
         <NordexHeroSection />
         <NordexServicesSection />
         <NordexAboutSection />
+        <Features />
+        <NordexTestimonialsSection />
         <NordexNewsSection />
         <NordexFooterSection />
       </main>

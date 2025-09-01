@@ -77,11 +77,12 @@ export function SocialProofSection() {
         </div>
 
         <BlurFade delay={0.2}>
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 max-w-5xl mx-auto">
             {[
-              { value: "+150", label: "Empresas atendidas" },
-              { value: "+500", label: "Transacciones procesadas" },
-              { value: "98%", label: "Satisfacción del cliente" },
+              { value: "+10", label: "Años de experiencia" },
+              { value: "+30", label: "Empresas" },
+              { value: "+10", label: "Países destino" },
+              { value: "+50M$", label: "En transacciones gestionadas" },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
                 <div className="text-2xl md:text-3xl font-bold text-primary mb-1">

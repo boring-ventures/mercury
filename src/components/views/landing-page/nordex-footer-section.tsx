@@ -1,131 +1,101 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { MapPin, Phone, Mail, Clock, Facebook, Instagram, MessageCircle } from "lucide-react";
 
 export default function NordexFooterSection() {
-  const footerSections = [
-    {
-      title: "Servicios",
-      links: [
-        { name: "Intermediación comercial", href: "#servicios" },
-        { name: "Pagos internacionales", href: "#servicios" },
-        { name: "Comercio exterior", href: "#servicios" },
-        { name: "Consultoría", href: "#servicios" }
-      ]
-    },
-    {
-      title: "Empresa",
-      links: [
-        { name: "Quiénes somos", href: "#quienes-somos" },
-        { name: "Nuestro equipo", href: "#quienes-somos" },
-        { name: "Certificaciones", href: "#quienes-somos" },
-        { name: "Casos de éxito", href: "#" }
-      ]
-    },
-    {
-      title: "Recursos",
-      links: [
-        { name: "Blog", href: "#noticias" },
-        { name: "Guías", href: "#" },
-        { name: "Webinars", href: "#" },
-        { name: "Centro de ayuda", href: "#" }
-      ]
-    },
-    {
-      title: "Legal",
-      links: [
-        { name: "Términos de servicio", href: "#" },
-        { name: "Política de privacidad", href: "#" },
-        { name: "Cookies", href: "#" },
-        { name: "Cumplimiento", href: "#" }
-      ]
-    }
+  const navigationLinks = [
+    { name: "Inicio", href: "#" },
+    { name: "Servicios", href: "#servicios" },
+    { name: "Quienes Somos", href: "#quienes-somos" },
+    { name: "Noticias", href: "#noticias" }
   ];
 
   const socialLinks = [
-    { name: "LinkedIn", href: "#", icon: "💼" },
-    { name: "Facebook", href: "#", icon: "📘" },
-    { name: "Twitter", href: "#", icon: "🐦" },
-    { name: "Instagram", href: "#", icon: "📸" }
+    { name: "Facebook", href: "#", icon: Facebook },
+    { name: "Instagram", href: "#", icon: Instagram },
+    { name: "WhatsApp", href: "#", icon: MessageCircle }
   ];
 
   return (
     <footer className="bg-[#051D67] text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="py-16 grid lg:grid-cols-5 gap-8">
-          <div className="lg:col-span-2 space-y-8">
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-white rounded-md flex items-center justify-center">
-                  <span className="text-[#051D67] font-bold text-xl">N</span>
-                </div>
-                <span className="text-white font-semibold text-2xl">NORDEX</span>
+        <div className="py-16 grid lg:grid-cols-3 gap-12">
+          {/* Primera columna - Información de NORDEX */}
+          <div className="flex flex-col space-y-6">
+            <div className="flex flex-col space-y-4">
+              <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center">
+                <span className="text-[#051D67] font-bold text-3xl">N</span>
               </div>
-              <p className="text-white/80 text-sm leading-relaxed max-w-md">
-                Conectamos Bolivia con el mundo. Somos la empresa líder en facilitación 
-                comercial internacional, transformando la manera en que las empresas 
-                locales se conectan globalmente.
-              </p>
+              <span className="text-white font-semibold text-2xl">NORDEX</span>
             </div>
+            <p className="text-white/80 text-sm leading-relaxed max-w-xs">
+              Conectamos Bolivia con el mundo. Empresa líder en facilitación 
+              comercial internacional.
+            </p>
+          </div>
 
+          {/* Segunda columna - Navegación */}
+          <div className="space-y-6">
+            <h4 className="text-white font-semibold text-lg">Navegación</h4>
+            <ul className="space-y-3">
+              {navigationLinks.map((link) => (
+                <li key={link.name}>
+                  <Link
+                    href={link.href}
+                    className="text-white/80 hover:text-[#81D843] text-sm transition-colors duration-200 block py-1"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Tercera columna - Contacto y Redes Sociales */}
+          <div className="space-y-6">
             <div className="space-y-4">
               <h4 className="text-white font-semibold text-lg">Contacto</h4>
-              <div className="space-y-3 text-sm text-white/80">
-                <div className="flex items-center space-x-3">
-                  <span className="text-[#81D843]">📍</span>
-                  <span>Av. Arce 2799, Torre Multicentro, Piso 15, La Paz - Bolivia</span>
+              <div className="space-y-3">
+                <div className="flex items-start space-x-3">
+                  <MapPin className="w-4 h-4 text-white mt-1 flex-shrink-0" />
+                  <span className="text-white/80 text-sm">Av. Arce 2799, Torre Multicentro, Piso 15, La Paz - Bolivia</span>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <span className="text-[#81D843]">📞</span>
-                  <span>+591 2 2441234</span>
+                  <Phone className="w-4 h-4 text-white flex-shrink-0" />
+                  <span className="text-white/80 text-sm">+591 2 2441234</span>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <span className="text-[#81D843]">📧</span>
-                  <span>info@nordex.com.bo</span>
+                  <Mail className="w-4 h-4 text-white flex-shrink-0" />
+                  <span className="text-white/80 text-sm">info@nordex.com.bo</span>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <span className="text-[#81D843]">🕐</span>
-                  <span>Lun - Vie: 8:00 AM - 6:00 PM</span>
+                  <Clock className="w-4 h-4 text-white flex-shrink-0" />
+                  <span className="text-white/80 text-sm">Lun - Vie: 8:00 AM - 6:00 PM</span>
                 </div>
               </div>
             </div>
 
             <div className="space-y-4">
-              <h4 className="text-white font-semibold text-lg">Síguenos</h4>
-              <div className="flex space-x-4">
+              <h4 className="text-white font-semibold text-lg">Redes Sociales</h4>
+              <div className="flex space-x-3">
                 {socialLinks.map((social) => (
                   <Link
                     key={social.name}
                     href={social.href}
-                    className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors duration-200"
+                    className="w-10 h-10 border border-white/30 rounded-lg flex items-center justify-center hover:border-[#81D843] hover:bg-[#81D843]/10 transition-all duration-200"
                     aria-label={social.name}
                   >
-                    <span className="text-lg">{social.icon}</span>
+                    {React.createElement(social.icon, {
+                      size: 18,
+                      className: "text-white"
+                    })}
                   </Link>
                 ))}
               </div>
             </div>
-          </div>
-
-          <div className="lg:col-span-3 grid md:grid-cols-4 gap-8">
-            {footerSections.map((section) => (
-              <div key={section.title} className="space-y-4">
-                <h4 className="text-white font-semibold text-lg">{section.title}</h4>
-                <ul className="space-y-3">
-                  {section.links.map((link) => (
-                    <li key={link.name}>
-                      <Link
-                        href={link.href}
-                        className="text-white/80 hover:text-[#81D843] text-sm transition-colors duration-200"
-                      >
-                        {link.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
           </div>
         </div>
 
@@ -155,36 +125,6 @@ export default function NordexFooterSection() {
         </div>
       </div>
 
-      <div className="bg-gradient-to-r from-[#041655] to-[#051D67] py-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
-            <div className="text-center md:text-left">
-              <h5 className="text-white font-semibold text-lg mb-1">
-                ¿Listo para expandir tu negocio?
-              </h5>
-              <p className="text-white/80 text-sm">
-                Comienza tu proceso de internacionalización hoy mismo
-              </p>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button 
-                size="lg"
-                className="bg-[#81D843] hover:bg-[#6BC536] text-[#051D67] px-6 py-3 rounded-md font-medium transition-all duration-200"
-              >
-                Consulta gratuita
-              </Button>
-              <Button 
-                size="lg"
-                variant="outline"
-                className="border-white text-white hover:bg-white hover:text-[#051D67] px-6 py-3 rounded-md font-medium transition-all duration-200"
-              >
-                <Link href="/sign-in">Acceder al sistema</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
     </footer>
   );
 }
