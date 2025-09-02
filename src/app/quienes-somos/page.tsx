@@ -2,7 +2,8 @@ import NordexHeader from "@/components/views/landing-page/nordex-header";
 import NordexFooterSection from "@/components/views/landing-page/nordex-footer-section";
 import NordexBanner from "@/components/ui/nordex-banner";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Zap, Users } from "lucide-react";
+import NordexStats from "@/components/ui/nordex-stats";
+import NordexValuesTimeline from "@/components/ui/nordex-values-timeline";
 
 export default function QuienesSomosPage() {
   return (
@@ -32,12 +33,12 @@ export default function QuienesSomosPage() {
           </div>
 
           {/* About Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 mb-20">
-            <div>
+          <div className="mb-20">
+            <div className="max-w-4xl mx-auto text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-sans font-bold text-[#262626] mb-8">
                 Nuestra Historia
               </h2>
-              <div className="space-y-6 text-[#262626A3] text-base md:text-lg leading-relaxed">
+              <div className="space-y-6 text-[#262626A3] text-base md:text-lg leading-relaxed font-serif">
                 <p>
                   NORDEX nace de la necesidad de brindar soluciones integrales y
                   confiables en el mercado de comercio internacional. Fundada por un
@@ -57,114 +58,45 @@ export default function QuienesSomosPage() {
                 </p>
               </div>
             </div>
-            <div className="bg-[#051D67] rounded-2xl p-8 md:p-10">
-              <h3 className="text-2xl md:text-3xl font-sans font-bold text-white mb-8">En Números</h3>
-              <div className="grid grid-cols-2 gap-6">
-                <div className="text-center">
-                  <div className="text-3xl md:text-4xl font-bold text-white mb-2">
-                    +10
-                  </div>
-                  <div className="text-white/80 text-sm">
-                    Años de experiencia
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl md:text-4xl font-bold text-white mb-2">
-                    +30
-                  </div>
-                  <div className="text-white/80 text-sm">
-                    Empresas
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl md:text-4xl font-bold text-white mb-2">
-                    +10
-                  </div>
-                  <div className="text-white/80 text-sm">
-                    Países destino
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl md:text-4xl font-bold text-white mb-2">
-                    +50M$
-                  </div>
-                  <div className="text-white/80 text-sm">
-                    En transacciones gestionadas
-                  </div>
-                </div>
-              </div>
-            </div>
+            
+            {/* Stats Section */}
+            <NordexStats />
           </div>
 
           {/* Mission & Vision */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-20">
-            <div className="bg-[#051D67] text-white rounded-2xl p-8">
-              <h3 className="text-2xl md:text-3xl font-sans font-bold mb-6">
-                Nuestra Misión
-              </h3>
-              <p className="text-white/90 font-serif text-base md:text-lg leading-relaxed">
-                Facilitar el proceso de internacionalización para empresas
-                bolivianas, proporcionando servicios especializados que
-                simplifiquen operaciones internacionales y aceleren el crecimiento
-                global.
-              </p>
-            </div>
-            <div className="bg-[#81D843] text-[#051D67] rounded-2xl p-8">
-              <h3 className="text-2xl md:text-3xl font-sans font-bold mb-6">
-                Nuestra Visión
-              </h3>
-              <p className="text-[#051D67]/90 font-serif text-base md:text-lg leading-relaxed">
-                Ser el líder indiscutible en facilitación comercial internacional
-                en Bolivia, reconocido por nuestra excelencia operativa,
-                innovación y compromiso con el éxito de nuestros clientes.
-              </p>
+          <div className="text-center mb-20">
+            <div className="max-w-4xl mx-auto">
+              <h2 className="text-3xl md:text-4xl font-sans font-bold text-[#262626] mb-8">
+                Misión & Visión
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="text-left">
+                  <h3 className="text-xl font-sans font-bold text-[#051D67] mb-4">
+                    Nuestra Misión
+                  </h3>
+                  <p className="text-[#262626A3] font-serif text-base leading-relaxed">
+                    Facilitar el proceso de internacionalización para empresas
+                    bolivianas, proporcionando servicios especializados que
+                    simplifiquen operaciones internacionales y aceleren el crecimiento
+                    global.
+                  </p>
+                </div>
+                <div className="text-left">
+                  <h3 className="text-xl font-sans font-bold text-[#051D67] mb-4">
+                    Nuestra Visión
+                  </h3>
+                  <p className="text-[#262626A3] font-serif text-base leading-relaxed">
+                    Ser el líder indiscutible en facilitación comercial internacional
+                    en Bolivia, reconocido por nuestra excelencia operativa,
+                    innovación y compromiso con el éxito de nuestros clientes.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Values */}
-          <div className="mb-20">
-            <h2 className="text-3xl md:text-4xl font-sans font-bold text-[#262626] text-center mb-16">
-              Nuestros Valores
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="text-center">
-                <div className="w-16 h-16 border-2 border-[#051D67] rounded-lg flex items-center justify-center mx-auto mb-6">
-                  <Shield className="w-8 h-8 text-[#051D67]" />
-                </div>
-                <h3 className="text-xl font-sans font-bold text-[#262626] mb-4">
-                  Confiabilidad
-                </h3>
-                <p className="text-[#262626A3] font-serif text-base leading-relaxed">
-                  Cumplimos nuestros compromisos con transparencia y
-                  responsabilidad absoluta.
-                </p>
-              </div>
-              <div className="text-center">
-                <div className="w-16 h-16 border-2 border-[#051D67] rounded-lg flex items-center justify-center mx-auto mb-6">
-                  <Zap className="w-8 h-8 text-[#051D67]" />
-                </div>
-                <h3 className="text-xl font-sans font-bold text-[#262626] mb-4">
-                  Innovación
-                </h3>
-                <p className="text-[#262626A3] font-serif text-base leading-relaxed">
-                  Adoptamos las últimas tecnologías para optimizar continuamente
-                  nuestros procesos.
-                </p>
-              </div>
-              <div className="text-center">
-                <div className="w-16 h-16 border-2 border-[#051D67] rounded-lg flex items-center justify-center mx-auto mb-6">
-                  <Users className="w-8 h-8 text-[#051D67]" />
-                </div>
-                <h3 className="text-xl font-sans font-bold text-[#262626] mb-4">
-                  Compromiso
-                </h3>
-                <p className="text-[#262626A3] font-serif text-base leading-relaxed">
-                  Nos dedicamos completamente al éxito y crecimiento de nuestros
-                  clientes.
-                </p>
-              </div>
-            </div>
-          </div>
+          {/* Values Timeline */}
+          <NordexValuesTimeline />
         </div>
       </main>
 

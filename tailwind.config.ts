@@ -84,7 +84,10 @@ export default {
   			'shiny-text': 'shiny-text 8s infinite',
   			shine: 'shine var(--duration) infinite linear',
   			'shimmer-slide': 'shimmer-slide var(--speed) ease-in-out infinite alternate',
-  			'spin-around': 'spin-around calc(var(--speed) * 2) infinite linear'
+  			'spin-around': 'spin-around calc(var(--speed) * 2) infinite linear',
+  			'spin-slow': 'spin-slow 20s linear infinite',
+  			'reverse-spin': 'reverse-spin 30s linear infinite',
+  			'spin-slower': 'spin-slower 40s linear infinite'
   		},
   		keyframes: {
   			'shiny-text': {

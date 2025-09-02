@@ -51,6 +51,7 @@
     "docx-templates": "^4.14.1",
     "dotenv": "^16.4.7",
     "dotted-map": "^2.2.3",
+    "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.4.7",
     "jszip": "^3.10.1",
     "lucide-react": "^0.475.0",

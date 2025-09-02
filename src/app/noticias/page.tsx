@@ -5,6 +5,7 @@ import NordexHeader from "@/components/views/landing-page/nordex-header";
 import NordexFooterSection from "@/components/views/landing-page/nordex-footer-section";
 import NordexBanner from "@/components/ui/nordex-banner";
 import { Badge } from "@/components/ui/badge";
+import { NewsGallery } from "@/components/ui/news-gallery";
 import {
   FileText,
   Scale,
@@ -169,70 +170,14 @@ export default function NoticiasPage() {
             </div>
           </div>
 
-          {/* Blog Posts Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {mockPosts.slice(1).map((post) => (
-              <article key={post.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-                <div className="h-48 bg-gray-200 flex items-center justify-center">
-                  <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="bg-gray-100 text-[#6B6B6B] text-xs font-medium px-3 py-1 rounded-full">
-                      {post.category}
-                    </span>
-                    <span className="text-sm text-[#6B6B6B]">
-                      {new Date(post.date).toLocaleDateString('es-ES', { 
-                        day: 'numeric', 
-                        month: 'long', 
-                        year: 'numeric' 
-                      })}
-                    </span>
-                  </div>
-                  <h3 className="text-lg font-semibold font-sans text-[#262626] mb-2 line-clamp-2">
-                    {post.title}
-                  </h3>
-                  <p className="text-[#6B6B6B] font-serif text-sm mb-4 line-clamp-3">
-                    {post.excerpt}
-                  </p>
-                  <button className="text-[#051D67] hover:text-[#041655] font-medium text-sm transition-colors">
-                    Leer más →
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
+          {/* News Gallery */}
+          <NewsGallery items={mockPosts.slice(1)} heading="Más Artículos" />
 
           {/* Load More Button */}
           <div className="text-center mt-12">
             <button className="border border-[#051D67] text-[#051D67] hover:bg-[#051D67] hover:text-white px-8 py-3 rounded-md font-medium transition-colors">
               Cargar Más Artículos
             </button>
-          </div>
-
-          {/* Newsletter Subscription */}
-          <div className="bg-white rounded-lg p-12 shadow-sm border border-gray-200 mt-16">
-            <div className="text-center">
-              <h2 className="text-3xl font-bold font-sans text-[#262626] mb-4">
-                Suscríbete a Nuestro Newsletter
-              </h2>
-              <p className="text-lg font-serif text-[#6B6B6B] mb-8 max-w-2xl mx-auto">
-                Recibe las últimas noticias, consejos y actualizaciones sobre comercio 
-                internacional directamente en tu correo electrónico.
-              </p>
-              <div className="max-w-md mx-auto flex gap-4">
-                <input
-                  type="email"
-                  placeholder="Tu correo electrónico"
-                  className="flex-1 px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#051D67]"
-                />
-                <button className="bg-[#051D67] hover:bg-[#041655] text-white px-6 py-3 rounded-md font-medium transition-colors whitespace-nowrap">
-                  Suscribirse
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       </main>
