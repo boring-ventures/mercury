@@ -192,7 +192,7 @@ export default function Features() {
               <input
                 type="email"
                 placeholder="Tu correo electrónico"
-                className="flex-1 px-4 py-3 rounded-lg text-[#051D67] placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#051D67] font-serif">
+                className="flex-1 px-4 py-3 rounded-lg text-[#051D67] placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#051D67] font-serif"
               />
               <button className="px-8 py-3 bg-[#051D67] hover:bg-[#0a2b7a] text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 font-sans">
                 Suscribirse
