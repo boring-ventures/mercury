@@ -8,55 +8,54 @@ export default function NordexHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="fixed top-12 left-0 right-0 z-40 bg-[#FFFFFF] border-b border-gray-200 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+    <header className="fixed top-10 sm:top-12 left-0 right-0 z-40 bg-[#FFFFFF] border-b border-gray-200 shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
+        <div className="flex justify-between items-center h-14 sm:h-16 lg:h-18">
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-[#051D67] rounded-md flex items-center justify-center">
-                <span className="text-white font-bold text-lg">N</span>
-              </div>
-              <span className="text-[#262626] font-semibold text-xl font-sans">
-                NORDEX
-              </span>
+            <Link href="/" className="flex items-center space-x-3">
+              <img
+                src="/logos/logo Nordex_Mesa de trabajo 1 copia.png"
+                alt="NORDEX Logo"
+                className="h-6 w-auto sm:h-8 lg:h-10"
+              />
             </Link>
           </div>
 
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden lg:flex items-center space-x-4 xl:space-x-8">
             <Link
               href="/"
-              className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium font-sans"
+              className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium font-sans text-sm lg:text-base xl:text-lg"
             >
               Inicio
             </Link>
             <Link
               href="/servicios"
-              className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium font-sans"
+              className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium font-sans text-sm lg:text-base xl:text-lg"
             >
               Servicios
             </Link>
             <Link
               href="/quienes-somos"
-              className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium font-sans"
+              className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium font-sans text-sm lg:text-base xl:text-lg"
             >
               Quiénes somos
             </Link>
             <Link
               href="/noticias"
-              className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium font-sans"
+              className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium font-sans text-sm lg:text-base xl:text-lg"
             >
               Noticias
             </Link>
             <Button
               asChild
-              className="bg-[#051D67] hover:bg-[#041655] text-white px-6 py-2 rounded-md transition-colors duration-200"
+              className="bg-[#051D67] hover:bg-[#041655] text-white px-4 py-2 lg:px-6 lg:py-2 xl:px-8 xl:py-3 text-sm lg:text-base rounded-md transition-colors duration-200"
             >
               <Link href="/sign-in">Iniciar sesión</Link>
             </Button>
           </nav>
 
           <button
-            className="md:hidden text-[#262626]"
+            className="lg:hidden text-[#262626]"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             <svg
@@ -85,39 +84,39 @@ export default function NordexHeader() {
         </div>
 
         {isMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-200">
+          <div className="lg:hidden py-4 border-t border-gray-200">
             <nav className="flex flex-col space-y-4">
               <Link
                 href="/"
-                className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium px-2 py-1 font-sans"
+                className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium px-2 py-1 font-sans text-base"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Inicio
               </Link>
               <Link
                 href="/servicios"
-                className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium px-2 py-1 font-sans"
+                className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium px-2 py-1 font-sans text-base"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Servicios
               </Link>
               <Link
                 href="/quienes-somos"
-                className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium px-2 py-1 font-sans"
+                className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium px-2 py-1 font-sans text-base"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Quiénes somos
               </Link>
               <Link
                 href="/noticias"
-                className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium px-2 py-1 font-sans"
+                className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium px-2 py-1 font-sans text-base"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Noticias
               </Link>
               <Button
                 asChild
-                className="bg-[#051D67] hover:bg-[#041655] text-white px-6 py-2 rounded-md transition-colors duration-200 w-fit ml-2"
+                className="bg-[#051D67] hover:bg-[#041655] text-white px-6 py-3 rounded-md transition-colors duration-200 w-fit ml-2 text-base"
               >
                 <Link href="/sign-in">Iniciar sesión</Link>
               </Button>
