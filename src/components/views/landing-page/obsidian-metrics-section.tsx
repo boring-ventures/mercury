@@ -61,10 +61,10 @@ export default function NordexMetricsSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-20">
-          <h2 className="text-4xl md:text-5xl font-bold text-[#051D67] mb-6 font-['Helvetica']">
+          <h2 className="text-4xl md:text-5xl font-bold text-[#051D67] mb-6 font-sans">
             IMPACTO MENSUAL EN NUESTROS CLIENTES
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto font-['Helvetica']">
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto font-serif">
             Resultados verificables que demuestran el impacto real de nuestros
             servicios
           </p>
@@ -90,13 +90,13 @@ export default function NordexMetricsSection() {
 
                 {/* Metric Value */}
                 <div className="mb-4">
-                  <div className="text-4xl font-bold text-[#051D67] mb-2 font-['Helvetica']">
+                  <div className="text-4xl font-bold text-[#051D67] mb-2 font-sans">
                     {metric.value}
                   </div>
-                  <div className="text-lg font-semibold text-[#81D843] mb-2 font-['Helvetica']">
+                  <div className="text-lg font-semibold text-[#81D843] mb-2 font-sans">
                     {metric.label}
                   </div>
-                  <div className="text-sm text-gray-600 font-['Helvetica']">
+                  <div className="text-sm text-gray-600 font-serif">
                     {metric.description}
                   </div>
                 </div>
@@ -110,10 +110,10 @@ export default function NordexMetricsSection() {
           <div className="bg-[#051D67] rounded-lg p-12 text-white">
             <div className="max-w-4xl mx-auto">
               <Award className="w-16 h-16 mx-auto mb-6 text-white opacity-90" />
-              <h3 className="text-3xl font-bold mb-4 font-['Helvetica']">
+              <h3 className="text-3xl font-bold mb-4 font-sans">
                 Transformando el Comercio Internacional
               </h3>
-              <p className="text-xl opacity-90 leading-relaxed font-['Helvetica']">
+              <p className="text-xl opacity-90 leading-relaxed font-serif">
                 Cada mes, facilitamos la expansión global de empresas
                 bolivianas, creando un impacto medible y sostenible en la
                 economía nacional.

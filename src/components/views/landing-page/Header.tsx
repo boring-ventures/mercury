@@ -25,7 +25,7 @@ export default function Header() {
             <Globe className="h-8 w-8 text-[#051D67]" />
             <Link
               href="/"
-              className="text-2xl font-bold text-[#051D67] font-['Helvetica']"
+              className="text-2xl font-bold text-[#051D67] font-sans"
             >
               NORDEX
             </Link>
@@ -37,7 +37,7 @@ export default function Header() {
               <Link
                 key={item.name}
                 href={item.href}
-                className="text-[#051D67] hover:text-[#81D843] transition-colors duration-300 font-['Helvetica'] font-medium"
+                className="text-[#051D67] hover:text-[#81D843] transition-colors duration-300 font-sans font-medium"
               >
                 {item.name}
               </Link>
@@ -71,7 +71,7 @@ export default function Header() {
                   <Link
                     key={item.name}
                     href={item.href}
-                    className="block px-3 py-2 text-[#051D67] hover:text-[#81D843] hover:bg-gray-50 rounded-md transition-colors duration-300 font-['Helvetica']"
+                    className="block px-3 py-2 text-[#051D67] hover:text-[#81D843] hover:bg-gray-50 rounded-md transition-colors duration-300 font-sans"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     {item.name}

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import NordexHeader from "@/components/views/landing-page/nordex-header";
 import NordexFooterSection from "@/components/views/landing-page/nordex-footer-section";
+import NordexBanner from "@/components/ui/nordex-banner";
+import { Badge } from "@/components/ui/badge";
 import {
   Package,
   Users,
@@ -100,20 +102,28 @@ export default function ServiciosPage() {
 
   return (
     <div className="bg-white min-h-screen">
+      <NordexBanner />
       <NordexHeader />
 
-      <main className="pt-20 pb-16">
+      <main className="pt-32 pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Hero Section */}
-          <div className="text-center mb-16">
-            <h1 className="text-4xl md:text-5xl font-bold text-[#1F1915] mb-6">
-              Nuestros Servicios
-            </h1>
-            <p className="text-lg text-[#6B6B6B] max-w-3xl mx-auto">
-              Ofrecemos soluciones integrales para la gestión de envíos
-              internacionales, simplificando cada paso del proceso de
-              importación para tu empresa.
-            </p>
+          <div className="flex gap-4 py-12 flex-col items-start mb-16">
+            <div>
+              <Badge className="bg-[#051D67] text-white hover:bg-[#041655]">
+                Servicios
+              </Badge>
+            </div>
+            <div className="flex gap-2 flex-col">
+              <h1 className="text-3xl md:text-5xl tracking-tighter lg:max-w-xl font-regular text-[#262626] font-sans font-bold">
+                Nuestros <span className="text-[#051D67]">Servicios</span>
+              </h1>
+              <p className="text-lg max-w-xl lg:max-w-xl leading-relaxed tracking-tight text-[#262626A3] font-serif">
+                Ofrecemos soluciones integrales para la gestión de envíos
+                internacionales, simplificando cada paso del proceso de
+                importación para tu empresa.
+              </p>
+            </div>
           </div>
 
           {/* Services Tabs */}
@@ -128,7 +138,7 @@ export default function ServiciosPage() {
                     className={`flex flex-col items-center gap-3 transition-all duration-200 ${
                       activeTab === service.id
                         ? "text-[#81D843]"
-                        : "text-[#6B6B6B] hover:text-[#1F1915]"
+                        : "text-[#6B6B6B] hover:text-[#262626]"
                     }`}
                   >
                     <IconComponent className="w-6 h-6" />
@@ -158,10 +168,10 @@ export default function ServiciosPage() {
                     })()}
                   </div>
                   <div>
-                    <h2 className="text-3xl font-bold text-[#1F1915] mb-4">
+                    <h2 className="text-3xl font-bold font-sans text-[#262626] mb-4">
                       {activeService.title}
                     </h2>
-                    <p className="text-lg text-[#6B6B6B] leading-relaxed max-w-3xl">
+                    <p className="text-lg font-serif text-[#6B6B6B] leading-relaxed max-w-3xl">
                       {activeService.description}
                     </p>
                   </div>
@@ -172,7 +182,7 @@ export default function ServiciosPage() {
                   {activeService.features.map((feature, index) => (
                     <div key={index} className="flex items-center gap-3">
                       <div className="w-1.5 h-1.5 bg-[#81D843] rounded-full flex-shrink-0"></div>
-                      <span className="text-[#1F1915] text-sm">{feature}</span>
+                      <span className="text-[#262626] font-serif text-sm">{feature}</span>
                     </div>
                   ))}
                 </div>
@@ -182,10 +192,10 @@ export default function ServiciosPage() {
 
           {/* CTA Section */}
           <div className="text-center bg-white rounded-lg p-12 shadow-sm border border-gray-200">
-            <h2 className="text-3xl font-bold text-[#1F1915] mb-4">
+            <h2 className="text-3xl font-bold text-[#262626] mb-4">
               ¿Listo para optimizar tus importaciones?
             </h2>
-            <p className="text-lg text-[#6B6B6B] mb-8 max-w-2xl mx-auto">
+            <p className="text-lg font-serif text-[#6B6B6B] mb-8 max-w-2xl mx-auto">
               Contacta con nuestro equipo para una consulta personalizada y
               descubre cómo podemos hacer más eficiente tu proceso de
               importación.

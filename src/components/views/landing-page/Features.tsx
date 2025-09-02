@@ -78,10 +78,10 @@ export default function Features() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-20">
-          <h2 className="text-4xl md:text-5xl font-bold text-[#051D67] mb-6 font-['Helvetica']">
+          <h2 className="text-4xl md:text-5xl font-bold text-[#051D67] mb-6 font-sans">
             Noticias y Actualizaciones
           </h2>
-          <p className="text-xl text-gray-600 max-w-4xl mx-auto font-['Helvetica']">
+          <p className="text-xl text-gray-600 max-w-4xl mx-auto font-serif">
             Mantente informado sobre las últimas novedades en comercio
             internacional y nuestros servicios
           </p>
@@ -90,10 +90,10 @@ export default function Features() {
         {/* Featured News */}
         <div className="mb-16">
           <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-[#051D67] mb-4 font-['Helvetica']">
+            <h3 className="text-3xl font-bold text-[#051D67] mb-4 font-sans">
               Últimas Noticias
             </h3>
-            <p className="text-xl text-gray-600 font-['Helvetica']">
+            <p className="text-xl text-gray-600 font-serif">
               Información relevante para tu estrategia de internacionalización
             </p>
           </div>
@@ -115,27 +115,27 @@ export default function Features() {
                   </div>
 
                   <div className="mb-3">
-                    <span className="text-xs font-semibold text-[#81D843] uppercase tracking-wide font-['Helvetica']">
+                    <span className="text-xs font-semibold text-[#81D843] uppercase tracking-wide font-sans">
                       {article.category}
                     </span>
                   </div>
 
-                  <h4 className="text-lg font-bold text-[#051D67] mb-3 group-hover:text-[#81D843] transition-colors line-clamp-2 font-['Helvetica']">
+                  <h4 className="text-lg font-bold text-[#051D67] mb-3 group-hover:text-[#81D843] transition-colors line-clamp-2 font-sans">
                     {article.title}
                   </h4>
 
-                  <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3 font-['Helvetica']">
+                  <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3 font-serif">
                     {article.excerpt}
                   </p>
 
-                  <div className="flex items-center justify-between text-xs text-gray-500 mb-4 font-['Helvetica']">
+                  <div className="flex items-center justify-between text-xs text-gray-500 mb-4 font-serif">
                     <span>{article.date}</span>
                     <span>{article.readTime}</span>
                   </div>
 
                   <a
                     href="#"
-                    className="inline-flex items-center text-[#051D67] hover:text-[#81D843] font-semibold text-sm group-hover:translate-x-1 transition-all duration-300 font-['Helvetica']"
+                    className="inline-flex items-center text-[#051D67] hover:text-[#81D843] font-semibold text-sm group-hover:translate-x-1 transition-all duration-300 font-sans"
                   >
                     Leer más
                     <ArrowRight className="w-4 h-4 ml-1" />
@@ -149,10 +149,10 @@ export default function Features() {
         {/* Industry Insights */}
         <div className="mb-16">
           <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-[#051D67] mb-4 font-['Helvetica']">
+            <h3 className="text-3xl font-bold text-[#051D67] mb-4 font-sans">
               Insights de la Industria
             </h3>
-            <p className="text-xl text-gray-600 font-['Helvetica']">
+            <p className="text-xl text-gray-600 font-serif">
               Recursos y análisis especializados para tu crecimiento
               internacional
             </p>
@@ -165,10 +165,10 @@ export default function Features() {
                 className="bg-[#051D67] rounded-lg p-8 text-[#FCFDFD] hover:scale-105 transition-all duration-300"
               >
                 <div className="text-4xl mb-4">{insight.icon}</div>
-                <h4 className="text-xl font-bold mb-4 font-['Helvetica']">
+                <h4 className="text-xl font-bold mb-4 font-sans">
                   {insight.title}
                 </h4>
-                <p className="text-[#FCFDFD] opacity-90 leading-relaxed font-['Helvetica']">
+                <p className="text-[#FCFDFD] opacity-90 leading-relaxed font-serif">
                   {insight.description}
                 </p>
               </div>
@@ -180,10 +180,10 @@ export default function Features() {
         <div className="bg-[#81D843] rounded-lg p-12 text-[#051D67] text-center">
           <div className="max-w-2xl mx-auto">
             <Newspaper className="w-16 h-16 mx-auto mb-6 text-[#051D67]" />
-            <h3 className="text-3xl font-bold mb-4 font-['Helvetica']">
+            <h3 className="text-3xl font-bold mb-4 font-sans">
               Mantente Informado
             </h3>
-            <p className="text-xl opacity-90 mb-8 font-['Helvetica']">
+            <p className="text-xl opacity-90 mb-8 font-serif">
               Suscríbete a nuestro boletín para recibir las últimas noticias,
               insights y oportunidades de comercio internacional.
             </p>
@@ -192,14 +192,14 @@ export default function Features() {
               <input
                 type="email"
                 placeholder="Tu correo electrónico"
-                className="flex-1 px-4 py-3 rounded-lg text-[#051D67] placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#051D67] font-['Helvetica']"
+                className="flex-1 px-4 py-3 rounded-lg text-[#051D67] placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#051D67] font-serif">
               />
-              <button className="px-8 py-3 bg-[#051D67] hover:bg-[#0a2b7a] text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 font-['Helvetica']">
+              <button className="px-8 py-3 bg-[#051D67] hover:bg-[#0a2b7a] text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 font-sans">
                 Suscribirse
               </button>
             </div>
 
-            <p className="text-sm opacity-80 mt-4 font-['Helvetica']">
+            <p className="text-sm opacity-80 mt-4 font-serif">
               No spam, solo contenido valioso para tu negocio.
             </p>
           </div>

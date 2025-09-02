@@ -4,23 +4,23 @@ import React from "react";
 import { motion, useAnimation } from "motion/react";
 import { useEffect, useState } from "react";
 import {
-  Building,
+  Building2,
   Package,
-  ShirtIcon,
+  Shirt,
   Pill,
-  UtensilsIcon,
-  Laptop,
+  Utensils,
+  Laptop2,
 } from "lucide-react";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import { AnimatedShinyText } from "@/components/magicui/animated-shiny-text";
 
 const bolivianCompanies = [
-  { name: "Importadoras de Tecnología", icon: Laptop },
+  { name: "Importadoras de Tecnología", icon: Laptop2 },
   { name: "Distribuidoras de Maquinaria", icon: Package },
-  { name: "Empresas Textiles", icon: ShirtIcon },
+  { name: "Empresas Textiles", icon: Shirt },
   { name: "Sector Farmacéutico", icon: Pill },
-  { name: "Industria Alimentaria", icon: UtensilsIcon },
-  { name: "Empresas Industriales", icon: Building },
+  { name: "Industria Alimentaria", icon: Utensils },
+  { name: "Empresas Industriales", icon: Building2 },
 ];
 
 export function SocialProofSection() {
@@ -69,6 +69,7 @@ export function SocialProofSection() {
             {React.createElement(bolivianCompanies[currentIndex].icon, {
               size: 56,
               className: "text-primary mb-3",
+              strokeWidth: 1.5,
             })}
             <span className="text-xl font-semibold text-foreground">
               {bolivianCompanies[currentIndex].name}

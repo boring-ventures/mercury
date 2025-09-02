@@ -8,7 +8,7 @@ export default function NordexHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-[#FFFFFF] border-b border-gray-200 shadow-sm">
+    <header className="fixed top-12 left-0 right-0 z-40 bg-[#FFFFFF] border-b border-gray-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
@@ -16,7 +16,7 @@ export default function NordexHeader() {
               <div className="w-8 h-8 bg-[#051D67] rounded-md flex items-center justify-center">
                 <span className="text-white font-bold text-lg">N</span>
               </div>
-              <span className="text-[#1F1915] font-semibold text-xl">
+              <span className="text-[#262626] font-semibold text-xl font-sans">
                 NORDEX
               </span>
             </Link>
@@ -25,25 +25,25 @@ export default function NordexHeader() {
           <nav className="hidden md:flex items-center space-x-8">
             <Link
               href="/"
-              className="text-[#1F1915] hover:text-[#051D67] transition-colors duration-200 font-medium"
+              className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium font-sans"
             >
               Inicio
             </Link>
             <Link
               href="/servicios"
-              className="text-[#1F1915] hover:text-[#051D67] transition-colors duration-200 font-medium"
+              className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium font-sans"
             >
               Servicios
             </Link>
             <Link
               href="/quienes-somos"
-              className="text-[#1F1915] hover:text-[#051D67] transition-colors duration-200 font-medium"
+              className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium font-sans"
             >
               Quiénes somos
             </Link>
             <Link
               href="/noticias"
-              className="text-[#1F1915] hover:text-[#051D67] transition-colors duration-200 font-medium"
+              className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium font-sans"
             >
               Noticias
             </Link>
@@ -56,7 +56,7 @@ export default function NordexHeader() {
           </nav>
 
           <button
-            className="md:hidden text-[#1F1915]"
+            className="md:hidden text-[#262626]"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             <svg
@@ -89,28 +89,28 @@ export default function NordexHeader() {
             <nav className="flex flex-col space-y-4">
               <Link
                 href="/"
-                className="text-[#1F1915] hover:text-[#051D67] transition-colors duration-200 font-medium px-2 py-1"
+                className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium px-2 py-1 font-sans"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Inicio
               </Link>
               <Link
                 href="/servicios"
-                className="text-[#1F1915] hover:text-[#051D67] transition-colors duration-200 font-medium px-2 py-1"
+                className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium px-2 py-1 font-sans"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Servicios
               </Link>
               <Link
                 href="/quienes-somos"
-                className="text-[#1F1915] hover:text-[#051D67] transition-colors duration-200 font-medium px-2 py-1"
+                className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium px-2 py-1 font-sans"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Quiénes somos
               </Link>
               <Link
                 href="/noticias"
-                className="text-[#1F1915] hover:text-[#051D67] transition-colors duration-200 font-medium px-2 py-1"
+                className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium px-2 py-1 font-sans"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Noticias

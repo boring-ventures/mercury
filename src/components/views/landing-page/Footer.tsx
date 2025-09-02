@@ -21,10 +21,10 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-20">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 font-['Helvetica']">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 font-sans">
             Contacto
           </h2>
-          <p className="text-xl text-white/80 max-w-4xl mx-auto font-['Helvetica']">
+          <p className="text-xl text-white/80 max-w-4xl mx-auto font-serif">
             Ponte en contacto con nosotros para comenzar tu proceso de
             internacionalización
           </p>
@@ -36,11 +36,11 @@ export default function Footer() {
           <div className="lg:col-span-2">
             <div className="flex items-center space-x-3 mb-6">
               <Globe className="h-8 w-8 text-[#81D843]" />
-              <span className="text-2xl font-bold font-['Helvetica']">
+              <span className="text-2xl font-bold font-sans">
                 NORDEX Global
               </span>
             </div>
-            <p className="text-white/80 mb-8 leading-relaxed font-['Helvetica'] max-w-2xl">
+            <p className="text-white/80 mb-8 leading-relaxed font-serif max-w-2xl">
               Especialistas en internacionalización empresarial, facilitando
               operaciones internacionales y comercialización global para
               empresas bolivianas.
@@ -50,25 +50,25 @@ export default function Footer() {
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
                 <MapPin className="w-5 h-5 text-[#81D843] flex-shrink-0" />
-                <span className="text-white/80 font-['Helvetica']">
+                <span className="text-white/80 font-serif">
                   {contactInfo.address}
                 </span>
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="w-5 h-5 text-[#81D843] flex-shrink-0" />
-                <span className="text-white/80 font-['Helvetica']">
+                <span className="text-white/80 font-serif">
                   {contactInfo.phone}
                 </span>
               </div>
               <div className="flex items-center space-x-3">
                 <MessageCircle className="w-5 h-5 text-[#81D843] flex-shrink-0" />
-                <span className="text-white/80 font-['Helvetica']">
+                <span className="text-white/80 font-serif">
                   WhatsApp: {contactInfo.whatsapp}
                 </span>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="w-5 h-5 text-[#81D843] flex-shrink-0" />
-                <span className="text-white/80 font-['Helvetica']">
+                <span className="text-white/80 font-serif">
                   {contactInfo.email}
                 </span>
               </div>
@@ -77,28 +77,28 @@ export default function Footer() {
 
           {/* Quick Contact Form */}
           <div className="bg-white/5 p-8 rounded-lg border border-white/10">
-            <h3 className="text-xl font-semibold mb-6 font-['Helvetica']">
+            <h3 className="text-xl font-semibold mb-6 font-sans">
               Envíanos un mensaje
             </h3>
             <form className="space-y-4">
               <input
                 type="text"
                 placeholder="Nombre completo"
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-[#81D843] font-['Helvetica']"
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-[#81D843] font-serif"
               />
               <input
                 type="email"
                 placeholder="Correo electrónico"
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-[#81D843] font-['Helvetica']"
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-[#81D843] font-serif"
               />
               <textarea
                 placeholder="Mensaje"
                 rows={4}
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-[#81D843] font-['Helvetica'] resize-none"
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-[#81D843] font-serif resize-none"
               ></textarea>
               <button
                 type="submit"
-                className="w-full px-6 py-3 bg-[#81D843] hover:bg-[#6BC035] text-[#051D67] rounded-lg font-semibold transition-all duration-300 font-['Helvetica']"
+                className="w-full px-6 py-3 bg-[#81D843] hover:bg-[#6BC035] text-[#051D67] rounded-lg font-semibold transition-all duration-300 font-sans"
               >
                 Enviar Mensaje
               </button>
@@ -109,19 +109,19 @@ export default function Footer() {
         {/* Bottom Footer */}
         <div className="border-t border-white/20 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <div className="text-white/60 font-['Helvetica']">
+            <div className="text-white/60 font-serif">
               © 2025 NORDEX Global. Todos los derechos reservados.
             </div>
             <div className="flex items-center space-x-6">
               <a
                 href="#"
-                className="text-white/60 hover:text-white transition-colors font-['Helvetica']"
+                className="text-white/60 hover:text-white transition-colors font-serif">
               >
                 Términos y Condiciones
               </a>
               <a
                 href="#"
-                className="text-white/60 hover:text-white transition-colors font-['Helvetica']"
+                className="text-white/60 hover:text-white transition-colors font-serif">
               >
                 Política de Privacidad
               </a>

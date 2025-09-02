@@ -32,7 +32,7 @@ export default function NordexHeroSection() {
           {/* Left Column - Content */}
           <div className="text-left">
             {/* Main Headline */}
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-8 font-['Helvetica'] leading-tight text-[#051D67]">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-8 font-sans leading-tight text-[#051D67]">
               Conectamos
               <br />
               <span className="text-[#81D843]">Bolivia</span>
@@ -41,12 +41,12 @@ export default function NordexHeroSection() {
             </h1>
 
             {/* Tagline */}
-            <p className="text-xl md:text-2xl text-gray-700 mb-8 font-['Helvetica'] font-medium leading-relaxed">
+            <p className="text-xl md:text-2xl text-gray-700 mb-8 font-serif font-medium leading-relaxed">
               Facilitamos. Internacionalizamos. Escalamos.
             </p>
 
             {/* Description */}
-            <p className="text-lg md:text-xl text-gray-600 mb-12 max-w-2xl leading-relaxed font-['Helvetica']">
+            <p className="text-lg md:text-xl text-gray-600 mb-12 max-w-2xl leading-relaxed font-serif">
               Somos la empresa boliviana líder en facilitación comercial
               internacional. Transformamos la manera en que las empresas locales
               se conectan con el mundo, optimizando procesos y acelerando el
@@ -57,7 +57,7 @@ export default function NordexHeroSection() {
             <div className="flex flex-col sm:flex-row gap-6 mb-12">
               <a
                 href="#contacto"
-                className="inline-flex items-center justify-center px-8 py-4 bg-[#051D67] hover:bg-[#0a2b7a] rounded-lg text-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl text-white font-['Helvetica']"
+                className="inline-flex items-center justify-center px-8 py-4 bg-[#051D67] hover:bg-[#0a2b7a] rounded-lg text-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl text-white font-sans"
               >
                 <MessageCircle className="w-5 h-5 mr-2" />
                 Solicitar Consultoría
@@ -65,7 +65,7 @@ export default function NordexHeroSection() {
 
               <a
                 href="#servicios"
-                className="inline-flex items-center justify-center px-8 py-4 bg-white hover:bg-gray-50 border-2 border-[#051D67] rounded-lg text-lg font-semibold transition-all duration-300 transform hover:scale-105 text-[#051D67] font-['Helvetica']"
+                className="inline-flex items-center justify-center px-8 py-4 bg-white hover:bg-gray-50 border-2 border-[#051D67] rounded-lg text-lg font-semibold transition-all duration-300 transform hover:scale-105 text-[#051D67] font-sans"
               >
                 Conocer Servicios
                 <ArrowRight className="w-5 h-5 ml-2" />
@@ -77,7 +77,7 @@ export default function NordexHeroSection() {
               <div className="w-8 h-8 bg-[#81D843] rounded-full flex items-center justify-center">
                 <TrendingUp className="w-4 h-4 text-white" />
               </div>
-              <p className="text-gray-700 font-['Helvetica'] font-medium">
+              <p className="text-gray-700 font-serif font-medium">
                 El programa líder de internacionalización empresarial en Bolivia
               </p>
             </div>

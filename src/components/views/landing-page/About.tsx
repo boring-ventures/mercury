@@ -52,10 +52,10 @@ export default function About() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-20">
-          <h2 className="text-4xl md:text-5xl font-bold text-[#051D67] mb-6 font-['Helvetica']">
+          <h2 className="text-4xl md:text-5xl font-bold text-[#051D67] mb-6 font-sans">
             Quienes Somos
           </h2>
-          <p className="text-xl text-gray-600 max-w-4xl mx-auto font-['Helvetica']">
+          <p className="text-xl text-gray-600 max-w-4xl mx-auto font-serif">
             Conoce más sobre NORDEX Global y nuestro compromiso con el
             crecimiento empresarial boliviano
           </p>
@@ -64,22 +64,22 @@ export default function About() {
         {/* Company Story */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-20">
           <div className="space-y-6">
-            <h3 className="text-3xl font-bold text-[#051D67] mb-6 font-['Helvetica']">
+            <h3 className="text-3xl font-bold text-[#051D67] mb-6 font-sans">
               Nuestra Historia
             </h3>
-            <p className="text-lg text-gray-600 leading-relaxed font-['Helvetica']">
+            <p className="text-lg text-gray-600 leading-relaxed font-serif">
               Fundada con la misión de simplificar el proceso de
               internacionalización para empresas bolivianas, NORDEX Global se ha
               convertido en un socio estratégico confiable para más de 150
               empresas que buscan expandir sus operaciones globalmente.
             </p>
-            <p className="text-lg text-gray-600 leading-relaxed font-['Helvetica']">
+            <p className="text-lg text-gray-600 leading-relaxed font-serif">
               Nuestro equipo combina experiencia local con conocimiento global,
               ofreciendo soluciones integrales que abarcan desde la
               intermediación comercial hasta la gestión completa de operaciones
               de comercio exterior.
             </p>
-            <p className="text-lg text-gray-600 leading-relaxed font-['Helvetica']">
+            <p className="text-lg text-gray-600 leading-relaxed font-serif">
               Con un enfoque en la transparencia, velocidad y cumplimiento
               normativo, hemos logrado una tasa de éxito del 99.8% en todas
               nuestras operaciones.
@@ -89,34 +89,34 @@ export default function About() {
           <div className="relative">
             <div className="bg-[#051D67] rounded-lg p-12 text-[#FCFDFD] text-center">
               <div className="text-6xl mb-6">🏢</div>
-              <h4 className="text-2xl font-bold mb-4 font-['Helvetica']">
+              <h4 className="text-2xl font-bold mb-4 font-sans">
                 NORDEX Global
               </h4>
-              <p className="text-lg opacity-90 font-['Helvetica']">
+              <p className="text-lg opacity-90 font-serif">
                 Facilitando la internacionalización empresarial en Bolivia
               </p>
               <div className="mt-8 grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <div className="font-bold font-['Helvetica']">+10</div>
-                  <div className="opacity-80 font-['Helvetica']">
+                  <div className="font-bold font-sans">+10</div>
+                  <div className="opacity-80 font-serif">
                     Años de experiencia
                   </div>
                 </div>
                 <div>
-                  <div className="font-bold font-['Helvetica']">+30</div>
-                  <div className="opacity-80 font-['Helvetica']">
+                  <div className="font-bold font-sans">+30</div>
+                  <div className="opacity-80 font-serif">
                     Empresas
                   </div>
                 </div>
                 <div>
-                  <div className="font-bold font-['Helvetica']">+10</div>
-                  <div className="opacity-80 font-['Helvetica']">
+                  <div className="font-bold font-sans">+10</div>
+                  <div className="opacity-80 font-serif">
                     Países destino
                   </div>
                 </div>
                 <div>
-                  <div className="font-bold font-['Helvetica']">+50M$</div>
-                  <div className="opacity-80 font-['Helvetica']">
+                  <div className="font-bold font-sans">+50M$</div>
+                  <div className="opacity-80 font-serif">
                     En transacciones gestionadas
                   </div>
                 </div>
@@ -128,10 +128,10 @@ export default function About() {
         {/* Company Values */}
         <div className="mb-16">
           <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-[#051D67] mb-4 font-['Helvetica']">
+            <h3 className="text-3xl font-bold text-[#051D67] mb-4 font-sans">
               Nuestros Valores
             </h3>
-            <p className="text-xl text-gray-600 font-['Helvetica']">
+            <p className="text-xl text-gray-600 font-serif">
               Los principios que guían cada una de nuestras operaciones
             </p>
           </div>
@@ -152,11 +152,11 @@ export default function About() {
                     </div>
                   </div>
 
-                  <h4 className="text-lg font-bold text-[#051D67] mb-3 font-['Helvetica']">
+                  <h4 className="text-lg font-bold text-[#051D67] mb-3 font-sans">
                     {value.title}
                   </h4>
 
-                  <p className="text-gray-600 text-sm leading-relaxed font-['Helvetica']">
+                  <p className="text-gray-600 text-sm leading-relaxed font-serif">
                     {value.description}
                   </p>
                 </div>
@@ -168,10 +168,10 @@ export default function About() {
         {/* Mission & Vision */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="bg-[#051D67] rounded-lg p-8 text-[#FCFDFD]">
-            <h4 className="text-2xl font-bold mb-4 font-['Helvetica']">
+            <h4 className="text-2xl font-bold mb-4 font-sans">
               Nuestra Misión
             </h4>
-            <p className="text-lg opacity-90 font-['Helvetica']">
+            <p className="text-lg opacity-90 font-sans">
               Facilitar el proceso de internacionalización para empresas
               bolivianas, proporcionando servicios especializados que
               simplifiquen operaciones internacionales y aceleren el crecimiento
@@ -180,10 +180,10 @@ export default function About() {
           </div>
 
           <div className="bg-[#81D843] rounded-lg p-8 text-[#051D67]">
-            <h4 className="text-2xl font-bold mb-4 font-['Helvetica']">
+            <h4 className="text-2xl font-bold mb-4 font-sans">
               Nuestra Visión
             </h4>
-            <p className="text-lg opacity-90 font-['Helvetica']">
+            <p className="text-lg opacity-90 font-sans">
               Ser el líder indiscutible en facilitación comercial internacional
               en Bolivia, reconocido por nuestra excelencia operativa,
               innovación y compromiso con el éxito de nuestros clientes.

@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 
 export default function NordexNewsSection() {
@@ -52,15 +53,21 @@ export default function NordexNewsSection() {
   return (
     <section id="noticias" className="bg-[#FFFFFF] py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-[#1F1915] font-serif text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
-            Noticias y Actualizaciones
-          </h2>
-          <p className="text-[#1F1915A3] text-base md:text-lg max-w-3xl mx-auto leading-relaxed mb-8">
-            Mantente informado sobre nuestros logros, nuevos servicios y las
-            últimas tendencias en comercio internacional.
-          </p>
-
+        <div className="flex gap-4 py-12 flex-col items-start mb-8">
+          <div>
+            <Badge className="bg-[#051D67] text-white hover:bg-[#041655]">
+              Noticias
+            </Badge>
+          </div>
+          <div className="flex gap-2 flex-col">
+            <h2 className="text-3xl md:text-5xl tracking-tighter lg:max-w-xl font-regular text-[#262626] font-sans font-bold">
+              Noticias y Actualizaciones
+            </h2>
+            <p className="text-lg max-w-xl lg:max-w-xl leading-relaxed tracking-tight text-[#262626A3] font-serif">
+              Mantente informado sobre nuestros logros, nuevos servicios y las
+              últimas tendencias en comercio internacional.
+            </p>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
@@ -76,21 +83,21 @@ export default function NordexNewsSection() {
                   <span className="bg-[#051D67]/10 text-[#051D67] px-2 py-1 rounded-md text-xs font-medium">
                     {article.category}
                   </span>
-                  <span className="text-[#1F1915A3] text-xs">
+                  <span className="text-[#262626A3] text-xs font-serif">
                     {article.date}
                   </span>
                 </div>
 
-                <h4 className="text-[#1F1915] font-serif text-lg font-bold leading-tight group-hover:text-[#051D67] transition-colors duration-200">
+                <h4 className="text-[#262626] font-sans text-lg font-bold leading-tight group-hover:text-[#051D67] transition-colors duration-200">
                   {article.title}
                 </h4>
 
-                <p className="text-[#1F1915A3] text-sm leading-relaxed flex-1">
+                <p className="text-[#262626A3] text-sm leading-relaxed flex-1 font-serif">
                   {article.excerpt}
                 </p>
 
                 <div className="flex items-center justify-between pt-4">
-                  <span className="text-[#1F1915A3] text-xs">
+                  <span className="text-[#262626A3] text-xs font-serif">
                     {article.readTime} lectura
                   </span>
                   <Button

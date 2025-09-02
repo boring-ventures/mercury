@@ -1,5 +1,19 @@
+"use client";
+
+import { useState } from "react";
 import NordexHeader from "@/components/views/landing-page/nordex-header";
 import NordexFooterSection from "@/components/views/landing-page/nordex-footer-section";
+import NordexBanner from "@/components/ui/nordex-banner";
+import { Badge } from "@/components/ui/badge";
+import {
+  FileText,
+  Scale,
+  Lightbulb,
+  BarChart,
+  Laptop,
+  BookOpen,
+  ShoppingCart,
+} from "lucide-react";
 
 export default function NoticiasPage() {
   // Mock data for blog posts - this will be replaced with Contentful data
@@ -60,39 +74,69 @@ export default function NoticiasPage() {
     }
   ];
 
-  const categories = ["Todos", "Regulaciones", "Consejos", "Análisis", "Tecnología", "Guías", "E-commerce"];
+  const categories = [
+    { id: "todos", name: "Todos", icon: FileText },
+    { id: "regulaciones", name: "Regulaciones", icon: Scale },
+    { id: "consejos", name: "Consejos", icon: Lightbulb },
+    { id: "analisis", name: "Análisis", icon: BarChart },
+    { id: "tecnologia", name: "Tecnología", icon: Laptop },
+    { id: "guias", name: "Guías", icon: BookOpen },
+    { id: "ecommerce", name: "E-commerce", icon: ShoppingCart },
+  ];
+
+  const [activeCategory, setActiveCategory] = useState("todos");
 
   return (
-    <div className="bg-[#F2EFE9] min-h-screen">
+    <div className="bg-white min-h-screen">
+      <NordexBanner />
       <NordexHeader />
       
-      <main className="pt-20 pb-16">
+      <main className="pt-32 pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Hero Section */}
-          <div className="text-center mb-16">
-            <h1 className="text-4xl md:text-5xl font-bold text-[#1F1915] mb-6">
-              Noticias y Blog
-            </h1>
-            <p className="text-lg text-[#6B6B6B] max-w-3xl mx-auto">
-              Mantente informado sobre las últimas tendencias, regulaciones y consejos 
-              del mundo del comercio internacional y las importaciones.
-            </p>
+          <div className="flex gap-4 py-12 flex-col items-start mb-16">
+            <div>
+              <Badge className="bg-[#051D67] text-white hover:bg-[#041655]">
+                Blog
+              </Badge>
+            </div>
+            <div className="flex gap-2 flex-col">
+              <h1 className="text-3xl md:text-5xl tracking-tighter lg:max-w-xl font-regular text-[#262626] font-sans font-bold">
+                Noticias y <span className="text-[#051D67]">Blog</span>
+              </h1>
+              <p className="text-lg max-w-xl lg:max-w-xl leading-relaxed tracking-tight text-[#262626A3] font-serif">
+                Mantente informado sobre las últimas tendencias, regulaciones y consejos 
+                del mundo del comercio internacional y las importaciones.
+              </p>
+            </div>
           </div>
 
-          {/* Categories Filter */}
-          <div className="flex flex-wrap justify-center gap-4 mb-12">
-            {categories.map((category) => (
-              <button
-                key={category}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  category === "Todos"
-                    ? "bg-[#051D67] text-white"
-                    : "bg-white text-[#6B6B6B] hover:bg-[#051D67] hover:text-white border border-gray-200"
-                }`}
-              >
-                {category}
-              </button>
-            ))}
+          {/* Categories Tabs */}
+          <div className="flex flex-wrap justify-center gap-8 mb-12">
+            {categories.map((category) => {
+              const IconComponent = category.icon;
+              return (
+                <button
+                  key={category.id}
+                  onClick={() => setActiveCategory(category.id)}
+                  className={`flex flex-col items-center gap-3 transition-all duration-200 ${
+                    activeCategory === category.id
+                      ? "text-[#81D843]"
+                      : "text-[#6B6B6B] hover:text-[#262626]"
+                  }`}
+                >
+                  <IconComponent className="w-6 h-6" />
+                  <div className="text-center">
+                    <span className="text-sm font-medium block">
+                      {category.name}
+                    </span>
+                    {activeCategory === category.id && (
+                      <div className="w-full h-0.5 bg-[#81D843] mt-2"></div>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
           </div>
 
           {/* Featured Post */}
@@ -112,10 +156,10 @@ export default function NoticiasPage() {
                   </span>
                   <span className="ml-4 text-sm text-[#6B6B6B]">15 Enero 2024</span>
                 </div>
-                <h2 className="text-2xl font-bold text-[#1F1915] mb-4">
+                <h2 className="text-2xl font-bold font-sans text-[#262626] mb-4">
                   {mockPosts[0].title}
                 </h2>
-                <p className="text-[#6B6B6B] mb-6">
+                <p className="text-[#6B6B6B] font-serif mb-6">
                   {mockPosts[0].excerpt}
                 </p>
                 <button className="bg-[#051D67] hover:bg-[#041655] text-white px-6 py-2 rounded-md font-medium transition-colors">
@@ -147,10 +191,10 @@ export default function NoticiasPage() {
                       })}
                     </span>
                   </div>
-                  <h3 className="text-lg font-semibold text-[#1F1915] mb-2 line-clamp-2">
+                  <h3 className="text-lg font-semibold font-sans text-[#262626] mb-2 line-clamp-2">
                     {post.title}
                   </h3>
-                  <p className="text-[#6B6B6B] text-sm mb-4 line-clamp-3">
+                  <p className="text-[#6B6B6B] font-serif text-sm mb-4 line-clamp-3">
                     {post.excerpt}
                   </p>
                   <button className="text-[#051D67] hover:text-[#041655] font-medium text-sm transition-colors">
@@ -171,10 +215,10 @@ export default function NoticiasPage() {
           {/* Newsletter Subscription */}
           <div className="bg-white rounded-lg p-12 shadow-sm border border-gray-200 mt-16">
             <div className="text-center">
-              <h2 className="text-3xl font-bold text-[#1F1915] mb-4">
+              <h2 className="text-3xl font-bold font-sans text-[#262626] mb-4">
                 Suscríbete a Nuestro Newsletter
               </h2>
-              <p className="text-lg text-[#6B6B6B] mb-8 max-w-2xl mx-auto">
+              <p className="text-lg font-serif text-[#6B6B6B] mb-8 max-w-2xl mx-auto">
                 Recibe las últimas noticias, consejos y actualizaciones sobre comercio 
                 internacional directamente en tu correo electrónico.
               </p>

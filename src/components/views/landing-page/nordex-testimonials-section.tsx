@@ -40,10 +40,10 @@ export default function NordexTestimonialsSection() {
     <section className="bg-[#051D67] py-20">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-10">
-          <h2 className="text-white font-serif font-bold text-[48px] leading-tight">
+          <h2 className="text-white font-sans font-bold text-[48px] leading-tight">
             Testimonios de clientes
           </h2>
-          <p className="text-white/80 text-[18px] mt-2">
+          <p className="text-white/80 text-[18px] mt-2 font-serif">
             Resultados medibles. Historias reales de compañías que ya expanden
             su negocio con NORDEX.
           </p>

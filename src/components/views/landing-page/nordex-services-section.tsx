@@ -61,10 +61,10 @@ export default function NordexServicesSection() {
             </Badge>
           </div>
           <div className="flex gap-2 flex-col">
-            <h2 className="text-3xl md:text-5xl tracking-tighter lg:max-w-xl font-regular text-[#1F1915] font-serif font-bold">
+            <h2 className="text-3xl md:text-5xl tracking-tighter lg:max-w-xl font-regular text-[#262626] font-sans font-bold">
               Nuestros Servicios
             </h2>
-            <p className="text-lg max-w-xl lg:max-w-xl leading-relaxed tracking-tight text-[#1F1915A3]">
+            <p className="text-lg max-w-xl lg:max-w-xl leading-relaxed tracking-tight text-[#262626A3] font-serif">
               Soluciones integrales para conectar tu empresa con el mercado
               internacional, desde la negociación hasta la entrega final.
             </p>
@@ -82,10 +82,10 @@ export default function NordexServicesSection() {
                       <IconComponent className="w-5 h-5 text-[#051D67]" />
                     </div>
                     <div className="flex flex-col gap-1">
-                      <p className="font-medium text-[#1F1915]">
+                      <p className="font-medium text-[#262626] font-sans">
                         {advantage.title}
                       </p>
-                      <p className="text-[#1F1915A3] text-sm leading-relaxed">
+                      <p className="text-[#262626A3] text-sm leading-relaxed font-serif">
                         {advantage.description}
                       </p>
                     </div>
@@ -106,10 +106,10 @@ export default function NordexServicesSection() {
 
             {/* CTA Banner with Minimalistic Border */}
             <div className="border border-[#051D67] rounded-2xl p-8 bg-white relative">
-              <h3 className="font-serif text-2xl md:text-3xl font-bold mb-4 text-[#1F1915]">
+              <h3 className="font-sans text-2xl md:text-3xl font-bold mb-4 text-[#262626]">
                 ¿Listo para expandir tu negocio globalmente?
               </h3>
-              <p className="text-[#1F1915A3] text-sm md:text-base mb-6 max-w-2xl mx-auto">
+              <p className="text-[#262626A3] text-sm md:text-base mb-6 max-w-2xl mx-auto font-serif">
                 Nuestro equipo de expertos está listo para ayudarte a conectar
                 con el mundo. Agenda una consulta gratuita y descubre cómo
                 podemos impulsar tu crecimiento internacional.

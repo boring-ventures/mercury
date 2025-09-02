@@ -59,10 +59,10 @@ export default function NordexCharacteristicsSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-20">
-          <h2 className="text-4xl md:text-5xl font-bold text-[#051D67] mb-6 font-['Helvetica']">
+          <h2 className="text-4xl md:text-5xl font-bold text-[#051D67] mb-6 font-sans">
             Lo que nos hace únicos en el mercado
           </h2>
-          <p className="text-xl text-gray-600 max-w-4xl mx-auto font-['Helvetica']">
+          <p className="text-xl text-gray-600 max-w-4xl mx-auto font-serif">
             Nuestras características distintivas que nos posicionan como líderes
             en facilitación comercial internacional
           </p>
@@ -87,7 +87,7 @@ export default function NordexCharacteristicsSection() {
                     {characteristic.title}
                   </h3>
 
-                  <p className="text-gray-600 text-base leading-relaxed">
+                  <p className="text-gray-600 text-base leading-relaxed font-serif">
                     {characteristic.description}
                   </p>
                 </div>
@@ -101,7 +101,7 @@ export default function NordexCharacteristicsSection() {
           <h3 className="text-3xl font-bold mb-6">
             La combinación perfecta de experiencia, tecnología y compromiso
           </h3>
-          <p className="text-xl opacity-90 mb-8 max-w-4xl mx-auto">
+          <p className="text-xl opacity-90 mb-8 max-w-4xl mx-auto font-serif">
             Estas características únicas nos permiten ofrecer un servicio
             integral que transforma la manera en que las empresas bolivianas
             participan en el comercio internacional.
@@ -110,17 +110,17 @@ export default function NordexCharacteristicsSection() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
               <div className="text-4xl font-bold mb-2">+50</div>
-              <div className="text-[#FCFDFD] opacity-90">Países conectados</div>
+              <div className="text-[#FCFDFD] opacity-90 font-serif">Países conectados</div>
             </div>
             <div className="text-center">
               <div className="text-4xl font-bold mb-2">24/7</div>
-              <div className="text-[#FCFDFD] opacity-90">
+              <div className="text-[#FCFDFD] opacity-90 font-serif">
                 Soporte disponible
               </div>
             </div>
             <div className="text-center">
               <div className="text-4xl font-bold mb-2">99.8%</div>
-              <div className="text-[#FCFDFD] opacity-90">Tasa de éxito</div>
+              <div className="text-[#FCFDFD] opacity-90 font-serif">Tasa de éxito</div>
             </div>
           </div>
         </div>

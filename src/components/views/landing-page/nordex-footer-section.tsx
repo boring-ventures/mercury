@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { MapPin, Phone, Mail, Clock, Facebook, Instagram, MessageCircle } from "lucide-react";
+import FooterGridBackground from "@/components/ui/footer-grid-background";
 
 export default function NordexFooterSection() {
   const navigationLinks = [
@@ -20,8 +21,9 @@ export default function NordexFooterSection() {
   ];
 
   return (
-    <footer className="bg-[#051D67] text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <footer className="bg-[#051D67] text-white relative overflow-hidden">
+      <FooterGridBackground />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="py-16 grid lg:grid-cols-3 gap-12">
           {/* Primera columna - Información de NORDEX */}
           <div className="flex flex-col space-y-6">
@@ -29,9 +31,9 @@ export default function NordexFooterSection() {
               <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center">
                 <span className="text-[#051D67] font-bold text-3xl">N</span>
               </div>
-              <span className="text-white font-semibold text-2xl">NORDEX</span>
+              <span className="text-white font-semibold text-2xl font-sans">NORDEX</span>
             </div>
-            <p className="text-white/80 text-sm leading-relaxed max-w-xs">
+            <p className="text-white/80 text-sm leading-relaxed max-w-xs font-serif">
               Conectamos Bolivia con el mundo. Empresa líder en facilitación 
               comercial internacional.
             </p>
@@ -39,13 +41,13 @@ export default function NordexFooterSection() {
 
           {/* Segunda columna - Navegación */}
           <div className="space-y-6">
-            <h4 className="text-white font-semibold text-lg">Navegación</h4>
+            <h4 className="text-white font-semibold text-lg font-sans">Navegación</h4>
             <ul className="space-y-3">
               {navigationLinks.map((link) => (
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-white/80 hover:text-[#81D843] text-sm transition-colors duration-200 block py-1"
+                    className="text-white/80 hover:text-[#81D843] text-sm transition-colors duration-200 block py-1 font-serif">
                   >
                     {link.name}
                   </Link>
@@ -57,29 +59,29 @@ export default function NordexFooterSection() {
           {/* Tercera columna - Contacto y Redes Sociales */}
           <div className="space-y-6">
             <div className="space-y-4">
-              <h4 className="text-white font-semibold text-lg">Contacto</h4>
+              <h4 className="text-white font-semibold text-lg font-sans">Contacto</h4>
               <div className="space-y-3">
                 <div className="flex items-start space-x-3">
                   <MapPin className="w-4 h-4 text-white mt-1 flex-shrink-0" />
-                  <span className="text-white/80 text-sm">Av. Arce 2799, Torre Multicentro, Piso 15, La Paz - Bolivia</span>
+                  <span className="text-white/80 text-sm font-serif">Av. Arce 2799, Torre Multicentro, Piso 15, La Paz - Bolivia</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Phone className="w-4 h-4 text-white flex-shrink-0" />
-                  <span className="text-white/80 text-sm">+591 2 2441234</span>
+                  <span className="text-white/80 text-sm font-serif">+591 2 2441234</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Mail className="w-4 h-4 text-white flex-shrink-0" />
-                  <span className="text-white/80 text-sm">info@nordex.com.bo</span>
+                  <span className="text-white/80 text-sm font-serif">info@nordex.com.bo</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Clock className="w-4 h-4 text-white flex-shrink-0" />
-                  <span className="text-white/80 text-sm">Lun - Vie: 8:00 AM - 6:00 PM</span>
+                  <span className="text-white/80 text-sm font-serif">Lun - Vie: 8:00 AM - 6:00 PM</span>
                 </div>
               </div>
             </div>
 
             <div className="space-y-4">
-              <h4 className="text-white font-semibold text-lg">Redes Sociales</h4>
+              <h4 className="text-white font-semibold text-lg font-sans">Redes Sociales</h4>
               <div className="flex space-x-3">
                 {socialLinks.map((social) => (
                   <Link
@@ -102,24 +104,24 @@ export default function NordexFooterSection() {
         <div className="py-8 border-t border-white/20">
           <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
             <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-6 text-sm text-white/80">
-              <span>© 2024 NORDEX. Todos los derechos reservados.</span>
+              <span className="font-serif">© 2024 NORDEX. Todos los derechos reservados.</span>
               <div className="flex items-center space-x-4">
-                <Link href="#" className="hover:text-[#81D843] transition-colors duration-200">
+                <Link href="#" className="hover:text-[#81D843] transition-colors duration-200 font-serif">
                   Términos
                 </Link>
-                <Link href="#" className="hover:text-[#81D843] transition-colors duration-200">
+                <Link href="#" className="hover:text-[#81D843] transition-colors duration-200 font-serif">
                   Privacidad
                 </Link>
-                <Link href="#" className="hover:text-[#81D843] transition-colors duration-200">
+                <Link href="#" className="hover:text-[#81D843] transition-colors duration-200 font-serif">
                   Cookies
                 </Link>
               </div>
             </div>
 
             <div className="flex items-center space-x-4">
-              <span className="text-white/60 text-sm">Hecho con</span>
+              <span className="text-white/60 text-sm font-serif">Hecho con</span>
               <span className="text-[#81D843] text-lg">💚</span>
-              <span className="text-white/60 text-sm">en Bolivia</span>
+              <span className="text-white/60 text-sm font-serif">en Bolivia</span>
             </div>
           </div>
         </div>

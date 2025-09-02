@@ -1,12 +1,11 @@
-@import url("https://fonts.googleapis.com/css2?family=Geist+Sans:wght@300;400;500;600;700;800;900&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
-  font-family: "Geist", sans-serif;
+  font-family: "Inter", sans-serif;
   scroll-behavior: smooth;
 }
 
@@ -44,8 +43,8 @@ body {
     --sidebar-accent-foreground: 22.7273 82.5% 31.3725%;
     --sidebar-border: 220 13.0435% 90.9804%;
     --sidebar-ring: 37.6923 92.126% 50.1961%;
-    --font-sans: Inter, sans-serif;
-    --font-serif: Source Serif 4, serif;
+    --font-sans: "Inter", sans-serif;
+    --font-serif: "Inter", sans-serif;
     --font-mono: JetBrains Mono, monospace;
     --radius: 0.375rem;
     --shadow-2xs: 0px 4px 8px -1px rgba(0, 0, 0, 0.05);
@@ -95,8 +94,8 @@ body {
     --sidebar-accent-foreground: 48 96.6387% 76.6667%;
     --sidebar-border: 0 0% 25.098%;
     --sidebar-ring: 37.6923 92.126% 50.1961%;
-    --font-sans: Inter, sans-serif;
-    --font-serif: Source Serif 4, serif;
+    --font-sans: "Inter", sans-serif;
+    --font-serif: "Inter", sans-serif;
     --font-mono: JetBrains Mono, monospace;
     --radius: 0.375rem;
     --shadow-2xs: 0px 4px 8px -1px rgba(0, 0, 0, 0.05);
@@ -441,7 +440,7 @@ body {
   appearance: none;
   width: 18px;
   height: 18px;
-  border: 2px solid #1F1915;
+  border: 2px solid #262626;
   border-radius: 4px;
   position: relative;
   cursor: pointer;

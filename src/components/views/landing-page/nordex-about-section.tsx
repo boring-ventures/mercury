@@ -8,10 +8,10 @@ export default function NordexAboutSection() {
     <section id="quienes-somos" className="bg-[#051D67] py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-white font-serif text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-6">
+          <h2 className="text-white font-sans text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-6">
             Quiénes somos
           </h2>
-          <p className="text-white/90 text-[18px] max-w-3xl mx-auto leading-relaxed">
+          <p className="text-white/90 text-[18px] max-w-3xl mx-auto leading-relaxed font-serif">
             Somos el puente que conecta Bolivia con el mundo. NORDEX nació con
             la visión de transformar el panorama del comercio internacional en
             Bolivia, especializándonos en eliminar las barreras que limitan el
@@ -21,32 +21,32 @@ export default function NordexAboutSection() {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
           <div className="border border-white/20 rounded-xl p-6 text-center bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all duration-300">
-            <div className="text-2xl md:text-3xl font-bold text-white mb-2">
+            <div className="text-2xl md:text-3xl font-bold text-white mb-2 font-sans">
               10+
             </div>
-            <div className="text-white/80 text-sm font-medium">
+            <div className="text-white/80 text-sm font-medium font-serif">
               Años de experiencia
             </div>
           </div>
           <div className="border border-white/20 rounded-xl p-6 text-center bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all duration-300">
-            <div className="text-2xl md:text-3xl font-bold text-white mb-2">
+            <div className="text-2xl md:text-3xl font-bold text-white mb-2 font-sans">
               30+
             </div>
-            <div className="text-white/80 text-sm font-medium">Empresas</div>
+            <div className="text-white/80 text-sm font-medium font-serif">Empresas</div>
           </div>
           <div className="border border-white/20 rounded-xl p-6 text-center bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all duration-300">
-            <div className="text-2xl md:text-3xl font-bold text-white mb-2">
+            <div className="text-2xl md:text-3xl font-bold text-white mb-2 font-sans">
               10+
             </div>
-            <div className="text-white/80 text-sm font-medium">
+            <div className="text-white/80 text-sm font-medium font-serif">
               Países destino
             </div>
           </div>
           <div className="border border-white/20 rounded-xl p-6 text-center bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all duration-300">
-            <div className="text-2xl md:text-3xl font-bold text-white mb-2">
+            <div className="text-2xl md:text-3xl font-bold text-white mb-2 font-sans">
               $50M+
             </div>
-            <div className="text-white/80 text-sm font-medium">
+            <div className="text-white/80 text-sm font-medium font-serif">
               En transacciones gestionadas
             </div>
           </div>
