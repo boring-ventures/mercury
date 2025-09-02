@@ -17,7 +17,7 @@ export function WavePath({ className, ...props }: WWavePathProps) {
   }, []);
 
   const setPath = (progress: number) => {
-    const width = window.innerWidth * 0.7;
+    const width = (typeof window !== 'undefined' ? window.innerWidth : 1000) * 0.7;
     if (path.current) {
       path.current.setAttributeNS(
         null,

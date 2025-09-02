@@ -58,8 +58,8 @@ export function HeroSection() {
                             </div>
                             <div className="relative py-6 md:w-[calc(100%-11rem)]">
                                 <InfiniteSlider
-                                    speedOnHover={20}
-                                    speed={40}
+                                    durationOnHover={20}
+                                    duration={40}
                                     gap={112}>
                                     <div className="flex">
                                         <img

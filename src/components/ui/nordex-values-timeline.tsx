@@ -160,8 +160,10 @@ export default function NordexValuesTimeline() {
                       className="w-full h-full object-cover rounded-full"
                       onError={(e) => {
                         e.currentTarget.style.display = "none";
-                        e.currentTarget.nextElementSibling.style.display =
-                          "flex";
+                        const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                        if (nextElement) {
+                          nextElement.style.display = "flex";
+                        }
                       }}
                     />
                     <span className="text-5xl hidden">👩‍💼</span>
