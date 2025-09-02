@@ -24,25 +24,25 @@ export default function NordexHeader() {
           <nav className="hidden lg:flex items-center space-x-4 xl:space-x-8">
             <Link
               href="/"
-              className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium font-sans text-sm lg:text-base xl:text-lg"
+              className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium font-sans text-[14px]"
             >
               Inicio
             </Link>
             <Link
               href="/servicios"
-              className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium font-sans text-sm lg:text-base xl:text-lg"
+              className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium font-sans text-[14px]"
             >
               Servicios
             </Link>
             <Link
               href="/quienes-somos"
-              className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium font-sans text-sm lg:text-base xl:text-lg"
+              className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium font-sans text-[14px]"
             >
               Quiénes somos
             </Link>
             <Link
               href="/noticias"
-              className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium font-sans text-sm lg:text-base xl:text-lg"
+              className="text-[#262626] hover:text-[#051D67] transition-colors duration-200 font-medium font-sans text-[14px]"
             >
               Noticias
             </Link>

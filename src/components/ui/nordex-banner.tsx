@@ -7,13 +7,11 @@ import { ArrowRight } from "lucide-react";
 
 export default function NordexBanner() {
   return (
-    <StickyBanner 
-      className="bg-[#051D67] text-white z-50"
-      hideOnScroll={false}
-    >
+    <StickyBanner className="bg-[#051D67] text-white z-50" hideOnScroll={false}>
       <div className="flex items-center justify-center gap-4 text-center">
-        <span className="text-sm font-normal font-serif">
-          ¡Registra tu empresa y automatiza tus procesos comerciales internacionales!
+        <span className="text-[12px] font-normal font-serif">
+          ¡Registra tu empresa y automatiza tus procesos comerciales
+          internacionales!
         </span>
         <Link
           href="/registro"
