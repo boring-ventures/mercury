@@ -105,10 +105,10 @@ export default function ServiciosPage() {
       <NordexBanner />
       <NordexHeader />
 
-      <main className="pt-32 pb-16">
+      <main className="pt-16 pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Hero Section */}
-          <div className="flex gap-4 py-12 flex-col items-start mb-16">
+          <div className="flex gap-4 py-6 flex-col items-start mb-10">
             <div>
               <Badge className="bg-[#051D67] text-white hover:bg-[#041655]">
                 Servicios
@@ -182,7 +182,9 @@ export default function ServiciosPage() {
                   {activeService.features.map((feature, index) => (
                     <div key={index} className="flex items-center gap-3">
                       <div className="w-1.5 h-1.5 bg-[#81D843] rounded-full flex-shrink-0"></div>
-                      <span className="text-[#262626] font-serif text-sm">{feature}</span>
+                      <span className="text-[#262626] font-serif text-sm">
+                        {feature}
+                      </span>
                     </div>
                   ))}
                 </div>

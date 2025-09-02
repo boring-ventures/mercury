@@ -11,10 +11,10 @@ export default function QuienesSomosPage() {
       <NordexBanner />
       <NordexHeader />
 
-      <main className="pt-32 pb-16">
+      <main className="pt-16 pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Hero Section */}
-          <div className="flex gap-4 py-12 flex-col items-start mb-20">
+          <div className="flex gap-4 py-6 flex-col items-start mb-10">
             <div>
               <Badge className="bg-[#051D67] text-white hover:bg-[#041655]">
                 Nosotros
@@ -32,39 +32,14 @@ export default function QuienesSomosPage() {
             </div>
           </div>
 
-          {/* About Section */}
-          <div className="mb-20">
-            <div className="max-w-4xl mx-auto text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-sans font-bold text-[#262626] mb-8">
-                Nuestra Historia
-              </h2>
-              <div className="space-y-6 text-[#262626A3] text-base md:text-lg leading-relaxed font-serif">
-                <p>
-                  NORDEX nace de la necesidad de brindar soluciones integrales y
-                  confiables en el mercado de comercio internacional. Fundada por un
-                  equipo de profesionales con amplia experiencia, hemos crecido hasta
-                  convertirnos en un referente del sector.
-                </p>
-                <p>
-                  Desde nuestros inicios, nos hemos enfocado en comprender las
-                  necesidades específicas de cada cliente, desarrollando
-                  soluciones personalizadas que agregan valor real a sus
-                  operaciones comerciales.
-                </p>
-                <p>
-                  Hoy en día, facilitamos operaciones internacionales para empresas
-                  bolivianas, manteniendo siempre nuestro compromiso con la excelencia,
-                  la transparencia y la innovación.
-                </p>
-              </div>
-            </div>
-            
+          {/* About/Stats Section */}
+          <div className="mb-12">
             {/* Stats Section */}
             <NordexStats />
           </div>
 
           {/* Mission & Vision */}
-          <div className="text-center mb-20">
+          <div className="text-center mb-16">
             <div className="max-w-4xl mx-auto">
               <h2 className="text-3xl md:text-4xl font-sans font-bold text-[#262626] mb-8">
                 Misión & Visión
@@ -77,8 +52,8 @@ export default function QuienesSomosPage() {
                   <p className="text-[#262626A3] font-serif text-base leading-relaxed">
                     Facilitar el proceso de internacionalización para empresas
                     bolivianas, proporcionando servicios especializados que
-                    simplifiquen operaciones internacionales y aceleren el crecimiento
-                    global.
+                    simplifiquen operaciones internacionales y aceleren el
+                    crecimiento global.
                   </p>
                 </div>
                 <div className="text-left">
@@ -86,9 +61,10 @@ export default function QuienesSomosPage() {
                     Nuestra Visión
                   </h3>
                   <p className="text-[#262626A3] font-serif text-base leading-relaxed">
-                    Ser el líder indiscutible en facilitación comercial internacional
-                    en Bolivia, reconocido por nuestra excelencia operativa,
-                    innovación y compromiso con el éxito de nuestros clientes.
+                    Ser el líder indiscutible en facilitación comercial
+                    internacional en Bolivia, reconocido por nuestra excelencia
+                    operativa, innovación y compromiso con el éxito de nuestros
+                    clientes.
                   </p>
                 </div>
               </div>

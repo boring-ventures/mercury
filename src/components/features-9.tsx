@@ -47,14 +47,13 @@ export function Features() {
             <div aria-hidden className="relative">
               <div className="absolute inset-0 z-10 m-auto size-fit">
                 <div className="relative z-[1] flex size-fit w-fit items-center gap-2 rounded-xl bg-white border border-[#1F1915]/10 px-3 py-1 text-xs font-medium text-[#1F1915] shadow-md shadow-black/5">
-                  <span className="text-lg">🌍</span> Ruta activa: La Paz →
-                  Shanghái
+                  <span className="text-lg">🌍</span> Ruta activa: Santa Cruz →
+                  China
                 </div>
                 <div className="absolute inset-2 -bottom-2 mx-auto rounded-xl bg-white border border-[#1F1915]/10 px-3 py-4 text-xs font-medium shadow-md shadow-black/5"></div>
               </div>
 
-              <div className="relative overflow-hidden text-[#051D67]/40">
-                <div className="absolute inset-0 from-transparent to-white to-75% [background-image:radial-gradient(var(--tw-gradient-stops))]"></div>
+              <div className="relative overflow-hidden text-[#262626]">
                 <Map />
               </div>
             </div>
@@ -123,8 +122,8 @@ const map = new DottedMap({ height: 55, grid: "diagonal" });
 const points = map.getPoints();
 
 const svgOptions = {
-  backgroundColor: "var(--color-background)",
-  color: "currentColor",
+  backgroundColor: "#ffffff",
+  color: "#262626",
   radius: 0.15,
 };
 
