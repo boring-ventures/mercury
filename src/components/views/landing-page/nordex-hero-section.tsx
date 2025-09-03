@@ -125,8 +125,8 @@ export default function NordexHeroSection() {
       <section id="inicio" className="bg-white overflow-x-hidden">
         {/* Hero Section with reduced spacing from navbar */}
         <div className="pt-16 pb-8 sm:pt-18 sm:pb-10 md:pt-20 md:pb-12 lg:pt-24 lg:pb-16 xl:pt-28 xl:pb-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
-            <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 xl:gap-20 items-center">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 overflow-x-hidden">
+            <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 xl:gap-20 items-center overflow-x-hidden">
               {/* Left Column - Text Content */}
               <div className="space-y-4 sm:space-y-6 lg:space-y-8">
                 {/* Main Heading */}
@@ -170,7 +170,7 @@ export default function NordexHeroSection() {
               </div>
 
               {/* Right Column - Interactive Globe */}
-              <div className="relative h-64 sm:h-80 md:h-96 lg:h-[450px] xl:h-[500px] 2xl:h-[550px] w-full">
+              <div className="relative h-64 sm:h-80 md:h-96 lg:h-[450px] xl:h-[500px] 2xl:h-[550px] w-full overflow-hidden">
                 <World globeConfig={globeConfig} data={globeData} />
               </div>
             </div>
@@ -179,7 +179,7 @@ export default function NordexHeroSection() {
 
         {/* Metrics Section */}
         <section className="bg-white py-4 sm:py-6 lg:py-8">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 overflow-x-hidden">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
               <div className="text-center">
                 <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-[#051D67] mb-1 font-sans">
@@ -219,14 +219,14 @@ export default function NordexHeroSection() {
 
         {/* Company Logos Section with reduced spacing */}
         <section className="bg-white py-8 sm:py-10 lg:py-12 xl:py-16 border-t border-[#262626]/10">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
-            <div className="flex flex-col items-center lg:flex-row">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 overflow-x-hidden">
+            <div className="flex flex-col items-center lg:flex-row w-full overflow-x-hidden">
               <div className="lg:max-w-48 xl:max-w-64 lg:border-r lg:pr-8 mb-6 lg:mb-0">
                 <p className="text-center lg:text-end text-sm sm:text-base lg:text-lg xl:text-xl text-[#262626] font-medium font-serif">
                   Empresas líderes confían en NORDEX
                 </p>
               </div>
-              <div className="relative lg:w-[calc(100%-12rem)] xl:w-[calc(100%-16rem)]">
+              <div className="relative lg:w-[calc(100%-12rem)] xl:w-[calc(100%-16rem)] overflow-hidden">
                 <InfiniteSlider duration={25} durationOnHover={15} gap={80}>
                   <div className="flex flex-col items-center">
                     <Laptop2
@@ -302,15 +302,15 @@ export default function NordexHeroSection() {
                   </div>
                 </InfiniteSlider>
 
-                <div className="bg-gradient-to-r from-white absolute inset-y-0 left-0 w-20"></div>
-                <div className="bg-gradient-to-l from-white absolute inset-y-0 right-0 w-20"></div>
+                <div className="bg-gradient-to-r from-white absolute inset-y-0 left-0 w-12 sm:w-16 md:w-20"></div>
+                <div className="bg-gradient-to-l from-white absolute inset-y-0 right-0 w-12 sm:w-16 md:w-20"></div>
                 <ProgressiveBlur
-                  className="pointer-events-none absolute left-0 top-0 h-full w-20"
+                  className="pointer-events-none absolute left-0 top-0 h-full w-12 sm:w-16 md:w-20"
                   direction="left"
                   blurIntensity={1}
                 />
                 <ProgressiveBlur
-                  className="pointer-events-none absolute right-0 top-0 h-full w-20"
+                  className="pointer-events-none absolute right-0 top-0 h-full w-12 sm:w-16 md:w-20"
                   direction="right"
                   blurIntensity={1}
                 />

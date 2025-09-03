@@ -52,8 +52,8 @@ export default function NordexServicesSection() {
   ];
 
   return (
-    <section id="servicios" className="bg-[#FFFFFF] py-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="servicios" className="bg-[#FFFFFF] py-16 sm:py-18 md:py-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 overflow-x-hidden">
         <div className="flex gap-4 py-12 flex-col items-start">
           <div>
             <Badge className="bg-[#051D67] text-white hover:bg-[#041655]">
@@ -69,23 +69,23 @@ export default function NordexServicesSection() {
               internacional, desde la negociación hasta la entrega final.
             </p>
           </div>
-          <div className="flex gap-10 pt-12 flex-col w-full">
-            <div className="grid grid-cols-2 items-start lg:grid-cols-3 gap-10">
+          <div className="flex gap-10 pt-8 sm:pt-10 md:pt-12 flex-col w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 items-start gap-8 sm:gap-10 w-full">
               {advantages.map((advantage, index) => {
                 const IconComponent = advantage.icon;
                 return (
                   <div
                     key={index}
-                    className="flex flex-row gap-6 w-full items-start"
+                    className="flex flex-row gap-4 sm:gap-6 w-full items-start min-w-0"
                   >
-                    <div className="w-10 h-10 border-2 border-[#051D67] rounded-lg flex items-center justify-center mt-2 flex-shrink-0">
+                    <div className="w-10 h-10 border-2 border-[#051D67] rounded-lg flex items-center justify-center mt-2 shrink-0">
                       <IconComponent className="w-5 h-5 text-[#051D67]" />
                     </div>
-                    <div className="flex flex-col gap-1">
-                      <p className="font-medium text-[#262626] font-sans">
+                    <div className="flex flex-col gap-1 min-w-0">
+                      <p className="font-medium text-[#262626] font-sans break-words">
                         {advantage.title}
                       </p>
-                      <p className="text-[#262626A3] text-sm leading-relaxed font-serif">
+                      <p className="text-[#262626A3] text-sm leading-relaxed font-serif break-words">
                         {advantage.description}
                       </p>
                     </div>
@@ -97,7 +97,7 @@ export default function NordexServicesSection() {
         </div>
 
         {/* CTA Section with Wave Path */}
-        <div className="mt-16 text-center">
+        <div className="mt-12 sm:mt-14 md:mt-16 text-center">
           <div className="relative">
             {/* Wave Path Component */}
             <div className="flex justify-center mb-8">
@@ -105,7 +105,7 @@ export default function NordexServicesSection() {
             </div>
 
             {/* CTA Banner with Minimalistic Border */}
-            <div className="border border-[#051D67] rounded-2xl p-8 bg-white relative">
+            <div className="border border-[#051D67] rounded-2xl p-6 sm:p-8 bg-white relative overflow-hidden">
               <h3 className="font-sans text-2xl md:text-3xl font-bold mb-4 text-[#262626]">
                 ¿Listo para expandir tu negocio globalmente?
               </h3>

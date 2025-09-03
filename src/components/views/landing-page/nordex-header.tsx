@@ -8,7 +8,7 @@ export default function NordexHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
         <div className="flex justify-between items-center h-16 lg:h-18">
           <div className="flex items-center">
@@ -84,7 +84,7 @@ export default function NordexHeader() {
         </div>
 
         {isMenuOpen && (
-          <div className="lg:hidden py-4 border-t border-gray-200">
+          <div className="lg:hidden py-4 border-t border-gray-200 overflow-x-hidden">
             <nav className="flex flex-col space-y-4">
               <Link
                 href="/"
