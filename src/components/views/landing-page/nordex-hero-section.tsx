@@ -102,7 +102,7 @@ export default function NordexHeroSection() {
       endLng: 144.2,
       arcAlt: 0.7,
       color: "#051D67",
-    },
+  },
     {
       order: 8,
       startLat: -16.5, // Bolivia
