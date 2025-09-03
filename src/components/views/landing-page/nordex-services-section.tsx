@@ -76,7 +76,6 @@ const NordexServicesSection = () => {
       scale: 1,
       transition: {
         duration: 0.6,
-        ease: "easeOut",
       },
     },
   };
@@ -93,7 +92,6 @@ const NordexServicesSection = () => {
       y: 0,
       transition: {
         duration: 0.8,
-        ease: "easeOut",
       },
     },
   };

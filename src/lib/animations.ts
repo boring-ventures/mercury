@@ -1,49 +1,49 @@
 export const fadeInUp = {
   initial: { opacity: 0, y: 60 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.6, ease: "easeOut" }
+  transition: { duration: 0.6 }
 }
 
 export const fadeInDown = {
   initial: { opacity: 0, y: -60 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.6, ease: "easeOut" }
+  transition: { duration: 0.6 }
 }
 
 export const fadeInLeft = {
   initial: { opacity: 0, x: -60 },
   animate: { opacity: 1, x: 0 },
-  transition: { duration: 0.6, ease: "easeOut" }
+  transition: { duration: 0.6 }
 }
 
 export const fadeInRight = {
   initial: { opacity: 0, x: 60 },
   animate: { opacity: 1, x: 0 },
-  transition: { duration: 0.6, ease: "easeOut" }
+  transition: { duration: 0.6 }
 }
 
 export const scaleIn = {
   initial: { opacity: 0, scale: 0.8 },
   animate: { opacity: 1, scale: 1 },
-  transition: { duration: 0.5, ease: "easeOut" }
+  transition: { duration: 0.5 }
 }
 
 export const slideInFromBottom = {
   initial: { opacity: 0, y: 100 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.8, ease: "easeOut" }
+  transition: { duration: 0.8 }
 }
 
 export const slideInFromTop = {
   initial: { opacity: 0, y: -100 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.8, ease: "easeOut" }
+  transition: { duration: 0.8 }
 }
 
 export const rotateIn = {
   initial: { opacity: 0, rotate: -10, scale: 0.9 },
   animate: { opacity: 1, rotate: 0, scale: 1 },
-  transition: { duration: 0.7, ease: "easeOut" }
+  transition: { duration: 0.7 }
 }
 
 export const staggerContainer = {
@@ -59,14 +59,14 @@ export const cardHover = {
     y: -5, 
     scale: 1.02,
     boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)",
-    transition: { duration: 0.3, ease: "easeOut" }
+    transition: { duration: 0.3 }
   }
 }
 
 export const buttonHover = {
   hover: { 
     scale: 1.05,
-    transition: { duration: 0.2, ease: "easeOut" }
+    transition: { duration: 0.2 }
   },
   tap: { 
     scale: 0.98,
@@ -90,6 +90,6 @@ export const itemVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: "easeOut" }
+    transition: { duration: 0.6 }
   }
 }
