@@ -85,18 +85,36 @@ export default function NordexHeroSection() {
       arcAlt: 0.7,
       color: "#81D843",
     },
+    {
+      order: 7,
+      startLat: -16.5, // Bolivia
+      startLng: -68.1,
+      endLat: 21.2, // China
+      endLng: 144.2,
+      arcAlt: 0.7,
+      color: "#051D67",
+    },
+    {
+      order: 8,
+      startLat: -16.5, // Bolivia
+      startLng: -68.1,
+      endLat: 76.9, // China
+      endLng: 94.2,
+      arcAlt: 0.7,
+      color: "#051D67",
+    },
   ];
 
   const globeConfig = {
-    globeColor: "#F2EFE9",
-    atmosphereColor: "#051D67",
+    globeColor: "#051d67",
+    atmosphereColor: "#ffffff",
     showAtmosphere: true,
     atmosphereAltitude: 0.15,
-    polygonColor: "rgba(5, 29, 103, 0.3)",
+    polygonColor: "rgb(255, 255, 255)",
     ambientLight: "#ffffff",
     directionalLeftLight: "#ffffff",
     directionalTopLight: "#ffffff",
-    pointLight: "#ffffff",
+    pointLight: "#008f39",
     autoRotate: true,
     autoRotateSpeed: 0.5,
   };
