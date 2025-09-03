@@ -1,66 +1,68 @@
 "use client";
 
-import type { Metadata } from "next";
-import { SignInPage } from "@/components/sign-in";
-import { useRouter } from "next/navigation";
-
-const testimonials = [
-  {
-    avatarSrc: "https://images.unsplash.com/photo-1494790108755-2616b612b1bb?w=100&h=100&fit=crop&crop=face&auto=format",
-    name: "María González",
-    handle: "CEO, TechBolivia",
-    text: "NORDEX facilitó nuestra expansión internacional de manera excepcional."
-  },
-  {
-    avatarSrc: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face&auto=format", 
-    name: "Carlos Mendoza",
-    handle: "Director, InnovaTextil",
-    text: "Los procesos de importación nunca fueron tan sencillos y transparentes."
-  },
-  {
-    avatarSrc: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face&auto=format",
-    name: "Ana Rodríguez",
-    handle: "Gerente, AlimentosPlus",
-    text: "Excelente servicio y seguimiento personalizado en cada operación."
-  }
-];
+import Link from "next/link";
+import { UserAuthForm } from "@/components/auth/sign-in/components/user-auth-form";
 
 export default function SignIn() {
-  const router = useRouter();
-
-  const handleSignIn = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    // Aquí iría la lógica de autenticación
-    console.log("Initiating sign in...");
-  };
-
-  const handleGoogleSignIn = () => {
-    // Aquí iría la lógica de Google OAuth
-    console.log("Google sign in...");
-  };
-
-  const handleResetPassword = () => {
-    router.push("/reset-password");
-  };
-
-  const handleCreateAccount = () => {
-    router.push("/sign-up");
-  };
-
   return (
-    <SignInPage
-      title={
-        <span className="font-light text-[#1F1915] tracking-tighter">
-          Bienvenido a <span className="font-bold text-[#051D67]">NORDEX</span>
-        </span>
-      }
-      description="Accede a tu cuenta y gestiona tus operaciones de comercio internacional"
-      heroImageSrc="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&h=600&fit=crop&auto=format"
-      testimonials={testimonials}
-      onSignIn={handleSignIn}
-      onGoogleSignIn={handleGoogleSignIn}
-      onResetPassword={handleResetPassword}
-      onCreateAccount={handleCreateAccount}
-    />
+    <div className="min-h-screen flex">
+      {/* Left side - Login Form */}
+      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-background">
+        <div className="w-full max-w-md space-y-8">
+          <div className="text-center">
+            <h2 className="mt-6 text-3xl font-bold tracking-tight">
+              Bienvenido a <span className="text-[#051D67]">NORDEX</span>
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Accede a tu cuenta y gestiona tus operaciones de comercio internacional
+            </p>
+          </div>
+
+          <UserAuthForm />
+
+          <p className="text-center text-sm text-muted-foreground">
+            ¿Nuevo en NORDEX?{" "}
+            <Link
+              href="/sign-up"
+              className="font-medium text-[#051D67] hover:underline transition-colors"
+            >
+              Crear cuenta
+            </Link>
+          </p>
+        </div>
+      </div>
+
+      {/* Right side - Hero Image */}
+      <div className="hidden lg:flex flex-1 relative">
+        <div className="absolute inset-0">
+          <img
+            className="h-full w-full object-cover"
+            src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&h=600&fit=crop&auto=format"
+            alt="NORDEX - Comercio Internacional"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#051D67]/20 to-transparent" />
+        </div>
+        
+        {/* Testimonials overlay */}
+        <div className="relative z-10 flex items-end p-8 w-full">
+          <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 shadow-lg max-w-md">
+            <div className="flex items-center gap-4">
+              <img
+                className="h-12 w-12 rounded-full object-cover"
+                src="https://images.unsplash.com/photo-1494790108755-2616b612b1bb?w=100&h=100&fit=crop&crop=face&auto=format"
+                alt="María González"
+              />
+              <div>
+                <p className="font-semibold text-gray-900">María González</p>
+                <p className="text-sm text-gray-600">CEO, TechBolivia</p>
+              </div>
+            </div>
+            <p className="mt-4 text-gray-700 text-sm leading-relaxed">
+              &ldquo;NORDEX facilitó nuestra expansión internacional de manera excepcional.&rdquo;
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

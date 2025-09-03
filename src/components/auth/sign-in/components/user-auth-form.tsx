@@ -113,23 +113,6 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
         </form>
       </Form>
 
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-2 text-muted-foreground">
-            o continúa con
-          </span>
-        </div>
-      </div>
-
-      <Button variant="outline" className="h-11" asChild>
-        <Link href="/magic-link">
-          <Mail className="mr-2 h-4 w-4" />
-          Iniciar sesión con Magic Link
-        </Link>
-      </Button>
     </div>
   );
 }
