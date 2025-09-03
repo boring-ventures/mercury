@@ -13,14 +13,14 @@ import {
   Headphones,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { 
-  fadeInUp, 
-  fadeInLeft, 
+import {
+  fadeInUp,
+  fadeInLeft,
   fadeInRight,
-  scaleIn, 
+  scaleIn,
   staggerContainer,
   buttonHover,
-  cardHover
+  cardHover,
 } from "@/lib/animations";
 
 export default function ServiciosPage() {
@@ -113,10 +113,10 @@ export default function ServiciosPage() {
     <div className="bg-white min-h-screen">
       <NordexHeader />
 
-      <main className="pt-16 pb-8 sm:pt-18 sm:pb-10 lg:pt-20 lg:pb-12 xl:pt-24 xl:pb-16">
+      <main className="pt-24 pb-8 sm:pt-18 sm:pb-10 lg:pt-20 lg:pb-12 xl:pt-24 xl:pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
           {/* Hero Section */}
-          <motion.div 
+          <motion.div
             className="flex gap-3 sm:gap-4 py-4 sm:py-6 lg:py-8 flex-col items-start mb-8 sm:mb-10 lg:mb-12"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -127,7 +127,7 @@ export default function ServiciosPage() {
                 Servicios
               </Badge>
             </motion.div>
-            <motion.div 
+            <motion.div
               className="flex gap-2 sm:gap-3 flex-col"
               {...fadeInLeft}
               transition={{ ...fadeInLeft.transition, delay: 0.2 }}
@@ -144,12 +144,12 @@ export default function ServiciosPage() {
           </motion.div>
 
           {/* Services Tabs */}
-          <motion.div 
+          <motion.div
             className="mb-8 sm:mb-10 lg:mb-12"
             {...fadeInUp}
             transition={{ ...fadeInUp.transition, delay: 0.4 }}
           >
-            <motion.div 
+            <motion.div
               className="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-10 lg:mb-12"
               variants={staggerContainer}
               initial="initial"
@@ -177,7 +177,7 @@ export default function ServiciosPage() {
                         {service.title}
                       </span>
                       {activeTab === service.id && (
-                        <motion.div 
+                        <motion.div
                           className="w-full h-0.5 bg-[#81D843] mt-1 sm:mt-2"
                           initial={{ scaleX: 0 }}
                           animate={{ scaleX: 1 }}
@@ -192,18 +192,18 @@ export default function ServiciosPage() {
 
             {/* Active Service Content */}
             {activeService && (
-              <motion.div 
+              <motion.div
                 className="bg-white"
                 key={activeService.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, ease: "easeOut" }}
               >
-                <motion.div 
+                <motion.div
                   className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8"
                   {...fadeInLeft}
                 >
-                  <motion.div 
+                  <motion.div
                     className="w-16 h-16 sm:w-18 sm:h-18 lg:w-20 lg:h-20 xl:w-24 xl:h-24 bg-[#F2EFE9] rounded-lg flex items-center justify-center flex-shrink-0"
                     {...scaleIn}
                   >
@@ -225,7 +225,7 @@ export default function ServiciosPage() {
                 </motion.div>
 
                 {/* Features Grid */}
-                <motion.div 
+                <motion.div
                   className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4"
                   variants={staggerContainer}
                   initial="initial"
@@ -236,9 +236,12 @@ export default function ServiciosPage() {
                       key={index}
                       className="flex items-center gap-3 sm:gap-4"
                       variants={fadeInUp}
-                      transition={{ ...fadeInUp.transition, delay: index * 0.1 }}
+                      transition={{
+                        ...fadeInUp.transition,
+                        delay: index * 0.1,
+                      }}
                     >
-                      <motion.div 
+                      <motion.div
                         className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-[#81D843] rounded-full flex-shrink-0"
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
@@ -255,24 +258,24 @@ export default function ServiciosPage() {
           </motion.div>
 
           {/* CTA Section */}
-          <motion.div 
+          <motion.div
             className="text-center bg-white rounded-lg p-6 sm:p-8 lg:p-12 shadow-sm border border-gray-200 mt-8 sm:mt-10 lg:mt-12"
             {...fadeInUp}
             transition={{ ...fadeInUp.transition, delay: 0.6 }}
             whileHover={{
               y: -5,
               boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)",
-              transition: { duration: 0.3 }
+              transition: { duration: 0.3 },
             }}
           >
-            <motion.h2 
+            <motion.h2
               className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-[#262626] mb-3 sm:mb-4"
               {...fadeInUp}
               transition={{ ...fadeInUp.transition, delay: 0.8 }}
             >
               ¿Listo para optimizar tus importaciones?
             </motion.h2>
-            <motion.p 
+            <motion.p
               className="text-base sm:text-lg lg:text-xl font-serif text-[#6B6B6B] mb-6 sm:mb-8 max-w-full sm:max-w-2xl lg:max-w-3xl mx-auto"
               {...fadeInUp}
               transition={{ ...fadeInUp.transition, delay: 1.0 }}
@@ -281,18 +284,18 @@ export default function ServiciosPage() {
               descubre cómo podemos hacer más eficiente tu proceso de
               importación.
             </motion.p>
-            <motion.div 
+            <motion.div
               className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center"
               {...fadeInUp}
               transition={{ ...fadeInUp.transition, delay: 1.2 }}
             >
-              <motion.button 
+              <motion.button
                 className="bg-[#051D67] hover:bg-[#041655] text-white px-6 py-3 sm:px-8 sm:py-3 lg:px-10 lg:py-4 text-sm sm:text-base lg:text-lg rounded-md font-medium transition-colors"
                 {...buttonHover}
               >
                 Solicitar Cotización
               </motion.button>
-              <motion.button 
+              <motion.button
                 className="border border-[#051D67] text-[#051D67] hover:bg-[#051D67] hover:text-white px-6 py-3 sm:px-8 sm:py-3 lg:px-10 lg:py-4 text-sm sm:text-base lg:text-lg rounded-md font-medium transition-colors"
                 {...buttonHover}
               >

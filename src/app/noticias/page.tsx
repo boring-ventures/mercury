@@ -15,14 +15,14 @@ import {
   ShoppingCart,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { 
-  fadeInUp, 
-  fadeInLeft, 
+import {
+  fadeInUp,
+  fadeInLeft,
   fadeInRight,
-  scaleIn, 
+  scaleIn,
   staggerContainer,
   buttonHover,
-  cardHover
+  cardHover,
 } from "@/lib/animations";
 
 export default function NoticiasPage() {
@@ -106,10 +106,10 @@ export default function NoticiasPage() {
     <div className="bg-white min-h-screen">
       <NordexHeader />
 
-      <main className="pt-16 pb-8 sm:pt-18 sm:pb-10 lg:pt-20 lg:pb-12 xl:pt-24 xl:pb-16">
+      <main className="pt-24 pb-8 sm:pt-18 sm:pb-10 lg:pt-20 lg:pb-12 xl:pt-24 xl:pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
           {/* Hero Section */}
-          <motion.div 
+          <motion.div
             className="flex gap-3 sm:gap-4 py-4 sm:py-6 lg:py-8 flex-col items-start mb-8 sm:mb-10 lg:mb-12"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -120,7 +120,7 @@ export default function NoticiasPage() {
                 Blog
               </Badge>
             </motion.div>
-            <motion.div 
+            <motion.div
               className="flex gap-2 sm:gap-3 flex-col"
               {...fadeInLeft}
               transition={{ ...fadeInLeft.transition, delay: 0.2 }}
@@ -137,7 +137,7 @@ export default function NoticiasPage() {
           </motion.div>
 
           {/* Categories Tabs */}
-          <motion.div 
+          <motion.div
             className="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-10 lg:mb-12"
             variants={staggerContainer}
             initial="initial"
@@ -155,7 +155,10 @@ export default function NoticiasPage() {
                       : "text-[#6B6B6B] hover:text-[#262626]"
                   }`}
                   variants={scaleIn}
-                  transition={{ ...scaleIn.transition, delay: index * 0.1 + 0.4 }}
+                  transition={{
+                    ...scaleIn.transition,
+                    delay: index * 0.1 + 0.4,
+                  }}
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -165,7 +168,7 @@ export default function NoticiasPage() {
                       {category.name}
                     </span>
                     {activeCategory === category.id && (
-                      <motion.div 
+                      <motion.div
                         className="w-full h-0.5 bg-[#81D843] mt-1 sm:mt-2"
                         initial={{ scaleX: 0 }}
                         animate={{ scaleX: 1 }}
@@ -179,18 +182,18 @@ export default function NoticiasPage() {
           </motion.div>
 
           {/* Featured Post */}
-          <motion.div 
+          <motion.div
             className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-8 sm:mb-10 lg:mb-12"
             {...fadeInUp}
             transition={{ ...fadeInUp.transition, delay: 1.1 }}
             whileHover={{
               y: -5,
               boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)",
-              transition: { duration: 0.3 }
+              transition: { duration: 0.3 },
             }}
           >
             <div className="lg:flex">
-              <motion.div 
+              <motion.div
                 className="lg:w-1/2"
                 {...fadeInLeft}
                 transition={{ ...fadeInLeft.transition, delay: 1.3 }}
@@ -211,7 +214,7 @@ export default function NoticiasPage() {
                   </svg>
                 </div>
               </motion.div>
-              <motion.div 
+              <motion.div
                 className="lg:w-1/2 p-4 sm:p-6 lg:p-8"
                 {...fadeInRight}
                 transition={{ ...fadeInRight.transition, delay: 1.3 }}
@@ -230,7 +233,7 @@ export default function NoticiasPage() {
                 <p className="text-[#6B6B6B] font-serif text-sm sm:text-base lg:text-lg mb-4 sm:mb-6">
                   {mockPosts[0].excerpt}
                 </p>
-                <motion.button 
+                <motion.button
                   className="bg-[#051D67] hover:bg-[#041655] text-white px-4 py-2 sm:px-6 sm:py-3 lg:px-8 lg:py-4 text-sm sm:text-base lg:text-lg rounded-md font-medium transition-colors"
                   {...buttonHover}
                 >
@@ -249,12 +252,12 @@ export default function NoticiasPage() {
           </motion.div>
 
           {/* Load More Button */}
-          <motion.div 
+          <motion.div
             className="text-center mt-8 sm:mt-10 lg:mt-12"
             {...fadeInUp}
             transition={{ ...fadeInUp.transition, delay: 1.7 }}
           >
-            <motion.button 
+            <motion.button
               className="border border-[#051D67] text-[#051D67] hover:bg-[#051D67] hover:text-white px-6 py-3 sm:px-8 sm:py-3 lg:px-10 lg:py-4 text-sm sm:text-base lg:text-lg rounded-md font-medium transition-colors"
               {...buttonHover}
             >

@@ -102,7 +102,7 @@ export default function NordexHeroSection() {
       endLng: 144.2,
       arcAlt: 0.7,
       color: "#051D67",
-  },
+    },
     {
       order: 8,
       startLat: -16.5, // Bolivia
@@ -132,8 +132,8 @@ export default function NordexHeroSection() {
     <>
       <NordexHeader />
       <section id="inicio" className="bg-white overflow-x-hidden">
-        {/* Hero Section with reduced spacing from navbar */}
-        <div className="pt-16 pb-8 sm:pt-18 sm:pb-10 md:pt-20 md:pb-12 lg:pt-24 lg:pb-16 xl:pt-28 xl:pb-20">
+        {/* Hero Section with improved mobile spacing from navbar */}
+        <div className="pt-24 pb-8 sm:pt-18 sm:pb-10 md:pt-20 md:pb-12 lg:pt-24 lg:pb-16 xl:pt-28 xl:pb-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 overflow-x-hidden">
             <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 xl:gap-20 items-center overflow-x-hidden">
               {/* Left Column - Text Content */}

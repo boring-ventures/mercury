@@ -13,10 +13,10 @@ export default function QuienesSomosPage() {
     <div className="bg-white min-h-screen">
       <NordexHeader />
 
-      <main className="pt-16 pb-8 sm:pt-18 sm:pb-10 lg:pt-20 lg:pb-12 xl:pt-24 xl:pb-16">
+      <main className="pt-24 pb-8 sm:pt-18 sm:pb-10 lg:pt-20 lg:pb-12 xl:pt-24 xl:pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
           {/* Hero Section */}
-          <motion.div 
+          <motion.div
             className="flex gap-3 sm:gap-4 py-4 sm:py-6 lg:py-8 flex-col items-start mb-8 sm:mb-10 lg:mb-12"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -27,7 +27,7 @@ export default function QuienesSomosPage() {
                 Nosotros
               </Badge>
             </motion.div>
-            <motion.div 
+            <motion.div
               className="flex gap-2 sm:gap-3 flex-col"
               {...fadeInLeft}
               transition={{ ...fadeInLeft.transition, delay: 0.2 }}
@@ -44,7 +44,7 @@ export default function QuienesSomosPage() {
           </motion.div>
 
           {/* About/Stats Section */}
-          <motion.div 
+          <motion.div
             className="mb-12"
             {...fadeInUp}
             transition={{ ...fadeInUp.transition, delay: 0.4 }}
