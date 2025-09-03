@@ -89,8 +89,8 @@ export default function NordexValuesTimeline() {
               <div className="absolute top-1/2 left-1/2 w-1 h-12 bg-gradient-to-b from-[#051D67]/30 to-transparent transform -translate-x-1/2 -translate-y-full origin-bottom rotate-45 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
               {/* Value circle */}
-              <div className="w-12 h-12 bg-white border-2 border-[#051D67] rounded-full flex items-center justify-center shadow-md transform transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg">
-                <IconComponent className="w-6 h-6 text-[#051D67] transition-colors group-hover:text-[#81D843]" />
+              <div className="w-8 h-8 bg-white border-2 border-[#051D67] rounded-full flex items-center justify-center shadow-md transform transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg">
+                <IconComponent className="w-4 h-4 text-[#051D67] transition-colors group-hover:text-[#81D843]" />
               </div>
 
               {/* Value card */}
@@ -160,7 +160,8 @@ export default function NordexValuesTimeline() {
                       className="w-full h-full object-cover rounded-full"
                       onError={(e) => {
                         e.currentTarget.style.display = "none";
-                        const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                        const nextElement = e.currentTarget
+                          .nextElementSibling as HTMLElement;
                         if (nextElement) {
                           nextElement.style.display = "flex";
                         }
