@@ -10,10 +10,10 @@ import {
 
 export default function Footer() {
   const contactInfo = {
-    address: "Av. Principal, Zona Central, La Paz - Bolivia",
-    phone: "+591 2 XXX-XXXX",
-    whatsapp: "+591 7XXXX-XXXX",
-    email: "contacto@nordex.bo",
+    address: "Av. San Martin, calle J, Manzana 40, Plaza Empresarial, Santa Cruz - Bolivia",
+    phone: "+591 77828618",
+    whatsapp: "+591 77828618",
+    email: "info@nordexbo.com",
   };
 
   return (
@@ -35,8 +35,8 @@ export default function Footer() {
           {/* Company Info */}
           <div className="lg:col-span-2">
             <div className="flex items-center space-x-3 mb-6">
-              <Globe className="h-8 w-8 text-[#81D843]" />
-              <span className="text-2xl font-bold font-sans">
+              <Globe className="h-6 w-6 text-[#81D843]" />
+              <span className="text-xl font-bold font-sans">
                 NORDEX Global
               </span>
             </div>

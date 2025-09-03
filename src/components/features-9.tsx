@@ -20,10 +20,10 @@ export function Features() {
               Diferenciadores
             </span>
           </div>
-          <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#1F1915] mb-6">
+          <h2 className="text-[30px] md:text-5xl font-serif font-bold text-[#1F1915] mb-6">
             Nuestros Diferenciadores
           </h2>
-          <p className="text-xl text-[#6B6B6B] max-w-3xl leading-relaxed">
+          <p className="text-[16px] text-[#6B6B6B] max-w-3xl leading-relaxed">
             Soluciones integrales para conectar tu empresa con el mercado
             internacional, desde la negociación hasta la entrega final, con
             tecnología de vanguardia.
@@ -38,7 +38,7 @@ export function Features() {
                 Logística comercial global
               </span>
 
-              <p className="mt-6 text-2xl font-serif font-bold text-[#1F1915]">
+              <p className="mt-6 text-lg sm:text-xl md:text-2xl font-serif font-bold text-[#1F1915]">
                 Coordinamos envíos internacionales, aduanas y seguimiento de
                 operaciones en un solo sistema.
               </p>
@@ -65,7 +65,7 @@ export function Features() {
                 Cotizaciones inmediatas y automatizadas
               </span>
 
-              <p className="my-6 text-2xl font-serif font-bold text-[#1F1915]">
+              <p className="my-6 text-lg sm:text-xl md:text-2xl font-serif font-bold text-[#1F1915]">
                 Respuestas en minutos. Obtén precios y tiempos estimados de
                 forma automática.
               </p>
@@ -98,18 +98,20 @@ export function Features() {
           </div>
           {/* Removed uptime block */}
           <div className="relative col-span-full">
-            <div className="absolute z-10 max-w-lg px-6 pr-12 pt-6 md:px-12 md:pt-12">
+            <div className="relative z-10 max-w-lg px-6 pr-12 pt-6 md:px-12 md:pt-12 md:absolute">
               <span className="flex items-center gap-2 text-[#1F1915A3] text-sm">
                 <Activity className="w-4 h-4 text-[#051D67]" />
                 Estados del proceso
               </span>
 
-              <p className="my-6 text-2xl font-serif font-bold text-[#1F1915]">
+              <p className="my-6 text-lg sm:text-xl md:text-2xl font-serif font-bold text-[#1F1915]">
                 Nuestro sistema te permite monitorear cada etapa de tus
                 operaciones: desde la solicitud hasta la entrega final.
               </p>
             </div>
-            <MonitoringChart />
+            <div className="mt-8 md:mt-0">
+              <MonitoringChart />
+            </div>
           </div>
         </div>
       </div>

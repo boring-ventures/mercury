@@ -3,6 +3,15 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { motion } from "framer-motion";
+import {
+  fadeInUp,
+  fadeInLeft,
+  scaleIn,
+  staggerContainer,
+  buttonHover,
+  cardHover,
+} from "@/lib/animations";
 
 export default function NordexNewsSection() {
   const news = [
@@ -49,36 +58,58 @@ export default function NordexNewsSection() {
     },
   ];
 
-
   return (
     <section id="noticias" className="bg-[#FFFFFF] py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex gap-4 py-12 flex-col items-start mb-8">
-          <div>
+        <motion.div
+          className="flex gap-4 py-12 flex-col items-start mb-8"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true, amount: 0.3 }}
+        >
+          <motion.div {...fadeInUp}>
             <Badge className="bg-[#051D67] text-white hover:bg-[#041655]">
               Noticias
             </Badge>
-          </div>
-          <div className="flex gap-2 flex-col">
-            <h2 className="text-3xl md:text-5xl tracking-tighter lg:max-w-xl font-regular text-[#262626] font-sans font-bold">
+          </motion.div>
+          <motion.div
+            className="flex gap-2 flex-col"
+            {...fadeInLeft}
+            transition={{ ...fadeInLeft.transition, delay: 0.2 }}
+          >
+            <h2 className="text-[30px] sm:text-[48px] tracking-tighter lg:max-w-xl font-regular text-[#262626] font-sans font-bold">
               Noticias y Actualizaciones
             </h2>
-            <p className="text-lg max-w-xl lg:max-w-xl leading-relaxed tracking-tight text-[#262626A3] font-serif">
+            <p className="text-[16px] max-w-xl lg:max-w-xl leading-relaxed tracking-tight text-[#262626A3] font-serif">
               Mantente informado sobre nuestros logros, nuevos servicios y las
               últimas tendencias en comercio internacional.
             </p>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <motion.div
+          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-12"
+          variants={staggerContainer}
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true, amount: 0.3 }}
+        >
           {news.map((article, index) => (
-            <div
+            <motion.div
               key={article.id}
-              className="bg-white rounded-xl p-6 hover:shadow-lg transition-all duration-300 group border border-gray-100 h-full flex flex-col"
+              className="bg-white rounded-xl p-4 sm:p-6 hover:shadow-lg transition-all duration-300 group border border-gray-100 h-full flex flex-col"
+              variants={scaleIn}
+              whileHover={{
+                y: -5,
+                scale: 1.02,
+                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)",
+                transition: { duration: 0.3 },
+              }}
             >
               <div className="space-y-4 flex-1">
                 <div className="aspect-[16/9] bg-gray-200 rounded-lg mb-4"></div>
-                
+
                 <div className="flex items-center space-x-3">
                   <span className="bg-[#051D67]/10 text-[#051D67] px-2 py-1 rounded-md text-xs font-medium">
                     {article.category}
@@ -88,7 +119,7 @@ export default function NordexNewsSection() {
                   </span>
                 </div>
 
-                <h4 className="text-[#262626] font-sans text-lg font-bold leading-tight group-hover:text-[#051D67] transition-colors duration-200">
+                <h4 className="text-[#262626] font-sans text-base sm:text-lg font-bold leading-tight group-hover:text-[#051D67] transition-colors duration-200">
                   {article.title}
                 </h4>
 
@@ -109,20 +140,25 @@ export default function NordexNewsSection() {
                   </Button>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
-        <div className="text-center">
-          <Button
-            size="lg"
-            variant="outline"
-            className="border-[#051D67] text-[#051D67] hover:bg-[#051D67] hover:text-white px-8 py-3 rounded-md font-medium transition-all duration-200"
-          >
-            Ver todas las noticias
-          </Button>
-        </div>
-
+        <motion.div
+          className="text-center"
+          {...fadeInUp}
+          transition={{ ...fadeInUp.transition, delay: 0.4 }}
+        >
+          <motion.div {...buttonHover}>
+            <Button
+              size="lg"
+              variant="outline"
+              className="bg-transparent border-2 border-[#051D67] text-[#051D67] hover:bg-[#051D67] hover:text-white px-8 py-3 rounded-md font-medium transition-all duration-200"
+            >
+              Ver todas las noticias
+            </Button>
+          </motion.div>
+        </motion.div>
       </div>
     </section>
   );

@@ -13,6 +13,8 @@ import {
   MessageCircle,
 } from "lucide-react";
 import FooterGridBackground from "@/components/ui/footer-grid-background";
+import { motion } from "framer-motion";
+import { fadeInUp, fadeInLeft, fadeInRight, staggerContainer } from "@/lib/animations";
 
 export default function NordexFooterSection() {
   const navigationLinks = [
@@ -32,24 +34,37 @@ export default function NordexFooterSection() {
     <footer className="bg-[#051D67] text-white relative overflow-hidden">
       <FooterGridBackground />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="py-16 grid lg:grid-cols-3 gap-12">
+        <motion.div 
+          className="py-16 grid lg:grid-cols-3 gap-12"
+          variants={staggerContainer}
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true, amount: 0.3 }}
+        >
           {/* Primera columna - Información de NORDEX */}
-          <div className="flex flex-col space-y-6">
+          <motion.div 
+            className="flex flex-col space-y-6"
+            {...fadeInLeft}
+          >
             <div className="flex flex-col space-y-4">
               <img
                 src="/logos/logo Nordex_Mesa de trabajo 1 copia 2 (1).png"
                 alt="NORDEX Logo"
-                className="h-12 w-auto"
+                className="h-8 w-auto"
               />
             </div>
             <p className="text-white/80 text-sm leading-relaxed max-w-xs font-serif">
               Conectamos Bolivia con el mundo. Empresa líder en facilitación
               comercial internacional.
             </p>
-          </div>
+          </motion.div>
 
           {/* Segunda columna - Navegación */}
-          <div className="space-y-6">
+          <motion.div 
+            className="space-y-6"
+            {...fadeInUp}
+            transition={{ ...fadeInUp.transition, delay: 0.2 }}
+          >
             <h4 className="text-white font-semibold text-lg font-sans">
               Navegación
             </h4>
@@ -65,10 +80,14 @@ export default function NordexFooterSection() {
                 </li>
               ))}
             </ul>
-          </div>
+          </motion.div>
 
           {/* Tercera columna - Contacto y Redes Sociales */}
-          <div className="space-y-6">
+          <motion.div 
+            className="space-y-6"
+            {...fadeInRight}
+            transition={{ ...fadeInRight.transition, delay: 0.4 }}
+          >
             <div className="space-y-4">
               <h4 className="text-white font-semibold text-lg font-sans">
                 Contacto
@@ -77,19 +96,19 @@ export default function NordexFooterSection() {
                 <div className="flex items-start space-x-3">
                   <MapPin className="w-4 h-4 text-white mt-1 flex-shrink-0" />
                   <span className="text-white/80 text-sm font-serif">
-                    Av. Arce 2799, Torre Multicentro, Piso 15, La Paz - Bolivia
+                    Av. San Martin, calle J, Manzana 40, Plaza Empresarial, Santa Cruz - Bolivia
                   </span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Phone className="w-4 h-4 text-white flex-shrink-0" />
                   <span className="text-white/80 text-sm font-serif">
-                    +591 2 2441234
+                    +591 77828618
                   </span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Mail className="w-4 h-4 text-white flex-shrink-0" />
                   <span className="text-white/80 text-sm font-serif">
-                    info@nordex.com.bo
+                    info@nordexbo.com
                   </span>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -121,10 +140,14 @@ export default function NordexFooterSection() {
                 ))}
               </div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
-        <div className="py-8 border-t border-white/20">
+        <motion.div 
+          className="py-8 border-t border-white/20"
+          {...fadeInUp}
+          transition={{ ...fadeInUp.transition, delay: 0.6 }}
+        >
           <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
             <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-6 text-sm text-white/80">
               <span className="font-serif">
@@ -162,7 +185,7 @@ export default function NordexFooterSection() {
               </span>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </footer>
   );

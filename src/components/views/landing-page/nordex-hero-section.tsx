@@ -5,6 +5,15 @@ import Link from "next/link";
 import { InfiniteSlider } from "@/components/ui/infinite-slider";
 import { ProgressiveBlur } from "@/components/ui/progressive-blur";
 import dynamic from "next/dynamic";
+import { motion } from "framer-motion";
+import {
+  fadeInUp,
+  fadeInLeft,
+  fadeInRight,
+  staggerContainer,
+  buttonHover,
+  scaleIn,
+} from "@/lib/animations";
 
 import NordexHeader from "@/components/views/landing-page/nordex-header";
 
@@ -47,7 +56,7 @@ export default function NordexHeroSection() {
       endLat: 51.5, // United Kingdom
       endLng: -0.1,
       arcAlt: 0.4,
-      color: "#81D843",
+      color: "#051D67",
     },
     {
       order: 3,
@@ -65,7 +74,7 @@ export default function NordexHeroSection() {
       endLat: -14.2, // Brazil
       endLng: -51.9,
       arcAlt: 0.2,
-      color: "#81D843",
+      color: "#051D67",
     },
     {
       order: 5,
@@ -83,7 +92,7 @@ export default function NordexHeroSection() {
       endLat: 35.9, // China
       endLng: 104.2,
       arcAlt: 0.7,
-      color: "#81D843",
+      color: "#051D67",
     },
     {
       order: 7,
@@ -106,15 +115,15 @@ export default function NordexHeroSection() {
   ];
 
   const globeConfig = {
-    globeColor: "#051d67",
-    atmosphereColor: "#ffffff",
+    globeColor: "#ffffff",
+    atmosphereColor: "#000000",
     showAtmosphere: true,
     atmosphereAltitude: 0.15,
-    polygonColor: "rgb(255, 255, 255)",
+    polygonColor: "rgb(0, 0, 0)",
     ambientLight: "#ffffff",
     directionalLeftLight: "#ffffff",
     directionalTopLight: "#ffffff",
-    pointLight: "#008f39",
+    pointLight: "#051D67",
     autoRotate: true,
     autoRotateSpeed: 0.5,
   };
@@ -128,105 +137,162 @@ export default function NordexHeroSection() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 overflow-x-hidden">
             <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 xl:gap-20 items-center overflow-x-hidden">
               {/* Left Column - Text Content */}
-              <div className="space-y-4 sm:space-y-6 lg:space-y-8">
+              <motion.div
+                className="space-y-4 sm:space-y-6 lg:space-y-8"
+                variants={staggerContainer}
+                initial="initial"
+                animate="animate"
+              >
                 {/* Main Heading */}
-                <h1 className="text-[28px] sm:text-[36px] md:text-[42px] lg:text-[46px] xl:text-[52px] 2xl:text-[58px] text-[#262626] font-sans font-bold leading-tight">
+                <motion.h1
+                  className="text-[28px] sm:text-[36px] md:text-[42px] lg:text-[46px] xl:text-[52px] 2xl:text-[58px] text-[#262626] font-sans font-bold leading-tight"
+                  {...fadeInLeft}
+                  transition={{ ...fadeInLeft.transition, delay: 0.2 }}
+                >
                   Conectamos Bolivia
                   <br />
                   con el <span className="text-[#051D67]">Mundo</span>
-                </h1>
+                </motion.h1>
 
                 {/* Descriptive Text */}
-                <div className="space-y-3 sm:space-y-4">
+                <motion.div
+                  className="space-y-3 sm:space-y-4"
+                  {...fadeInLeft}
+                  transition={{ ...fadeInLeft.transition, delay: 0.4 }}
+                >
                   <p className="text-[#262626] font-serif text-base sm:text-lg lg:text-xl xl:text-2xl font-semibold">
                     Facilitamos. Internacionalizamos. Escalamos.
                   </p>
                   <p className="text-[#262626A3] text-sm sm:text-base lg:text-lg xl:text-xl leading-relaxed max-w-none lg:max-w-xl xl:max-w-2xl font-serif">
-                    Somos la empresa boliviana líder en facilitación comercial
-                    internacional. Transformamos la manera en que las empresas
-                    locales se conectan con el mundo, optimizando procesos y
-                    acelerando el crecimiento global.
+                    Líder en comercio internacional. Conectamos empresas
+                    bolivianas con mercados globales, optimizando procesos y
+                    maximizando el crecimiento.
                   </p>
-                </div>
+                </motion.div>
 
                 {/* CTA Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-2 sm:pt-4">
-                  <Button
-                    asChild
-                    size="lg"
-                    className="px-6 py-2 sm:px-8 sm:py-3 lg:px-10 lg:py-4 text-sm sm:text-base lg:text-lg bg-[#051D67] hover:bg-[#041655] text-white rounded-md font-medium transition-all duration-200"
-                  >
-                    <Link href="#servicios">Conocer servicios</Link>
-                  </Button>
-                  <Button
-                    asChild
-                    size="lg"
-                    variant="outline"
-                    className="px-6 py-2 sm:px-8 sm:py-3 lg:px-10 lg:py-4 text-sm sm:text-base lg:text-lg border-2 border-[#051D67] text-[#051D67] hover:bg-[#051D67] hover:text-white rounded-md font-medium transition-all duration-200"
-                  >
-                    <Link href="#quienes-somos">Sobre nosotros</Link>
-                  </Button>
-                </div>
-              </div>
+                <motion.div
+                  className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-2 sm:pt-4"
+                  {...fadeInUp}
+                  transition={{ ...fadeInUp.transition, delay: 0.6 }}
+                >
+                  <motion.div {...buttonHover}>
+                    <Button
+                      asChild
+                      size="lg"
+                      className="px-6 py-2 sm:px-8 sm:py-3 lg:px-10 lg:py-4 text-sm sm:text-base lg:text-lg bg-[#051D67] hover:bg-[#041655] text-white rounded-md font-medium transition-all duration-200"
+                    >
+                      <Link href="#servicios">Conocer servicios</Link>
+                    </Button>
+                  </motion.div>
+                  <motion.div {...buttonHover}>
+                    <Button
+                      asChild
+                      size="lg"
+                      variant="outline"
+                      className="px-6 py-2 sm:px-8 sm:py-3 lg:px-10 lg:py-4 text-sm sm:text-base lg:text-lg bg-transparent border-2 border-[#051D67] text-[#051D67] hover:bg-[#051D67] hover:text-white rounded-md font-medium transition-all duration-200"
+                    >
+                      <Link href="#quienes-somos">Sobre nosotros</Link>
+                    </Button>
+                  </motion.div>
+                </motion.div>
+              </motion.div>
 
               {/* Right Column - Interactive Globe */}
-              <div className="relative h-64 sm:h-80 md:h-96 lg:h-[450px] xl:h-[500px] 2xl:h-[550px] w-full overflow-hidden">
+              <motion.div
+                className="relative h-64 sm:h-80 md:h-96 lg:h-[450px] xl:h-[500px] 2xl:h-[550px] w-full overflow-hidden"
+                {...fadeInRight}
+                transition={{ ...fadeInRight.transition, delay: 0.3 }}
+              >
                 <World globeConfig={globeConfig} data={globeData} />
-              </div>
+              </motion.div>
             </div>
           </div>
         </div>
 
         {/* Metrics Section */}
-        <section className="bg-white py-4 sm:py-6 lg:py-8">
+        <motion.section
+          className="bg-white py-4 sm:py-6 lg:py-8"
+          {...fadeInUp}
+          transition={{ ...fadeInUp.transition, delay: 0.8 }}
+        >
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 overflow-x-hidden">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-              <div className="text-center">
+            <motion.div
+              className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8"
+              variants={staggerContainer}
+              initial="initial"
+              whileInView="animate"
+              viewport={{ once: true, amount: 0.3 }}
+            >
+              <motion.div className="text-center" variants={scaleIn}>
                 <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-[#051D67] mb-1 font-sans">
                   $2.8B
                 </div>
                 <div className="text-xs sm:text-sm lg:text-base text-[#262626] font-serif">
                   Exportaciones en MM
                 </div>
-              </div>
-              <div className="text-center lg:border-l lg:border-[#262626]/20">
+              </motion.div>
+              <motion.div
+                className="text-center lg:border-l lg:border-[#262626]/20"
+                variants={scaleIn}
+              >
                 <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-[#051D67] mb-1 font-sans">
                   $4.2B
                 </div>
                 <div className="text-xs sm:text-sm lg:text-base text-[#262626] font-serif">
                   Importaciones en MM
                 </div>
-              </div>
-              <div className="text-center lg:border-l lg:border-[#262626]/20">
+              </motion.div>
+              <motion.div
+                className="text-center lg:border-l lg:border-[#262626]/20"
+                variants={scaleIn}
+              >
                 <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-[#051D67] mb-1 font-sans">
                   $1.4B
                 </div>
                 <div className="text-xs sm:text-sm lg:text-base text-[#262626] font-serif">
                   Saldo comercial MM
                 </div>
-              </div>
-              <div className="text-center lg:border-l lg:border-[#262626]/20">
+              </motion.div>
+              <motion.div
+                className="text-center lg:border-l lg:border-[#262626]/20"
+                variants={scaleIn}
+              >
                 <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-[#051D67] mb-1 font-sans">
                   $3.5B
                 </div>
                 <div className="text-xs sm:text-sm lg:text-base text-[#262626] font-serif">
                   Reservas Internacionales MM
                 </div>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           </div>
-        </section>
+        </motion.section>
 
         {/* Company Logos Section with reduced spacing */}
-        <section className="bg-white py-8 sm:py-10 lg:py-12 xl:py-16 border-t border-[#262626]/10">
+        <motion.section
+          className="bg-white pt-8 sm:pt-10 lg:pt-12 xl:pt-14 pb-6 sm:pb-8 lg:pb-10 xl:pb-12 border-t border-[#262626]/10"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          viewport={{ once: true, amount: 0.3 }}
+        >
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 overflow-x-hidden">
             <div className="flex flex-col items-center lg:flex-row w-full overflow-x-hidden">
-              <div className="lg:max-w-48 xl:max-w-64 lg:border-r lg:pr-8 mb-6 lg:mb-0">
+              <motion.div
+                className="lg:max-w-48 xl:max-w-64 lg:border-r lg:pr-8 mb-6 lg:mb-0"
+                {...fadeInLeft}
+                transition={{ ...fadeInLeft.transition, delay: 0.3 }}
+              >
                 <p className="text-center lg:text-end text-sm sm:text-base lg:text-lg xl:text-xl text-[#262626] font-medium font-serif">
                   Empresas líderes confían en NORDEX
                 </p>
-              </div>
-              <div className="relative lg:w-[calc(100%-12rem)] xl:w-[calc(100%-16rem)] overflow-hidden">
+              </motion.div>
+              <motion.div
+                className="relative lg:w-[calc(100%-12rem)] xl:w-[calc(100%-16rem)] overflow-hidden"
+                {...fadeInRight}
+                transition={{ ...fadeInRight.transition, delay: 0.4 }}
+              >
                 <InfiniteSlider duration={25} durationOnHover={15} gap={80}>
                   <div className="flex flex-col items-center">
                     <Laptop2
@@ -314,10 +380,10 @@ export default function NordexHeroSection() {
                   direction="right"
                   blurIntensity={1}
                 />
-              </div>
+              </motion.div>
             </div>
           </div>
-        </section>
+        </motion.section>
       </section>
     </>
   );

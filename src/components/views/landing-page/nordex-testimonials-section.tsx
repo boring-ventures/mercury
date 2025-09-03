@@ -1,6 +1,8 @@
 "use client";
 
 import { InfiniteMovingCards } from "@/components/ui/infinite-moving-cards";
+import { motion } from "framer-motion";
+import { fadeInUp, fadeInDown, scaleIn } from "@/lib/animations";
 
 const testimonials = [
   {
@@ -39,17 +41,35 @@ export default function NordexTestimonialsSection() {
   return (
     <section className="bg-[#051D67] py-20">
       <div className="max-w-7xl mx-auto px-6">
-        <div className="text-center mb-10">
-          <h2 className="text-white font-sans font-bold text-[48px] leading-tight">
+        <motion.div
+          className="text-center mb-10"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true, amount: 0.3 }}
+        >
+          <motion.h2
+            className="text-white font-sans font-bold text-[30px] leading-tight"
+            {...fadeInDown}
+            transition={{ ...fadeInDown.transition, delay: 0.2 }}
+          >
             Testimonios de clientes
-          </h2>
-          <p className="text-white/80 text-[18px] mt-2 font-serif">
+          </motion.h2>
+          <motion.p
+            className="text-white/80 text-[16px] mt-2 font-serif"
+            {...fadeInUp}
+            transition={{ ...fadeInUp.transition, delay: 0.4 }}
+          >
             Resultados medibles. Historias reales de compañías que ya expanden
             su negocio con NORDEX.
-          </p>
-        </div>
+          </motion.p>
+        </motion.div>
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+        <motion.div
+          className="rounded-2xl border border-white/10 bg-white/5 p-4"
+          {...scaleIn}
+          transition={{ ...scaleIn.transition, delay: 0.6 }}
+        >
           <InfiniteMovingCards
             items={testimonials.map((t) => ({
               quote: t.quote,
@@ -60,7 +80,7 @@ export default function NordexTestimonialsSection() {
             speed="normal"
             className="[--duration:40s]"
           />
-        </div>
+        </motion.div>
       </div>
     </section>
   );

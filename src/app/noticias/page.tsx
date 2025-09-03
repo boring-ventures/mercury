@@ -14,6 +14,16 @@ import {
   BookOpen,
   ShoppingCart,
 } from "lucide-react";
+import { motion } from "framer-motion";
+import { 
+  fadeInUp, 
+  fadeInLeft, 
+  fadeInRight,
+  scaleIn, 
+  staggerContainer,
+  buttonHover,
+  cardHover
+} from "@/lib/animations";
 
 export default function NoticiasPage() {
   // Mock data for blog posts - this will be replaced with Contentful data
@@ -99,13 +109,22 @@ export default function NoticiasPage() {
       <main className="pt-16 pb-8 sm:pt-18 sm:pb-10 lg:pt-20 lg:pb-12 xl:pt-24 xl:pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
           {/* Hero Section */}
-          <div className="flex gap-3 sm:gap-4 py-4 sm:py-6 lg:py-8 flex-col items-start mb-8 sm:mb-10 lg:mb-12">
-            <div>
+          <motion.div 
+            className="flex gap-3 sm:gap-4 py-4 sm:py-6 lg:py-8 flex-col items-start mb-8 sm:mb-10 lg:mb-12"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6 }}
+          >
+            <motion.div {...fadeInUp}>
               <Badge className="bg-[#051D67] text-white hover:bg-[#041655] text-xs sm:text-sm">
                 Blog
               </Badge>
-            </div>
-            <div className="flex gap-2 sm:gap-3 flex-col">
+            </motion.div>
+            <motion.div 
+              className="flex gap-2 sm:gap-3 flex-col"
+              {...fadeInLeft}
+              transition={{ ...fadeInLeft.transition, delay: 0.2 }}
+            >
               <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl tracking-tighter max-w-full lg:max-w-xl xl:max-w-2xl font-regular text-[#262626] font-sans font-bold">
                 Noticias y <span className="text-[#051D67]">Blog</span>
               </h1>
@@ -114,15 +133,20 @@ export default function NoticiasPage() {
                 consejos del mundo del comercio internacional y las
                 importaciones.
               </p>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* Categories Tabs */}
-          <div className="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-10 lg:mb-12">
-            {categories.map((category) => {
+          <motion.div 
+            className="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-10 lg:mb-12"
+            variants={staggerContainer}
+            initial="initial"
+            animate="animate"
+          >
+            {categories.map((category, index) => {
               const IconComponent = category.icon;
               return (
-                <button
+                <motion.button
                   key={category.id}
                   onClick={() => setActiveCategory(category.id)}
                   className={`flex flex-col items-center gap-2 sm:gap-3 transition-all duration-200 p-2 sm:p-3 rounded-lg hover:bg-gray-50 ${
@@ -130,6 +154,10 @@ export default function NoticiasPage() {
                       ? "text-[#81D843] bg-gray-50"
                       : "text-[#6B6B6B] hover:text-[#262626]"
                   }`}
+                  variants={scaleIn}
+                  transition={{ ...scaleIn.transition, delay: index * 0.1 + 0.4 }}
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
                   <div className="text-center">
@@ -137,18 +165,36 @@ export default function NoticiasPage() {
                       {category.name}
                     </span>
                     {activeCategory === category.id && (
-                      <div className="w-full h-0.5 bg-[#81D843] mt-1 sm:mt-2"></div>
+                      <motion.div 
+                        className="w-full h-0.5 bg-[#81D843] mt-1 sm:mt-2"
+                        initial={{ scaleX: 0 }}
+                        animate={{ scaleX: 1 }}
+                        transition={{ duration: 0.3, ease: "easeOut" }}
+                      ></motion.div>
                     )}
                   </div>
-                </button>
+                </motion.button>
               );
             })}
-          </div>
+          </motion.div>
 
           {/* Featured Post */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-8 sm:mb-10 lg:mb-12">
+          <motion.div 
+            className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-8 sm:mb-10 lg:mb-12"
+            {...fadeInUp}
+            transition={{ ...fadeInUp.transition, delay: 1.1 }}
+            whileHover={{
+              y: -5,
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)",
+              transition: { duration: 0.3 }
+            }}
+          >
             <div className="lg:flex">
-              <div className="lg:w-1/2">
+              <motion.div 
+                className="lg:w-1/2"
+                {...fadeInLeft}
+                transition={{ ...fadeInLeft.transition, delay: 1.3 }}
+              >
                 <div className="h-48 sm:h-64 lg:h-full bg-gray-200 flex items-center justify-center">
                   <svg
                     className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 text-gray-400"
@@ -164,8 +210,12 @@ export default function NoticiasPage() {
                     />
                   </svg>
                 </div>
-              </div>
-              <div className="lg:w-1/2 p-4 sm:p-6 lg:p-8">
+              </motion.div>
+              <motion.div 
+                className="lg:w-1/2 p-4 sm:p-6 lg:p-8"
+                {...fadeInRight}
+                transition={{ ...fadeInRight.transition, delay: 1.3 }}
+              >
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-3 sm:mb-4">
                   <span className="bg-[#051D67] text-white text-xs sm:text-sm font-medium px-3 py-1 rounded-full w-fit">
                     Destacado
@@ -180,22 +230,37 @@ export default function NoticiasPage() {
                 <p className="text-[#6B6B6B] font-serif text-sm sm:text-base lg:text-lg mb-4 sm:mb-6">
                   {mockPosts[0].excerpt}
                 </p>
-                <button className="bg-[#051D67] hover:bg-[#041655] text-white px-4 py-2 sm:px-6 sm:py-3 lg:px-8 lg:py-4 text-sm sm:text-base lg:text-lg rounded-md font-medium transition-colors">
+                <motion.button 
+                  className="bg-[#051D67] hover:bg-[#041655] text-white px-4 py-2 sm:px-6 sm:py-3 lg:px-8 lg:py-4 text-sm sm:text-base lg:text-lg rounded-md font-medium transition-colors"
+                  {...buttonHover}
+                >
                   Leer Más
-                </button>
-              </div>
+                </motion.button>
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
 
           {/* News Gallery */}
-          <NewsGallery items={mockPosts.slice(1)} heading="Más Artículos" />
+          <motion.div
+            {...fadeInUp}
+            transition={{ ...fadeInUp.transition, delay: 1.5 }}
+          >
+            <NewsGallery items={mockPosts.slice(1)} heading="Más Artículos" />
+          </motion.div>
 
           {/* Load More Button */}
-          <div className="text-center mt-8 sm:mt-10 lg:mt-12">
-            <button className="border border-[#051D67] text-[#051D67] hover:bg-[#051D67] hover:text-white px-6 py-3 sm:px-8 sm:py-3 lg:px-10 lg:py-4 text-sm sm:text-base lg:text-lg rounded-md font-medium transition-colors">
+          <motion.div 
+            className="text-center mt-8 sm:mt-10 lg:mt-12"
+            {...fadeInUp}
+            transition={{ ...fadeInUp.transition, delay: 1.7 }}
+          >
+            <motion.button 
+              className="border border-[#051D67] text-[#051D67] hover:bg-[#051D67] hover:text-white px-6 py-3 sm:px-8 sm:py-3 lg:px-10 lg:py-4 text-sm sm:text-base lg:text-lg rounded-md font-medium transition-colors"
+              {...buttonHover}
+            >
               Cargar Más Artículos
-            </button>
-          </div>
+            </motion.button>
+          </motion.div>
         </div>
       </main>
 
