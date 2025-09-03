@@ -5,13 +5,18 @@ import Link from "next/link";
 import { InfiniteSlider } from "@/components/ui/infinite-slider";
 import { ProgressiveBlur } from "@/components/ui/progressive-blur";
 import dynamic from "next/dynamic";
-import NordexBanner from "@/components/ui/nordex-banner";
+
 import NordexHeader from "@/components/views/landing-page/nordex-header";
 
-const World = dynamic(() => import("@/components/ui/globe").then(mod => ({ default: mod.World })), {
-  ssr: false,
-  loading: () => <div className="w-full h-full bg-gray-100 animate-pulse rounded-lg" />
-});
+const World = dynamic(
+  () => import("@/components/ui/globe").then((mod) => ({ default: mod.World })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-full bg-gray-100 animate-pulse rounded-lg" />
+    ),
+  }
+);
 import {
   Laptop2,
   Package,
@@ -98,7 +103,6 @@ export default function NordexHeroSection() {
 
   return (
     <>
-      <NordexBanner />
       <NordexHeader />
       <section id="inicio" className="bg-white overflow-x-hidden">
         {/* Hero Section with reduced spacing from navbar */}

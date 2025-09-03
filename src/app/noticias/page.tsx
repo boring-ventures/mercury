@@ -3,7 +3,6 @@
 import { useState } from "react";
 import NordexHeader from "@/components/views/landing-page/nordex-header";
 import NordexFooterSection from "@/components/views/landing-page/nordex-footer-section";
-import NordexBanner from "@/components/ui/nordex-banner";
 import { Badge } from "@/components/ui/badge";
 import { NewsGallery } from "@/components/ui/news-gallery";
 import {
@@ -95,7 +94,6 @@ export default function NoticiasPage() {
 
   return (
     <div className="bg-white min-h-screen">
-      <NordexBanner />
       <NordexHeader />
 
       <main className="pt-16 pb-8 sm:pt-18 sm:pb-10 lg:pt-20 lg:pb-12 xl:pt-24 xl:pb-16">

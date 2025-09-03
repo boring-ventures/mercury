@@ -8,15 +8,15 @@ export default function NordexHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="fixed top-10 sm:top-12 left-0 right-0 z-40 bg-[#FFFFFF] border-b border-gray-200 shadow-sm">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
-        <div className="flex justify-between items-center h-14 sm:h-16 lg:h-18">
+        <div className="flex justify-between items-center h-16 lg:h-18">
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-3">
               <img
                 src="/logos/logo Nordex_Mesa de trabajo 1 copia.png"
                 alt="NORDEX Logo"
-                className="h-6 w-auto sm:h-8 lg:h-10"
+                className="h-8 w-auto sm:h-10 lg:h-12"
               />
             </Link>
           </div>

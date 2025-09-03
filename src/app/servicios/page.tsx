@@ -3,7 +3,6 @@
 import { useState } from "react";
 import NordexHeader from "@/components/views/landing-page/nordex-header";
 import NordexFooterSection from "@/components/views/landing-page/nordex-footer-section";
-import NordexBanner from "@/components/ui/nordex-banner";
 import { Badge } from "@/components/ui/badge";
 import {
   Package,
@@ -102,7 +101,6 @@ export default function ServiciosPage() {
 
   return (
     <div className="bg-white min-h-screen">
-      <NordexBanner />
       <NordexHeader />
 
       <main className="pt-16 pb-8 sm:pt-18 sm:pb-10 lg:pt-20 lg:pb-12 xl:pt-24 xl:pb-16">
@@ -180,7 +178,10 @@ export default function ServiciosPage() {
                 {/* Features Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                   {activeService.features.map((feature, index) => (
-                    <div key={index} className="flex items-center gap-3 sm:gap-4">
+                    <div
+                      key={index}
+                      className="flex items-center gap-3 sm:gap-4"
+                    >
                       <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-[#81D843] rounded-full flex-shrink-0"></div>
                       <span className="text-[#262626] font-serif text-sm sm:text-base lg:text-lg">
                         {feature}

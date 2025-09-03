@@ -1,17 +1,5 @@
-import React, { useState } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
-
-// --- HELPER COMPONENTS (ICONS) ---
-
-const GoogleIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 48 48">
-        <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s12-5.373 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-2.641-.21-5.236-.611-7.743z" />
-        <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z" />
-        <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z" />
-        <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C42.022 35.026 44 30.038 44 24c0-2.641-.21-5.236-.611-7.743z" />
-    </svg>
-);
-
+import React, { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 // --- TYPE DEFINITIONS ---
 
@@ -35,19 +23,27 @@ interface SignInPageProps {
 
 // --- SUB-COMPONENTS ---
 
-const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
-  <div className="rounded-2xl border border-[#1F1915]/20 bg-[#1F1915]/5 backdrop-blur-sm transition-colors focus-within:border-[#051D67]/70 focus-within:bg-[#051D67]/10">
-    {children}
-  </div>
-);
-
-const TestimonialCard = ({ testimonial, delay }: { testimonial: Testimonial, delay: string }) => (
-  <div className={`animate-testimonial ${delay} flex items-start gap-3 rounded-3xl bg-card/40 dark:bg-zinc-800/40 backdrop-blur-xl border border-white/10 p-5 w-64`}>
-    <img src={testimonial.avatarSrc} className="h-10 w-10 object-cover rounded-2xl" alt="avatar" />
+const TestimonialCard = ({
+  testimonial,
+  delay,
+}: {
+  testimonial: Testimonial;
+  delay: string;
+}) => (
+  <div
+    className={`${delay} flex items-start gap-3 rounded-2xl bg-white/90 backdrop-blur-sm border border-white/20 p-4 shadow-lg`}
+  >
+    <img
+      src={testimonial.avatarSrc}
+      className="h-10 w-10 object-cover rounded-full"
+      alt="avatar"
+    />
     <div className="text-sm leading-snug">
-      <p className="flex items-center gap-1 font-medium">{testimonial.name}</p>
-      <p className="text-muted-foreground">{testimonial.handle}</p>
-      <p className="mt-1 text-foreground/80">{testimonial.text}</p>
+      <p className="flex items-center gap-1 font-medium text-gray-900">
+        {testimonial.name}
+      </p>
+      <p className="text-gray-600">{testimonial.handle}</p>
+      <p className="mt-1 text-gray-700">{testimonial.text}</p>
     </div>
   </div>
 );
@@ -55,8 +51,12 @@ const TestimonialCard = ({ testimonial, delay }: { testimonial: Testimonial, del
 // --- MAIN COMPONENT ---
 
 export const SignInPage: React.FC<SignInPageProps> = ({
-  title = <span className="font-light text-foreground tracking-tighter">Welcome</span>,
-  description = "Access your account and continue your journey with us",
+  title = (
+    <span className="font-light text-gray-900 tracking-tight">
+      Bienvenido a NORDEX
+    </span>
+  ),
+  description = "Accede a tu cuenta y gestiona tus operaciones de comercio internacional",
   heroImageSrc,
   testimonials = [],
   onSignIn,
@@ -67,77 +67,139 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div className="h-[100dvh] flex flex-col md:flex-row font-geist w-[100dvw]">
+    <div className="min-h-screen flex font-['Helvetica']">
       {/* Left column: sign-in form */}
-      <section className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-md">
-          <div className="flex flex-col gap-6">
-            <h1 className="animate-element animate-delay-100 text-4xl md:text-5xl font-semibold leading-tight">{title}</h1>
-            <p className="animate-element animate-delay-200 text-muted-foreground">{description}</p>
+      <div className="flex-1 flex items-center justify-center p-8 bg-white">
+        <div className="w-full max-w-md space-y-8">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">{title}</h1>
+            <p className="text-gray-600">{description}</p>
+          </div>
 
-            <form className="space-y-5" onSubmit={onSignIn}>
-              <div className="animate-element animate-delay-300">
-                <label className="text-sm font-medium text-[#1F1915A3]">Correo Electrónico</label>
-                <GlassInputWrapper>
-                  <input name="email" type="email" placeholder="Ingresa tu correo electrónico" className="w-full bg-transparent text-sm p-4 rounded-2xl focus:outline-none" />
-                </GlassInputWrapper>
-              </div>
-
-              <div className="animate-element animate-delay-400">
-                <label className="text-sm font-medium text-[#1F1915A3]">Contraseña</label>
-                <GlassInputWrapper>
-                  <div className="relative">
-                    <input name="password" type={showPassword ? 'text' : 'password'} placeholder="Ingresa tu contraseña" className="w-full bg-transparent text-sm p-4 pr-12 rounded-2xl focus:outline-none" />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-3 flex items-center">
-                      {showPassword ? <EyeOff className="w-5 h-5 text-[#1F1915A3] hover:text-[#1F1915] transition-colors" /> : <Eye className="w-5 h-5 text-[#1F1915A3] hover:text-[#1F1915] transition-colors" />}
-                    </button>
-                  </div>
-                </GlassInputWrapper>
-              </div>
-
-              <div className="animate-element animate-delay-500 flex items-center justify-between text-sm">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input type="checkbox" name="rememberMe" className="custom-checkbox" />
-                  <span className="text-[#1F1915]/90">Mantener sesión iniciada</span>
-                </label>
-                <a href="#" onClick={(e) => { e.preventDefault(); onResetPassword?.(); }} className="hover:underline text-[#051D67] transition-colors">Recuperar contraseña</a>
-              </div>
-
-              <button type="submit" className="animate-element animate-delay-600 w-full rounded-2xl bg-[#051D67] py-4 font-medium text-white hover:bg-[#041655] transition-colors">
-                Iniciar Sesión
-              </button>
-            </form>
-
-            <div className="animate-element animate-delay-700 relative flex items-center justify-center">
-              <span className="w-full border-t border-[#1F1915]/20"></span>
-              <span className="px-4 text-sm text-[#1F1915A3] bg-background absolute">O continúa con</span>
+          <form className="space-y-6" onSubmit={onSignIn}>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email
+              </label>
+              <input
+                name="email"
+                type="email"
+                placeholder="nombre@ejemplo.com"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                required
+              />
             </div>
 
-            <button onClick={onGoogleSignIn} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-[#1F1915]/20 rounded-2xl py-4 hover:bg-[#1F1915]/5 transition-colors">
-                <GoogleIcon />
-                Continuar con Google
-            </button>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Contraseña
+              </label>
+              <div className="relative">
+                <input
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Ingresa tu contraseña"
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+            </div>
 
-            <p className="animate-element animate-delay-900 text-center text-sm text-[#1F1915A3]">
-              ¿Nuevo en NORDEX? <a href="#" onClick={(e) => { e.preventDefault(); onCreateAccount?.(); }} className="text-[#051D67] hover:underline transition-colors">Crear Cuenta</a>
+            <div className="flex items-center justify-between">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="rememberMe"
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <span className="ml-2 text-sm text-gray-600">
+                  Mantener sesión iniciada
+                </span>
+              </label>
+              <a
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onResetPassword?.();
+                }}
+                className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
+              >
+                ¿Olvidaste tu contraseña?
+              </a>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            >
+              Iniciar Sesión
+            </button>
+          </form>
+
+          <div className="text-center">
+            <p className="text-sm text-gray-600">
+              ¿Nuevo en NORDEX?{" "}
+              <a
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onCreateAccount?.();
+                }}
+                className="text-blue-600 hover:text-blue-800 transition-colors font-medium"
+              >
+                Crear cuenta
+              </a>
             </p>
           </div>
         </div>
-      </section>
+      </div>
 
       {/* Right column: hero image + testimonials */}
       {heroImageSrc && (
-        <section className="hidden md:block flex-1 relative p-4">
-          <div className="animate-slide-right animate-delay-300 absolute inset-4 rounded-3xl bg-cover bg-center" style={{ backgroundImage: `url(${heroImageSrc})` }}></div>
+        <div className="hidden lg:block flex-1 relative">
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${heroImageSrc})` }}
+          />
+          <div className="absolute inset-0 bg-black/20" />
+
           {testimonials.length > 0 && (
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-4 px-8 w-full justify-center">
-              <TestimonialCard testimonial={testimonials[0]} delay="animate-delay-1000" />
-              {testimonials[1] && <div className="hidden xl:flex"><TestimonialCard testimonial={testimonials[1]} delay="animate-delay-1200" /></div>}
-              {testimonials[2] && <div className="hidden 2xl:flex"><TestimonialCard testimonial={testimonials[2]} delay="animate-delay-1400" /></div>}
+              <TestimonialCard
+                testimonial={testimonials[0]}
+                delay="animate-fade-in"
+              />
+              {testimonials[1] && (
+                <div className="hidden xl:flex">
+                  <TestimonialCard
+                    testimonial={testimonials[1]}
+                    delay="animate-fade-in"
+                  />
+                </div>
+              )}
+              {testimonials[2] && (
+                <div className="hidden 2xl:flex">
+                  <TestimonialCard
+                    testimonial={testimonials[2]}
+                    delay="animate-fade-in"
+                  />
+                </div>
+              )}
             </div>
           )}
-        </section>
+        </div>
       )}
     </div>
   );
-};  
+};
