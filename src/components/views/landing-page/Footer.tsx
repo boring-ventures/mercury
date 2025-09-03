@@ -10,7 +10,8 @@ import {
 
 export default function Footer() {
   const contactInfo = {
-    address: "Av. San Martin, calle J, Manzana 40, Plaza Empresarial, Santa Cruz - Bolivia",
+    address:
+      "Av. San Martin, calle J, Manzana 40, Plaza Empresarial, Santa Cruz - Bolivia",
     phone: "+591 77828618",
     whatsapp: "+591 77828618",
     email: "info@nordexbo.com",
@@ -36,9 +37,7 @@ export default function Footer() {
           <div className="lg:col-span-2">
             <div className="flex items-center space-x-3 mb-6">
               <Globe className="h-6 w-6 text-[#81D843]" />
-              <span className="text-xl font-bold font-sans">
-                NORDEX Global
-              </span>
+              <span className="text-xl font-bold font-sans">NORDEX Global</span>
             </div>
             <p className="text-white/80 mb-8 leading-relaxed font-serif max-w-2xl">
               Especialistas en internacionalización empresarial, facilitando

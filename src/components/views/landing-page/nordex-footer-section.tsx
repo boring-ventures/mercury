@@ -50,7 +50,7 @@ export default function NordexFooterSection() {
               <img
                 src="/logos/logo Nordex_Mesa de trabajo 1 copia 2 (1).png"
                 alt="NORDEX Logo"
-                className="h-8 w-auto"
+                className="h-6 w-40"
               />
             </div>
             <p className="text-white/80 text-sm leading-relaxed max-w-xs font-serif">
