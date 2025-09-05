@@ -159,7 +159,7 @@ export default function NordexHeroSection() {
       <NordexHeader />
       <section id="inicio" className="bg-white overflow-x-hidden">
         {/* Hero Section with improved mobile spacing from navbar */}
-        <div className="pt-24 pb-8 sm:pt-18 sm:pb-10 md:pt-20 md:pb-12 lg:pt-24 lg:pb-16 xl:pt-28 xl:pb-20">
+        <div className="pt-24 pb-4 sm:pt-18 sm:pb-6 md:pt-20 md:pb-8 lg:pt-24 lg:pb-10 xl:pt-28 xl:pb-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 overflow-x-hidden">
             <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 xl:gap-20 items-center overflow-x-hidden">
               {/* Left Column - Text Content */}
@@ -337,7 +337,7 @@ export default function NordexHeroSection() {
                 transition={{ ...fadeInLeft.transition, delay: 0.3 }}
               >
                 <p className="text-center lg:text-end text-sm sm:text-base lg:text-lg xl:text-xl text-[#262626] font-medium font-serif">
-                  Sectores con mayor exportación
+                  Sectores con mayor <span className="text-[#051D67] font-bold">exportación</span>
                 </p>
               </motion.div>
               <motion.div
@@ -453,7 +453,7 @@ export default function NordexHeroSection() {
                 transition={{ ...fadeInLeft.transition, delay: 0.3 }}
               >
                 <p className="text-center lg:text-end text-sm sm:text-base lg:text-lg xl:text-xl text-[#262626] font-medium font-serif">
-                  Sectores de mayor importación
+                  Sectores de mayor <span className="text-[#051D67] font-bold">importación</span>
                 </p>
               </motion.div>
               <motion.div
