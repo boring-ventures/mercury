@@ -35,6 +35,14 @@ import {
   Building2,
   Truck,
   ShoppingCart,
+  Pickaxe,
+  Fuel,
+  Wheat,
+  Beef,
+  Factory,
+  Car,
+  Settings,
+  Wrench,
 } from "lucide-react";
 
 export default function NordexHeroSection() {
@@ -339,7 +347,7 @@ export default function NordexHeroSection() {
               >
                 <InfiniteSlider duration={25} durationOnHover={15} gap={80}>
                   <div className="flex flex-col items-center">
-                    <Laptop2
+                    <Pickaxe
                       className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-[#051D67] mb-2"
                       strokeWidth={1.5}
                     />
@@ -348,7 +356,7 @@ export default function NordexHeroSection() {
                     </div>
                   </div>
                   <div className="flex flex-col items-center">
-                    <Package
+                    <Fuel
                       className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-[#051D67] mb-2"
                       strokeWidth={1.5}
                     />
@@ -357,7 +365,7 @@ export default function NordexHeroSection() {
                     </div>
                   </div>
                   <div className="flex flex-col items-center">
-                    <Shirt
+                    <Wheat
                       className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-[#051D67] mb-2"
                       strokeWidth={1.5}
                     />
@@ -366,7 +374,7 @@ export default function NordexHeroSection() {
                     </div>
                   </div>
                   <div className="flex flex-col items-center">
-                    <Pill
+                    <Beef
                       className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-[#051D67] mb-2"
                       strokeWidth={1.5}
                     />
@@ -375,7 +383,7 @@ export default function NordexHeroSection() {
                     </div>
                   </div>
                   <div className="flex flex-col items-center">
-                    <Utensils
+                    <Factory
                       className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-[#051D67] mb-2"
                       strokeWidth={1.5}
                     />
@@ -408,6 +416,95 @@ export default function NordexHeroSection() {
                     />
                     <div className="text-[#051D67] font-medium text-xs sm:text-sm lg:text-base">
                       COMERCIO
+                    </div>
+                  </div>
+                </InfiniteSlider>
+
+                <div className="bg-gradient-to-r from-white absolute inset-y-0 left-0 w-12 sm:w-16 md:w-20"></div>
+                <div className="bg-gradient-to-l from-white absolute inset-y-0 right-0 w-12 sm:w-16 md:w-20"></div>
+                <ProgressiveBlur
+                  className="pointer-events-none absolute left-0 top-0 h-full w-12 sm:w-16 md:w-20"
+                  direction="left"
+                  blurIntensity={1}
+                />
+                <ProgressiveBlur
+                  className="pointer-events-none absolute right-0 top-0 h-full w-12 sm:w-16 md:w-20"
+                  direction="right"
+                  blurIntensity={1}
+                />
+              </motion.div>
+            </div>
+          </div>
+        </motion.section>
+
+        {/* Importation Sectors Section */}
+        <motion.section
+          className="bg-white pt-4 sm:pt-6 lg:pt-8 xl:pt-10 pb-6 sm:pb-8 lg:pb-10 xl:pb-12"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          viewport={{ once: true, amount: 0.3 }}
+        >
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 overflow-x-hidden">
+            <div className="flex flex-col items-center lg:flex-row w-full overflow-x-hidden">
+              <motion.div
+                className="lg:max-w-48 xl:max-w-64 lg:border-r lg:pr-8 mb-6 lg:mb-0"
+                {...fadeInLeft}
+                transition={{ ...fadeInLeft.transition, delay: 0.3 }}
+              >
+                <p className="text-center lg:text-end text-sm sm:text-base lg:text-lg xl:text-xl text-[#262626] font-medium font-serif">
+                  Sectores de mayor importación
+                </p>
+              </motion.div>
+              <motion.div
+                className="relative lg:w-[calc(100%-12rem)] xl:w-[calc(100%-16rem)] overflow-hidden"
+                {...fadeInRight}
+                transition={{ ...fadeInRight.transition, delay: 0.4 }}
+              >
+                <InfiniteSlider duration={25} durationOnHover={15} gap={80}>
+                  <div className="flex flex-col items-center">
+                    <Fuel
+                      className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-[#051D67] mb-2"
+                      strokeWidth={1.5}
+                    />
+                    <div className="text-[#051D67] font-medium text-xs sm:text-sm lg:text-base">
+                      COMBUSTIBLE
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <Car
+                      className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-[#051D67] mb-2"
+                      strokeWidth={1.5}
+                    />
+                    <div className="text-[#051D67] font-medium text-xs sm:text-sm lg:text-base">
+                      VEHÍCULOS
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <Settings
+                      className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-[#051D67] mb-2"
+                      strokeWidth={1.5}
+                    />
+                    <div className="text-[#051D67] font-medium text-xs sm:text-sm lg:text-base">
+                      BIENES DE CAPITAL
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <Pill
+                      className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-[#051D67] mb-2"
+                      strokeWidth={1.5}
+                    />
+                    <div className="text-[#051D67] font-medium text-xs sm:text-sm lg:text-base">
+                      FARMACÉUTICO
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <Wrench
+                      className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-[#051D67] mb-2"
+                      strokeWidth={1.5}
+                    />
+                    <div className="text-[#051D67] font-medium text-xs sm:text-sm lg:text-base">
+                      MAQUINARIA
                     </div>
                   </div>
                 </InfiniteSlider>
