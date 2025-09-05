@@ -77,6 +77,24 @@ export default function NordexHeroSection() {
       color: "#051D67",
     },
     {
+      order: 4,
+      startLat: -13.5, // Bolivia
+      startLng: -78.1,
+      endLat: 14.2, // Brazil
+      endLng: 81.9,
+      arcAlt: 0.2,
+      color: "#051D67",
+    },
+    {
+      order: 4,
+      startLat: -2.5, // Bolivia
+      startLng: -62.1,
+      endLat: 42.2, // Brazil
+      endLng: 102.9,
+      arcAlt: 0.2,
+      color: "#051D67",
+    },
+    {
       order: 5,
       startLat: -16.5, // Bolivia
       startLng: -68.1,
@@ -212,11 +230,37 @@ export default function NordexHeroSection() {
 
         {/* Metrics Section */}
         <motion.section
-          className="bg-white py-4 sm:py-6 lg:py-8"
+          className="bg-white pt-2 sm:pt-3 lg:pt-4 pb-4 sm:pb-6 lg:pb-8"
           {...fadeInUp}
           transition={{ ...fadeInUp.transition, delay: 0.8 }}
         >
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 overflow-x-hidden">
+            {/* Title with Bolivian Flag */}
+            <motion.div
+              className="flex items-center gap-4 mb-6 sm:mb-8 lg:mb-10"
+              {...fadeInLeft}
+              transition={{ ...fadeInLeft.transition, delay: 0.6 }}
+            >
+              {/* Bolivian Flag */}
+              <div className="flex-shrink-0">
+                <div className="w-8 h-5 rounded-sm overflow-hidden shadow-sm border border-gray-200">
+                  <div className="h-1/3 bg-red-500"></div>
+                  <div className="h-1/3 bg-yellow-400"></div>
+                  <div className="h-1/3 bg-green-500"></div>
+                </div>
+              </div>
+
+              {/* Title */}
+              <div className="flex items-baseline gap-2">
+                <h2 className="text-2xl font-bold text-[#051D67] font-sans">
+                  Datos estadísticos de Bolivia
+                </h2>
+                <span className="text-base font-normal text-[#051D67] opacity-75">
+                  (julio 2025)
+                </span>
+              </div>
+            </motion.div>
+
             <motion.div
               className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8"
               variants={staggerContainer}
