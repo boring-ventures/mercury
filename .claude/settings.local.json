@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(pnpm run:*)"
+      "Bash(pnpm run:*)",
+      "WebFetch(domain:eldeber.com.bo)",
+      "WebFetch(domain:www.infobae.com)"
     ],
     "deny": [],
     "ask": []

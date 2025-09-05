@@ -26,67 +26,67 @@ import {
 } from "@/lib/animations";
 
 export default function NoticiasPage() {
-  // Mock data for blog posts - this will be replaced with Contentful data
+  // Recent news articles with economic data
   const mockPosts = [
     {
       id: 1,
-      title: "Nuevas Regulaciones de Importación 2024",
+      title: "Balanza Comercial Acumula Déficit de $US 500 Millones",
       excerpt:
-        "Conoce las últimas actualizaciones en normativas de importación que afectan el comercio internacional.",
-      date: "2024-01-15",
-      category: "Regulaciones",
-      image: "/placeholder-blog-1.jpg",
-      slug: "nuevas-regulaciones-importacion-2024",
+        "Pese a tres meses consecutivos de superávit, Bolivia mantiene un déficit comercial acumulado de $496 millones hasta julio de 2025.",
+      date: "2025-09-04",
+      category: "Análisis",
+      image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=400&fit=crop",
+      slug: "balanza-comercial-deficit-2025",
     },
     {
       id: 2,
-      title: "Cómo Optimizar los Costos de Envío Internacional",
+      title: "Reservas Internacionales Suben a $US 2.881 Millones",
       excerpt:
-        "Descubre estrategias efectivas para reducir costos en tus operaciones de importación.",
-      date: "2024-01-10",
-      category: "Consejos",
-      image: "/placeholder-blog-2.jpg",
-      slug: "optimizar-costos-envio-internacional",
+        "Las RIN aumentaron $905 millones respecto a 2024, principalmente por revalorización del oro, pero siguen lejos del pico histórico de 2014.",
+      date: "2025-09-03",
+      category: "Análisis",
+      image: "https://images.unsplash.com/photo-1640340434855-6084b1f4901c?w=800&h=400&fit=crop",
+      slug: "reservas-internacionales-2025",
     },
     {
       id: 3,
-      title: "Tendencias del Comercio Internacional en América Latina",
+      title: "Propuesta para Estabilizar el Dólar en 8 Bolivianos",
       excerpt:
-        "Análisis completo de las tendencias emergentes en el comercio internacional regional.",
-      date: "2024-01-05",
+        "Ex-director del Banco Central propone tres medidas clave para estabilizar el tipo de cambio y restaurar la confianza en el sistema financiero.",
+      date: "2025-09-03",
       category: "Análisis",
-      image: "/placeholder-blog-3.jpg",
-      slug: "tendencias-comercio-internacional-latam",
+      image: "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=800&h=400&fit=crop",
+      slug: "estabilizar-dolar-8-bolivianos",
     },
     {
       id: 4,
-      title: "Digitalización de Procesos Aduaneros",
+      title: "IA se Convierte en Aliada del Comercio Exterior",
       excerpt:
-        "La transformación digital está revolucionando los procesos aduaneros. Te contamos cómo.",
-      date: "2024-01-01",
+        "La inteligencia artificial está transformando el comercio internacional mediante optimización de rutas, traducción en tiempo real y análisis predictivo.",
+      date: "2025-09-02",
       category: "Tecnología",
-      image: "/placeholder-blog-4.jpg",
-      slug: "digitalizacion-procesos-aduaneros",
+      image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=400&fit=crop",
+      slug: "ia-comercio-exterior-2025",
     },
     {
       id: 5,
-      title: "Guía Completa para Nuevos Importadores",
+      title: "Escasez de Talento Impacta Logística y Comercio Exterior",
       excerpt:
-        "Todo lo que necesitas saber para comenzar en el mundo de las importaciones.",
-      date: "2023-12-28",
-      category: "Guías",
-      image: "/placeholder-blog-5.jpg",
-      slug: "guia-completa-nuevos-importadores",
+        "El Foro Económico Mundial advierte sobre la crisis de talento en logística que afecta la competitividad de las cadenas de suministro globales.",
+      date: "2025-09-02",
+      category: "Análisis",
+      image: "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=800&h=400&fit=crop",
+      slug: "escasez-talento-logistica-2025",
     },
     {
       id: 6,
-      title: "Impacto del E-commerce en las Importaciones",
+      title: "Exportaciones Bolivianas Muestran Recuperación",
       excerpt:
-        "Cómo el crecimiento del comercio electrónico está transformando las importaciones.",
-      date: "2023-12-25",
-      category: "E-commerce",
-      image: "/placeholder-blog-6.jpg",
-      slug: "impacto-ecommerce-importaciones",
+        "Exportaciones minerales crecieron 16.5% en julio, con incrementos notables en plata (24.8%), plomo (12.1%) y zinc (4.6%).",
+      date: "2025-09-01",
+      category: "Regulaciones",
+      image: "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=800&h=400&fit=crop",
+      slug: "exportaciones-bolivianas-recuperacion",
     },
   ];
 
@@ -101,6 +101,16 @@ export default function NoticiasPage() {
   ];
 
   const [activeCategory, setActiveCategory] = useState("todos");
+
+  // Filter posts based on active category
+  const filteredPosts = activeCategory === "todos" 
+    ? mockPosts 
+    : mockPosts.filter(post => {
+        const postCategory = post.category.toLowerCase();
+        if (activeCategory === "analisis") return postCategory === "análisis";
+        if (activeCategory === "tecnologia") return postCategory === "tecnología";
+        return postCategory === activeCategory.toLowerCase();
+      });
 
   return (
     <div className="bg-white min-h-screen">
@@ -198,20 +208,31 @@ export default function NoticiasPage() {
                 {...fadeInLeft}
                 transition={{ ...fadeInLeft.transition, delay: 1.3 }}
               >
-                <div className="h-48 sm:h-64 lg:h-full bg-gray-200 flex items-center justify-center">
-                  <svg
-                    className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
+                <div className="h-48 sm:h-64 lg:h-full bg-gray-200 overflow-hidden">
+                  <img 
+                    src={filteredPosts[0]?.image || mockPosts[0].image}
+                    alt={filteredPosts[0]?.title || mockPosts[0].title}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextElementSibling?.setAttribute('style', 'display: flex');
+                    }}
+                  />
+                  <div className="w-full h-full bg-gray-200 flex items-center justify-center" style={{display: 'none'}}>
+                    <svg
+                      className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
                 </div>
               </motion.div>
               <motion.div
@@ -224,14 +245,14 @@ export default function NoticiasPage() {
                     Destacado
                   </span>
                   <span className="text-xs sm:text-sm lg:text-base text-[#6B6B6B]">
-                    15 Enero 2024
+                    4 Septiembre 2025
                   </span>
                 </div>
                 <h2 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold font-sans text-[#262626] mb-3 sm:mb-4">
-                  {mockPosts[0].title}
+                  {filteredPosts[0]?.title || mockPosts[0].title}
                 </h2>
                 <p className="text-[#6B6B6B] font-serif text-sm sm:text-base lg:text-lg mb-4 sm:mb-6">
-                  {mockPosts[0].excerpt}
+                  {filteredPosts[0]?.excerpt || mockPosts[0].excerpt}
                 </p>
                 <motion.button
                   className="bg-[#051D67] hover:bg-[#041655] text-white px-4 py-2 sm:px-6 sm:py-3 lg:px-8 lg:py-4 text-sm sm:text-base lg:text-lg rounded-md font-medium transition-colors"
@@ -248,7 +269,7 @@ export default function NoticiasPage() {
             {...fadeInUp}
             transition={{ ...fadeInUp.transition, delay: 1.5 }}
           >
-            <NewsGallery items={mockPosts.slice(1)} heading="Más Artículos" />
+            <NewsGallery items={filteredPosts.slice(1)} heading="Más Artículos" />
           </motion.div>
 
           {/* Load More Button */}

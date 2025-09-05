@@ -17,44 +17,44 @@ export default function NordexNewsSection() {
   const news = [
     {
       id: 1,
-      title: "NORDEX expande sus operaciones a 5 nuevos países sudamericanos",
+      title: "Bolivia Registra Déficit Comercial de $US 496 Millones",
       excerpt:
-        "Nuestra empresa consolida su presencia en la región con nuevas alianzas estratégicas que beneficiarán a empresas bolivianas...",
-      category: "Expansión",
-      date: "15 Dic 2024",
+        "Pese a tres meses consecutivos de superávit, la balanza comercial acumulada muestra un déficit significativo que impacta las reservas internacionales...",
+      category: "Economía",
+      date: "4 Sep 2025",
       readTime: "3 min",
-      image: "/api/placeholder/400/250",
+      image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=400&fit=crop",
       featured: true,
     },
     {
       id: 2,
-      title: "Nuevo récord: $12M en transacciones gestionadas este mes",
+      title: "Reservas Internacionales Alcanzan $US 2.881 Millones",
       excerpt:
-        "Los servicios de facilitación de pagos internacionales de NORDEX alcanzaron cifras históricas durante noviembre...",
-      category: "Resultados",
-      date: "10 Dic 2024",
+        "Las RIN aumentaron principalmente por la revalorización del oro, que representa el 92% del total de las reservas bolivianas...",
+      category: "Economía",
+      date: "3 Sep 2025",
       readTime: "2 min",
-      image: "/api/placeholder/300/200",
+      image: "https://images.unsplash.com/photo-1640340434855-6084b1f4901c?w=600&h=300&fit=crop",
     },
     {
       id: 3,
-      title: "Certificación ISO 9001:2015 para procesos de comercio exterior",
+      title: "Inteligencia Artificial Revoluciona el Comercio Exterior",
       excerpt:
-        "NORDEX obtiene la certificación internacional que garantiza la calidad y eficiencia en todos sus procesos...",
-      category: "Certificaciones",
-      date: "5 Dic 2024",
+        "La IA optimiza rutas logísticas, automatiza trámites aduaneros y facilita comunicación internacional en tiempo real...",
+      category: "Tecnología",
+      date: "2 Sep 2025",
       readTime: "4 min",
-      image: "/api/placeholder/300/200",
+      image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=300&fit=crop",
     },
     {
       id: 4,
-      title: "Seminario gratuito: 'Claves para exportar desde Bolivia'",
+      title: "Crisis de Talento Afecta Logística Internacional",
       excerpt:
-        "Únete a nuestro webinar exclusivo donde compartiremos estrategias probadas para el éxito en mercados internacionales...",
-      category: "Eventos",
-      date: "1 Dic 2024",
-      readTime: "1 min",
-      image: "/api/placeholder/300/200",
+        "El Foro Económico Mundial advierte sobre la escasez de profesionales especializados en cadenas de suministro globales...",
+      category: "Mercado",
+      date: "2 Sep 2025",
+      readTime: "3 min",
+      image: "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=600&h=300&fit=crop",
     },
   ];
 
@@ -108,7 +108,17 @@ export default function NordexNewsSection() {
               }}
             >
               <div className="space-y-4 flex-1">
-                <div className="aspect-[16/9] bg-gray-200 rounded-lg mb-4"></div>
+                <div className="aspect-[16/9] bg-gray-200 rounded-lg mb-4 overflow-hidden">
+                  <img 
+                    src={article.image} 
+                    alt={article.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.parentElement?.classList.add('bg-gray-200');
+                    }}
+                  />
+                </div>
 
                 <div className="flex items-center space-x-3">
                   <span className="bg-[#051D67]/10 text-[#051D67] px-2 py-1 rounded-md text-xs font-medium">
@@ -151,11 +161,12 @@ export default function NordexNewsSection() {
         >
           <motion.div {...buttonHover}>
             <Button
+              asChild
               size="lg"
               variant="outline"
               className="bg-transparent border-2 border-[#051D67] text-[#051D67] hover:bg-[#051D67] hover:text-white px-8 py-3 rounded-md font-medium transition-all duration-200"
             >
-              Ver todas las noticias
+              <Link href="/noticias">Ver todas las noticias</Link>
             </Button>
           </motion.div>
         </motion.div>
