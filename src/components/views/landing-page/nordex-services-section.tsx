@@ -171,31 +171,31 @@ const NordexServicesSection = () => {
 
         {/* Contact CTA Section */}
         <motion.div
-          className="text-center mt-12"
+          className="text-center mt-16"
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.8, delay: 0.4 }}
         >
           <motion.div
-            className="bg-gradient-to-r from-[#051D67]/5 to-[#051D67]/10 rounded-2xl p-8 sm:p-12 border border-[#051D67]/20"
+            className="bg-[#051D67] rounded-2xl p-8 sm:p-12 border border-[#051D67]/20"
             whileHover={{
               scale: 1.02,
               boxShadow: "0 20px 40px -12px rgba(5, 29, 103, 0.15)",
               transition: { duration: 0.3 },
             }}
           >
-            <h3 className="text-2xl sm:text-3xl font-bold text-[#262626] mb-4 font-sans">
+            <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4 font-sans">
               ¿Necesitas ayuda con tu proyecto internacional?
             </h3>
-            <p className="text-[#262626A3] text-base sm:text-lg mb-8 max-w-2xl mx-auto font-serif">
+            <p className="text-white/90 text-base sm:text-lg mb-8 max-w-2xl mx-auto font-serif">
               Nuestro equipo de expertos está listo para asesorarte y encontrar
               la mejor solución para tu empresa.
             </p>
             <div className="flex justify-center">
               <Button
                 size="lg"
-                className="bg-[#051D67] hover:bg-[#041655] text-white px-8 py-3 rounded-md font-medium transition-all duration-200"
+                className="bg-white hover:bg-gray-100 text-[#051D67] px-8 py-3 rounded-md font-medium transition-all duration-200"
               >
                 Contactar ahora
               </Button>
@@ -204,10 +204,10 @@ const NordexServicesSection = () => {
         </motion.div>
 
         {/* CTA Section with Wave Path */}
-        <div className="mt-12 sm:mt-14 md:mt-16 text-center">
+        <div className="mt-2 sm:mt-2 md:mt-3 text-center">
           <div className="relative">
             {/* Wave Path Component */}
-            <div className="flex justify-center mb-8">
+            <div className="flex justify-center mb-2">
               <WavePath className="text-[#051D67]" />
             </div>
           </div>
