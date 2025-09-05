@@ -35,7 +35,7 @@ export default function NordexFooterSection() {
       <FooterGridBackground />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div 
-          className="py-16 grid lg:grid-cols-3 gap-12"
+          className="py-10 grid lg:grid-cols-4 gap-8"
           variants={staggerContainer}
           initial="initial"
           whileInView="animate"
@@ -82,107 +82,81 @@ export default function NordexFooterSection() {
             </ul>
           </motion.div>
 
-          {/* Tercera columna - Contacto y Redes Sociales */}
+          {/* Tercera columna - Contacto */}
           <motion.div 
-            className="space-y-6"
+            className="space-y-4"
             {...fadeInRight}
             transition={{ ...fadeInRight.transition, delay: 0.4 }}
           >
-            <div className="space-y-4">
-              <h4 className="text-white font-semibold text-lg font-sans">
-                Contacto
-              </h4>
-              <div className="space-y-3">
-                <div className="flex items-start space-x-3">
-                  <MapPin className="w-4 h-4 text-white mt-1 flex-shrink-0" />
-                  <span className="text-white/80 text-sm font-serif">
-                    Av. San Martin, calle J, Manzana 40, Plaza Empresarial, Santa Cruz - Bolivia
-                  </span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Phone className="w-4 h-4 text-white flex-shrink-0" />
-                  <span className="text-white/80 text-sm font-serif">
-                    +591 77828618
-                  </span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Mail className="w-4 h-4 text-white flex-shrink-0" />
-                  <span className="text-white/80 text-sm font-serif">
-                    info@nordexbo.com
-                  </span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Clock className="w-4 h-4 text-white flex-shrink-0" />
-                  <span className="text-white/80 text-sm font-serif">
-                    Lun - Vie: 8:00 AM - 6:00 PM
-                  </span>
-                </div>
+            <h4 className="text-white font-semibold text-lg font-sans">
+              Contacto
+            </h4>
+            <div className="space-y-3">
+              <div className="flex items-start space-x-3">
+                <MapPin className="w-4 h-4 text-white mt-1 flex-shrink-0" />
+                <span className="text-white/80 text-sm font-serif">
+                  Av. San Martin, calle J, Manzana 40, Plaza Empresarial, Santa Cruz - Bolivia
+                </span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Phone className="w-4 h-4 text-white flex-shrink-0" />
+                <span className="text-white/80 text-sm font-serif">
+                  +591 77828618
+                </span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Mail className="w-4 h-4 text-white flex-shrink-0" />
+                <span className="text-white/80 text-sm font-serif">
+                  info@nordexbo.com
+                </span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Clock className="w-4 h-4 text-white flex-shrink-0" />
+                <span className="text-white/80 text-sm font-serif">
+                  Lun - Vie: 8:00 AM - 6:00 PM
+                </span>
               </div>
             </div>
+          </motion.div>
 
-            <div className="space-y-4">
-              <h4 className="text-white font-semibold text-lg font-sans">
-                Redes Sociales
-              </h4>
-              <div className="flex space-x-3">
-                {socialLinks.map((social) => (
-                  <Link
-                    key={social.name}
-                    href={social.href}
-                    className="w-10 h-10 border border-white/30 rounded-lg flex items-center justify-center hover:border-[#81D843] hover:bg-[#81D843]/10 transition-all duration-200"
-                    aria-label={social.name}
-                  >
+          {/* Cuarta columna - Redes Sociales */}
+          <motion.div 
+            className="space-y-4"
+            {...fadeInRight}
+            transition={{ ...fadeInRight.transition, delay: 0.6 }}
+          >
+            <h4 className="text-white font-semibold text-lg font-sans">
+              Redes Sociales
+            </h4>
+            <div className="flex flex-col space-y-3">
+              {socialLinks.map((social) => (
+                <Link
+                  key={social.name}
+                  href={social.href}
+                  className="flex items-center space-x-3 text-white/80 hover:text-[#81D843] transition-colors duration-200"
+                  aria-label={social.name}
+                >
+                  <div className="w-8 h-8 border border-white/30 rounded-lg flex items-center justify-center hover:border-[#81D843] hover:bg-[#81D843]/10 transition-all duration-200">
                     {React.createElement(social.icon, {
-                      size: 18,
+                      size: 16,
                       className: "text-white",
                     })}
-                  </Link>
-                ))}
-              </div>
+                  </div>
+                  <span className="text-sm font-serif">{social.name}</span>
+                </Link>
+              ))}
             </div>
           </motion.div>
         </motion.div>
 
         <motion.div 
-          className="py-8 border-t border-white/20"
+          className="py-6 border-t border-white/20 mt-8"
           {...fadeInUp}
-          transition={{ ...fadeInUp.transition, delay: 0.6 }}
+          transition={{ ...fadeInUp.transition, delay: 0.8 }}
         >
-          <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
-            <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-6 text-sm text-white/80">
-              <span className="font-serif">
-                © 2024 NORDEX. Todos los derechos reservados.
-              </span>
-              <div className="flex items-center space-x-4">
-                <Link
-                  href="#"
-                  className="hover:text-[#81D843] transition-colors duration-200 font-serif"
-                >
-                  Términos
-                </Link>
-                <Link
-                  href="#"
-                  className="hover:text-[#81D843] transition-colors duration-200 font-serif"
-                >
-                  Privacidad
-                </Link>
-                <Link
-                  href="#"
-                  className="hover:text-[#81D843] transition-colors duration-200 font-serif"
-                >
-                  Cookies
-                </Link>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <span className="text-white/60 text-sm font-serif">
-                Hecho con
-              </span>
-              <span className="text-[#81D843] text-lg">💚</span>
-              <span className="text-white/60 text-sm font-serif">
-                en Bolivia
-              </span>
+          <div className="text-center">
+            <div className="text-white/60 text-sm font-serif">
+              © 2025 NORDEX. Todos los derechos reservados.
             </div>
           </div>
         </motion.div>

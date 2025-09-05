@@ -11,6 +11,7 @@ import {
   Headphones,
 } from "lucide-react";
 import { WavePath } from "@/components/wave-path";
+import { WavesBackground } from "@/components/ui/waves-background";
 import { motion } from "framer-motion";
 
 const NordexServicesSection = () => {
@@ -28,9 +29,9 @@ const NordexServicesSection = () => {
       icon: CreditCard,
     },
     {
-      title: "Operaciones de Comercio Exterior",
+      title: "Gestión Logística Integral",
       description:
-        "Gestión logística integral, trámites aduaneros y coordinación de envíos internacionales.",
+        "Coordinación completa de transporte internacional, seguimiento de mercancías y optimización de rutas para entregas eficientes.",
       icon: Ship,
     },
     {
@@ -46,10 +47,10 @@ const NordexServicesSection = () => {
       icon: GraduationCap,
     },
     {
-      title: "Soporte Continuo",
+      title: "Trámites Aduaneros",
       description:
-        "Acompañamiento 24/7 en todo el proceso de internacionalización de tu empresa.",
-      icon: Headphones,
+        "Gestión especializada de documentación aduanera, clasificación arancelaria y cumplimiento de regulaciones de importación y exportación.",
+      icon: Building2,
     },
   ];
 
@@ -178,28 +179,39 @@ const NordexServicesSection = () => {
           transition={{ duration: 0.8, delay: 0.4 }}
         >
           <motion.div
-            className="bg-[#051D67] rounded-2xl p-8 sm:p-12 border border-[#051D67]/20"
+            className="bg-[#051D67] rounded-2xl p-8 sm:p-12 border border-[#051D67]/20 relative overflow-hidden"
             whileHover={{
               scale: 1.02,
               boxShadow: "0 20px 40px -12px rgba(5, 29, 103, 0.15)",
               transition: { duration: 0.3 },
             }}
           >
-            <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4 font-sans">
-              ¿Necesitas ayuda con tu proyecto internacional?
-            </h3>
-            <p className="text-white/90 text-base sm:text-lg mb-8 max-w-2xl mx-auto font-serif">
-              Nuestro equipo de expertos está listo para asesorarte y encontrar
-              la mejor solución para tu empresa.
-            </p>
-            <div className="flex justify-center">
-              <Button
-                size="lg"
-                className="bg-white hover:bg-gray-100 text-[#051D67] px-8 py-3 rounded-md font-medium transition-all duration-200"
-              >
-                Contactar ahora
-              </Button>
-            </div>
+            <WavesBackground 
+              className="absolute inset-0"
+              lineColor="rgba(255, 255, 255, 0.25)"
+              backgroundColor="transparent"
+              waveSpeed={0.01}
+              amplitude={30}
+              frequency={0.008}
+              opacity={0.7}
+            />
+            <div className="relative z-10">
+              <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4 font-sans">
+                ¿Necesitas ayuda con tu proyecto internacional?
+              </h3>
+              <p className="text-white/90 text-base sm:text-lg mb-8 max-w-2xl mx-auto font-serif">
+                Nuestro equipo de expertos está listo para asesorarte y encontrar
+                la mejor solución para tu empresa.
+              </p>
+                <div className="flex justify-center">
+                  <Button
+                    size="lg"
+                    className="bg-white hover:bg-gray-100 text-[#051D67] px-8 py-3 rounded-md font-medium transition-all duration-200"
+                  >
+                    Contactar ahora
+                  </Button>
+                </div>
+              </div>
           </motion.div>
         </motion.div>
 
