@@ -270,7 +270,7 @@ export default function NordexHeroSection() {
             >
               <motion.div className="text-center" variants={scaleIn}>
                 <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-[#051D67] mb-1 font-sans">
-                  $2.8B
+                  $4.938
                 </div>
                 <div className="text-xs sm:text-sm lg:text-base text-[#262626] font-serif">
                   Exportaciones en MM
@@ -281,7 +281,7 @@ export default function NordexHeroSection() {
                 variants={scaleIn}
               >
                 <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-[#051D67] mb-1 font-sans">
-                  $4.2B
+                  $5.458
                 </div>
                 <div className="text-xs sm:text-sm lg:text-base text-[#262626] font-serif">
                   Importaciones en MM
@@ -292,7 +292,7 @@ export default function NordexHeroSection() {
                 variants={scaleIn}
               >
                 <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-[#051D67] mb-1 font-sans">
-                  $1.4B
+                  -495$
                 </div>
                 <div className="text-xs sm:text-sm lg:text-base text-[#262626] font-serif">
                   Saldo comercial MM
@@ -303,7 +303,7 @@ export default function NordexHeroSection() {
                 variants={scaleIn}
               >
                 <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-[#051D67] mb-1 font-sans">
-                  $3.5B
+                  $2.881
                 </div>
                 <div className="text-xs sm:text-sm lg:text-base text-[#262626] font-serif">
                   Reservas Internacionales MM
@@ -329,7 +329,7 @@ export default function NordexHeroSection() {
                 transition={{ ...fadeInLeft.transition, delay: 0.3 }}
               >
                 <p className="text-center lg:text-end text-sm sm:text-base lg:text-lg xl:text-xl text-[#262626] font-medium font-serif">
-                  Empresas líderes confían en NORDEX
+                  Sectores con mayor exportación
                 </p>
               </motion.div>
               <motion.div
@@ -344,7 +344,7 @@ export default function NordexHeroSection() {
                       strokeWidth={1.5}
                     />
                     <div className="text-[#051D67] font-medium text-xs sm:text-sm lg:text-base">
-                      TECNOLOGÍA
+                      MINERÍA
                     </div>
                   </div>
                   <div className="flex flex-col items-center">
@@ -353,7 +353,7 @@ export default function NordexHeroSection() {
                       strokeWidth={1.5}
                     />
                     <div className="text-[#051D67] font-medium text-xs sm:text-sm lg:text-base">
-                      MAQUINARIA
+                      HIDROCARBUROS
                     </div>
                   </div>
                   <div className="flex flex-col items-center">
@@ -362,7 +362,7 @@ export default function NordexHeroSection() {
                       strokeWidth={1.5}
                     />
                     <div className="text-[#051D67] font-medium text-xs sm:text-sm lg:text-base">
-                      TEXTIL
+                      AGRICULTURA
                     </div>
                   </div>
                   <div className="flex flex-col items-center">
@@ -371,7 +371,7 @@ export default function NordexHeroSection() {
                       strokeWidth={1.5}
                     />
                     <div className="text-[#051D67] font-medium text-xs sm:text-sm lg:text-base">
-                      FARMACÉUTICO
+                      GANADERÍA
                     </div>
                   </div>
                   <div className="flex flex-col items-center">
@@ -380,7 +380,7 @@ export default function NordexHeroSection() {
                       strokeWidth={1.5}
                     />
                     <div className="text-[#051D67] font-medium text-xs sm:text-sm lg:text-base">
-                      ALIMENTARIA
+                      MANUFACTURA
                     </div>
                   </div>
                   <div className="flex flex-col items-center">
