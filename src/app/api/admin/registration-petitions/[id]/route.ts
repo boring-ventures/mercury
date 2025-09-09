@@ -39,7 +39,8 @@ interface RegistrationRequest {
     mimeType: string;
     type: string;
     status: string;
-    url?: string;
+    fileUrl: string;
+    documentInfo?: string;
   }>;
 }
 
@@ -82,6 +83,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             type: true,
             status: true,
             fileUrl: true,
+            documentInfo: true,
           },
         },
       },

@@ -309,17 +309,174 @@ export default function AdminContractDetail() {
             </CardContent>
           </Card>
 
+          {/* Submitted Form Data */}
+          {contract.additionalData && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Datos Enviados por el Importador</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {(() => {
+                  const additionalData = contract.additionalData as any;
+                  const companyData = additionalData?.companyData || {};
+                  const contactData = additionalData?.contactData || {};
+                  const providerData = additionalData?.providerData || {};
+
+                  return (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Company Information */}
+                      <div className="space-y-3">
+                        <h4 className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                          <Building className="h-4 w-4" />
+                          Información de la Empresa
+                        </h4>
+                        <div className="space-y-2 text-sm">
+                          <div>
+                            <span className="font-medium text-gray-600">
+                              Nombre:
+                            </span>
+                            <span className="ml-2">
+                              {companyData.name || "—"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-600">
+                              NIT:
+                            </span>
+                            <span className="ml-2">
+                              {companyData.nit || "—"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-600">
+                              Dirección:
+                            </span>
+                            <span className="ml-2">
+                              {companyData.address || "—"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-600">
+                              Ciudad:
+                            </span>
+                            <span className="ml-2">
+                              {companyData.city || "—"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-600">
+                              Teléfono:
+                            </span>
+                            <span className="ml-2">
+                              {companyData.phone || "—"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-600">
+                              Email:
+                            </span>
+                            <span className="ml-2">
+                              {companyData.email || "—"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Contact Information */}
+                      <div className="space-y-3">
+                        <h4 className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          Persona de Contacto
+                        </h4>
+                        <div className="space-y-2 text-sm">
+                          <div>
+                            <span className="font-medium text-gray-600">
+                              Nombre:
+                            </span>
+                            <span className="ml-2">
+                              {contactData.name || "—"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-600">
+                              Cargo:
+                            </span>
+                            <span className="ml-2">
+                              {contactData.position || "—"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-600">
+                              Teléfono:
+                            </span>
+                            <span className="ml-2">
+                              {contactData.phone || "—"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-600">
+                              Email:
+                            </span>
+                            <span className="ml-2">
+                              {contactData.email || "—"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-600">
+                              Cédula:
+                            </span>
+                            <span className="ml-2">
+                              {contactData.ci || "—"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Provider Information */}
+                      {Object.keys(providerData).length > 0 && (
+                        <div className="space-y-3 md:col-span-2">
+                          <h4 className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                            <Building className="h-4 w-4" />
+                            Información del Proveedor
+                          </h4>
+                          <div className="space-y-2 text-sm">
+                            <div>
+                              <span className="font-medium text-gray-600">
+                                Tipo de Cuenta:
+                              </span>
+                              <span className="ml-2">
+                                {providerData.accountType || "—"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Contract Preview */}
           {(() => {
             console.log(
               "Admin Contract Detail - Contract data being passed to preview:",
               contract
             );
+            console.log(
+              "Admin Contract Detail - Contract status:",
+              contract?.status,
+              "isDateSelectionEnabled:",
+              contract?.status === "ACTIVE",
+              "Contract object:",
+              contract
+            );
             return (
               <ContractPreview
                 contract={contract}
                 onDatesChanged={handleContractDatesChanged}
-                isDateSelectionEnabled={contract.status === "DRAFT"}
+                isDateSelectionEnabled={contract?.status === "ACTIVE"}
               />
             );
           })()}
@@ -500,7 +657,7 @@ export default function AdminContractDetail() {
                 Descargar DOCX
               </Button>
               {/* Contract Completion Form - Only show for DRAFT contracts */}
-              {contract && contract.status === "DRAFT" && (
+              {contract && contract.status === "ACTIVE" && (
                 <ContractCompletionForm
                   contractId={contract.id}
                   contractCode={contract.code}

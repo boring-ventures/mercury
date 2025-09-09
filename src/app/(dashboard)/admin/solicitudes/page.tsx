@@ -33,7 +33,6 @@ import {
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { formatCurrency } from "@/lib/utils";
-import SetContractDatesDialog from "@/components/admin/contracts/set-contract-dates-dialog";
 
 const STATUS_FILTERS = [
   { value: "todos", label: "Todos" },
@@ -418,33 +417,6 @@ export default function AdminSolicitudes() {
                                 <Eye className="h-4 w-4" />
                               </Link>
                             </Button>
-
-                            {/* Show contract dates dialog for accepted quotations */}
-                            {request.quotations?.some(
-                              (q) => q.status === "ACCEPTED"
-                            ) && (
-                              <SetContractDatesDialog
-                                quotation={
-                                  request.quotations.find(
-                                    (q) => q.status === "ACCEPTED"
-                                  )!
-                                }
-                                request={{
-                                  id: request.id,
-                                  code: request.code,
-                                  description: request.description || "",
-                                  company: {
-                                    name: request.company?.name || "",
-                                    email: request.company?.email || "",
-                                  },
-                                  provider: request.provider,
-                                }}
-                                onDatesSet={() => {
-                                  // Refresh the page to show updated data
-                                  window.location.reload();
-                                }}
-                              />
-                            )}
                           </div>
                         </td>
                       </tr>
