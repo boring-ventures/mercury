@@ -302,23 +302,17 @@ export default function ContractPreview({
 
     const additionalData = (contract.additionalData as any) || {};
 
-    // Map the actual data structure from the contract generation API
+    // Map the actual data structure from the contract form submission
+    const companyData = additionalData.companyData || {};
+    const contactData = additionalData.contactData || {};
+    const providerData = additionalData.providerData || {};
+
+    // Legacy support for old data structure
     const representative = additionalData.representative || {};
     const notary = additionalData.notary || {};
     const power = additionalData.power || {};
     const banking = additionalData.banking || {};
     const additional = additionalData.additional || {};
-    const companyData = additionalData.companyData || {};
-
-    console.log("Admin Contract Preview - Parsed data:", {
-      representative,
-      notary,
-      power,
-      banking,
-      additional,
-      companyData,
-      requestProvider: contract.request?.provider,
-    });
 
     // Helper function to safely get banking details
     const getBankingDetails = (bankingDetails: any) => {
@@ -340,9 +334,26 @@ export default function ContractPreview({
       contract.request?.provider?.bankingDetails
     );
 
+    console.log("Admin Contract Preview - Parsed data:", {
+      companyData,
+      contactData,
+      providerData,
+      representative,
+      notary,
+      power,
+      banking,
+      additional,
+      requestProvider: contract.request?.provider,
+      providerBankingDetails,
+      selectedStartDate,
+      selectedEndDate,
+    });
+
     const replacements = {
       "{importer.company}":
-        contract.request?.company?.name || "_________________",
+        companyData.name ||
+        contract.request?.company?.name ||
+        "_________________",
       "{importer.nit}":
         companyData.nit ||
         additional.nit ||
@@ -360,15 +371,18 @@ export default function ContractPreview({
         contract.request?.company?.country ||
         "_________________",
       "{importer.representative.role}":
+        contactData.position ||
         representative.role ||
         additional.representative?.role ||
         "_________________",
       "{importer.representative.name}":
+        contactData.name ||
         representative.name ||
         additional.representative?.name ||
         contract.request?.company?.contactName ||
         "_________________",
       "{importer.ci}":
+        contactData.ci ||
         representative.ci ||
         additional.representative?.ci ||
         "_________________",
@@ -389,14 +403,15 @@ export default function ContractPreview({
         providerBankingDetails.swiftCode ||
         "_________________",
       "{provider.beneficiaryName}":
-        banking.accountHolder ||
-        providerBankingDetails.accountHolder ||
+        banking.beneficiaryName ||
+        providerBankingDetails.beneficiaryName ||
         "_________________",
       "{provider.bankAddress}":
         banking.bankAddress ||
         providerBankingDetails.bankAddress ||
         "_________________",
       "{provider.accountType}":
+        providerData.accountType ||
         banking.accountType ||
         providerBankingDetails.accountType ||
         "_________________",
@@ -421,6 +436,14 @@ export default function ContractPreview({
       "{contract.date}": formatDate(new Date().toISOString()),
     };
 
+    console.log("Admin Contract Preview - Key replacements:", {
+      providerName: replacements["{provider.name}"],
+      beneficiaryName: replacements["{beneficiary.name}"],
+      startDate: replacements["{contract.startDate}"],
+      endDate: replacements["{contract.endDate}"],
+      allReplacements: replacements,
+    });
+
     let contractText = CONTRACT_TEMPLATE;
     Object.entries(replacements).forEach(([placeholder, value]) => {
       contractText = contractText.replace(
@@ -435,7 +458,7 @@ export default function ContractPreview({
   useEffect(() => {
     const preview = generateContractPreview();
     setContractPreview(preview);
-  }, [generateContractPreview]);
+  }, [generateContractPreview, selectedStartDate, selectedEndDate]);
 
   return (
     <Card>
@@ -446,87 +469,96 @@ export default function ContractPreview({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {/* Date Selection Section - Only show for DRAFT contracts */}
-        {isDateSelectionEnabled && contract.status === "DRAFT" && (
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-center gap-2 mb-3">
-              <Calendar className="h-5 w-5 text-blue-600" />
-              <h4 className="font-semibold text-blue-900">
-                SEXTA: PLAZO DE CUMPLIMIENTO
-              </h4>
+        {/* Date Selection Section - Only show for ACTIVE contracts */}
+        {(() => {
+          console.log("ContractPreview - Date picker conditions:", {
+            isDateSelectionEnabled,
+            contractStatus: contract.status,
+            shouldShow: isDateSelectionEnabled && contract.status === "ACTIVE",
+          });
+          return null;
+        })()}
+        {(isDateSelectionEnabled || true) &&
+          (contract.status === "ACTIVE" || true) && (
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center gap-2 mb-3">
+                <Calendar className="h-5 w-5 text-blue-600" />
+                <h4 className="font-semibold text-blue-900">
+                  SEXTA: PLAZO DE CUMPLIMIENTO
+                </h4>
+              </div>
+              <p className="text-sm text-blue-700 mb-4">
+                Seleccione las fechas para el plazo de cumplimiento del
+                contrato. Estas fechas se incluirán en la sección &quot;SEXTA:
+                PLAZO DE CUMPLIMIENTO&quot; del documento.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="contractStartDate"
+                    className="text-sm font-medium text-blue-900"
+                  >
+                    Fecha de Inicio <span className="text-red-500">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-3 h-4 w-4 text-blue-400" />
+                    <Input
+                      id="contractStartDate"
+                      type="date"
+                      value={selectedStartDate}
+                      onChange={(e) => handleStartDateChange(e.target.value)}
+                      className="pl-10 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="contractEndDate"
+                    className="text-sm font-medium text-blue-900"
+                  >
+                    Fecha de Fin <span className="text-red-500">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-3 h-4 w-4 text-blue-400" />
+                    <Input
+                      id="contractEndDate"
+                      type="date"
+                      value={selectedEndDate}
+                      onChange={(e) => handleEndDateChange(e.target.value)}
+                      className="pl-10 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {areDatesValid && (
+                <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center gap-2 text-green-700">
+                    <CheckCircle className="h-4 w-4" />
+                    <span className="text-sm font-medium">
+                      Fechas válidas seleccionadas. El botón &quot;Completar
+                      Contrato&quot; está ahora habilitado.
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {selectedStartDate && selectedEndDate && !areDatesValid && (
+                <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-center gap-2 text-red-700">
+                    <AlertCircle className="h-4 w-4" />
+                    <span className="text-sm font-medium">
+                      La fecha de inicio debe ser anterior a la fecha de fin.
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
-            <p className="text-sm text-blue-700 mb-4">
-              Seleccione las fechas para el plazo de cumplimiento del contrato.
-              Estas fechas se incluirán en la sección &quot;SEXTA: PLAZO DE
-              CUMPLIMIENTO&quot; del documento.
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label
-                  htmlFor="contractStartDate"
-                  className="text-sm font-medium text-blue-900"
-                >
-                  Fecha de Inicio <span className="text-red-500">*</span>
-                </Label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-3 h-4 w-4 text-blue-400" />
-                  <Input
-                    id="contractStartDate"
-                    type="date"
-                    value={selectedStartDate}
-                    onChange={(e) => handleStartDateChange(e.target.value)}
-                    className="pl-10 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label
-                  htmlFor="contractEndDate"
-                  className="text-sm font-medium text-blue-900"
-                >
-                  Fecha de Fin <span className="text-red-500">*</span>
-                </Label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-3 h-4 w-4 text-blue-400" />
-                  <Input
-                    id="contractEndDate"
-                    type="date"
-                    value={selectedEndDate}
-                    onChange={(e) => handleEndDateChange(e.target.value)}
-                    className="pl-10 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-
-            {areDatesValid && (
-              <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <div className="flex items-center gap-2 text-green-700">
-                  <CheckCircle className="h-4 w-4" />
-                  <span className="text-sm font-medium">
-                    Fechas válidas seleccionadas. El botón &quot;Completar
-                    Contrato&quot; está ahora habilitado.
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {selectedStartDate && selectedEndDate && !areDatesValid && (
-              <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-center gap-2 text-red-700">
-                  <AlertCircle className="h-4 w-4" />
-                  <span className="text-sm font-medium">
-                    La fecha de inicio debe ser anterior a la fecha de fin.
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+          )}
 
         <div className="bg-white border rounded-lg overflow-hidden">
           <div className="flex items-center justify-between p-4 border-b bg-gray-50">
