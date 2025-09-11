@@ -11,34 +11,34 @@ import {
 
 export function Features() {
   return (
-    <section className="px-6 py-20 bg-white">
-      <div className="mx-auto max-w-7xl">
+    <section className="py-16 sm:py-20 md:py-24 lg:py-28 bg-white">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header Section */}
-        <div className="text-left mb-16">
+        <div className="text-center mb-16 sm:mb-20">
           <div className="inline-flex items-center px-4 py-2 bg-[#051D67] rounded-full mb-6">
             <span className="text-white font-semibold text-sm">
               Diferenciadores
             </span>
           </div>
-          <h2 className="text-[30px] md:text-5xl font-serif font-bold text-[#1F1915] mb-6">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-[#1F1915] mb-6">
             Nuestros Diferenciadores
           </h2>
-          <p className="text-[16px] text-[#6B6B6B] max-w-3xl leading-relaxed">
+          <p className="text-base sm:text-lg md:text-xl text-[#6B6B6B] max-w-4xl mx-auto leading-relaxed">
             Soluciones integrales para conectar tu empresa con el mercado
             internacional, desde la negociación hasta la entrega final, con
             tecnología de vanguardia.
           </p>
         </div>
 
-        <div className="grid border border-[#1F1915]/10 rounded-2xl overflow-hidden md:grid-cols-2">
-          <div>
-            <div className="p-6 sm:p-12">
-              <span className="flex items-center gap-2 text-[#1F1915A3] text-sm">
+        <div className="grid border border-[#1F1915]/10 rounded-2xl overflow-hidden grid-cols-1 md:grid-cols-2">
+          <div className="order-1 md:order-1">
+            <div className="p-6 sm:p-8 md:p-12">
+              <span className="flex items-center gap-2 text-[#1F1915A3] text-sm mb-4">
                 <MapIcon className="w-4 h-4 text-[#051D67]" />
                 Logística comercial global
               </span>
 
-              <p className="mt-6 text-lg sm:text-xl md:text-2xl font-serif font-bold text-[#1F1915]">
+              <p className="text-lg sm:text-xl md:text-2xl font-serif font-bold text-[#1F1915]">
                 Coordinamos envíos internacionales, aduanas y seguimiento de
                 operaciones en un solo sistema.
               </p>
@@ -58,14 +58,14 @@ export function Features() {
               </div>
             </div>
           </div>
-          <div className="overflow-hidden border-t md:border-0 md:border-l border-[#1F1915]/10 bg-white p-6 sm:p-12">
+          <div className="overflow-hidden border-t md:border-0 md:border-l border-[#1F1915]/10 bg-white p-6 sm:p-8 md:p-12 order-2 md:order-2">
             <div className="relative z-10">
-              <span className="flex items-center gap-2 text-[#1F1915A3] text-sm">
+              <span className="flex items-center gap-2 text-[#1F1915A3] text-sm mb-4">
                 <MessageCircle className="w-4 h-4 text-[#051D67]" />
                 Cotizaciones inmediatas y automatizadas
               </span>
 
-              <p className="my-6 text-lg sm:text-xl md:text-2xl font-serif font-bold text-[#1F1915]">
+              <p className="text-lg sm:text-xl md:text-2xl font-serif font-bold text-[#1F1915] mb-6">
                 Respuestas en minutos. Obtén precios y tiempos estimados de
                 forma automática.
               </p>
@@ -96,21 +96,23 @@ export function Features() {
               </div>
             </div>
           </div>
-          {/* Removed uptime block */}
-          <div className="relative col-span-full">
-            <div className="relative z-10 max-w-lg px-6 pr-12 pt-6 md:px-12 md:pt-12 md:absolute">
-              <span className="flex items-center gap-2 text-[#1F1915A3] text-sm">
-                <Activity className="w-4 h-4 text-[#051D67]" />
-                Estados del proceso
-              </span>
+          {/* Monitoring Chart Section */}
+          <div className="relative col-span-full order-3 md:order-3">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 sm:p-8 md:p-12">
+              <div className="relative z-10">
+                <span className="flex items-center gap-2 text-[#1F1915A3] text-sm mb-4">
+                  <Activity className="w-4 h-4 text-[#051D67]" />
+                  Estados del proceso
+                </span>
 
-              <p className="my-6 text-lg sm:text-xl md:text-2xl font-serif font-bold text-[#1F1915]">
-                Nuestro sistema te permite monitorear cada etapa de tus
-                operaciones: desde la solicitud hasta la entrega final.
-              </p>
-            </div>
-            <div className="mt-8 md:mt-0">
-              <MonitoringChart />
+                <p className="text-lg sm:text-xl md:text-2xl font-serif font-bold text-[#1F1915]">
+                  Nuestro sistema te permite monitorear cada etapa de tus
+                  operaciones: desde la solicitud hasta la entrega final.
+                </p>
+              </div>
+              <div className="lg:mt-0">
+                <MonitoringChart />
+              </div>
             </div>
           </div>
         </div>
@@ -177,8 +179,8 @@ const MonitoringChart = () => {
         accessibilityLayer
         data={chartData}
         margin={{
-          left: 0,
-          right: 0,
+          insetInlineStart: 0,
+          insetInlineEnd: 0,
         }}
       >
         <defs>

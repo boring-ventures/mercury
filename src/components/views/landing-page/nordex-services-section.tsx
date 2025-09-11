@@ -100,79 +100,80 @@ const NordexServicesSection = () => {
   return (
     <section
       id="servicios"
-      className="bg-[#FFFFFF] pt-8 sm:pt-10 md:pt-12 pb-16 sm:pb-18 md:pb-20"
+      className="bg-[#FFFFFF] py-16 sm:py-20 md:py-24 lg:py-28"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 overflow-x-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
-          className="flex gap-4 py-8 sm:py-10 md:py-12 flex-col items-start"
+          className="text-center mb-16"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.3 }}
           variants={containerVariants}
         >
           <motion.div
-            className="flex gap-2 flex-col"
+            className="flex flex-col items-center gap-4"
             variants={slideInFromRight}
           >
-            <Badge className="bg-[#051D67] text-white hover:bg-[#041655] self-start">
+            <Badge className="bg-[#051D67] text-white hover:bg-[#041655] self-center">
               Servicios
             </Badge>
-            <h2 className="text-3xl md:text-5xl tracking-tighter lg:max-w-xl font-regular text-[#262626] font-sans font-bold">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl tracking-tighter max-w-4xl font-regular text-[#262626] font-sans font-bold">
               Nuestros Servicios
             </h2>
-            <p className="text-[16px] max-w-xl lg:max-w-xl leading-relaxed tracking-tight text-[#262626A3] font-serif">
+            <p className="text-base sm:text-lg md:text-xl max-w-3xl leading-relaxed tracking-tight text-[#262626A3] font-serif">
               Soluciones integrales para conectar tu empresa con el mercado
               internacional, desde la negociación hasta la entrega final.
             </p>
           </motion.div>
-          <motion.div
-            className="flex gap-10 pt-8 sm:pt-10 md:pt-12 flex-col w-full"
-            variants={containerVariants}
-          >
-            <motion.div
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 items-start gap-8 sm:gap-10 w-full"
-              variants={containerVariants}
-            >
-              {advantages.map((advantage, index) => {
-                const IconComponent = advantage.icon;
-                return (
+        </motion.div>
+
+        <motion.div
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.3 }}
+          variants={containerVariants}
+        >
+          {advantages.map((advantage, index) => {
+            const IconComponent = advantage.icon;
+            return (
+              <motion.div
+                key={index}
+                className="bg-white rounded-xl p-6 sm:p-8 border border-gray-100 hover:border-[#051D67]/20 hover:shadow-lg transition-all duration-300 group h-full"
+                variants={itemVariants}
+                whileHover={{
+                  y: -5,
+                  scale: 1.02,
+                  transition: { duration: 0.3 },
+                }}
+              >
+                <div className="flex flex-col items-center text-center space-y-4 h-full">
                   <motion.div
-                    key={index}
-                    className="flex flex-row gap-4 sm:gap-6 w-full items-start min-w-0 group"
-                    variants={itemVariants}
+                    className="w-16 h-16 border-2 border-[#051D67] rounded-xl flex items-center justify-center group-hover:bg-[#051D67] transition-colors duration-300"
                     whileHover={{
-                      x: 10,
-                      scale: 1.02,
-                      transition: { duration: 0.3 },
+                      rotate: 360,
+                      transition: { duration: 0.6 },
                     }}
                   >
-                    <motion.div
-                      className="w-10 h-10 border-2 border-[#051D67] rounded-lg flex items-center justify-center mt-2 shrink-0 group-hover:bg-[#051D67] transition-colors duration-300"
-                      whileHover={{
-                        rotate: 360,
-                        transition: { duration: 0.6 },
-                      }}
-                    >
-                      <IconComponent className="w-5 h-5 text-[#051D67] group-hover:text-white transition-colors duration-300" />
-                    </motion.div>
-                    <div className="flex flex-col gap-1 min-w-0">
-                      <p className="font-medium text-[#262626] font-sans break-words group-hover:text-[#051D67] transition-colors duration-300">
-                        {advantage.title}
-                      </p>
-                      <p className="text-[#262626A3] text-sm leading-relaxed font-serif break-words">
-                        {advantage.description}
-                      </p>
-                    </div>
+                    <IconComponent className="w-8 h-8 text-[#051D67] group-hover:text-white transition-colors duration-300" />
                   </motion.div>
-                );
-              })}
-            </motion.div>
-          </motion.div>
+                  <div className="flex flex-col gap-3 flex-1">
+                    <h3 className="text-xl sm:text-2xl font-bold text-[#262626] font-sans group-hover:text-[#051D67] transition-colors duration-300">
+                      {advantage.title}
+                    </h3>
+                    <p className="text-[#262626A3] text-sm sm:text-base leading-relaxed font-serif flex-1">
+                      {advantage.description}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
         </motion.div>
 
         {/* Contact CTA Section */}
         <motion.div
-          className="text-center mt-16"
+          className="text-center mt-16 sm:mt-20 lg:mt-24"
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
@@ -186,7 +187,7 @@ const NordexServicesSection = () => {
               transition: { duration: 0.3 },
             }}
           >
-            <WavesBackground 
+            <WavesBackground
               className="absolute inset-0"
               lineColor="rgba(255, 255, 255, 0.25)"
               backgroundColor="transparent"
@@ -200,18 +201,18 @@ const NordexServicesSection = () => {
                 ¿Necesitas ayuda con tu proyecto internacional?
               </h3>
               <p className="text-white/90 text-base sm:text-lg mb-8 max-w-2xl mx-auto font-serif">
-                Nuestro equipo de expertos está listo para asesorarte y encontrar
-                la mejor solución para tu empresa.
+                Nuestro equipo de expertos está listo para asesorarte y
+                encontrar la mejor solución para tu empresa.
               </p>
-                <div className="flex justify-center">
-                  <Button
-                    size="lg"
-                    className="bg-white hover:bg-gray-100 text-[#051D67] px-8 py-3 rounded-md font-medium transition-all duration-200"
-                  >
-                    Contactar ahora
-                  </Button>
-                </div>
+              <div className="flex justify-center">
+                <Button
+                  size="lg"
+                  className="bg-white hover:bg-gray-100 text-[#051D67] px-8 py-3 rounded-md font-medium transition-all duration-200"
+                >
+                  Contactar ahora
+                </Button>
               </div>
+            </div>
           </motion.div>
         </motion.div>
 

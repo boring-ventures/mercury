@@ -23,7 +23,7 @@ export function WavesBackground({
   opacity = 0.3,
 }: WavesBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number | undefined>(undefined);
   const timeRef = useRef(0);
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export function WavesBackground({
 
     const drawWaves = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
+
       const rect = canvas.getBoundingClientRect();
       const width = rect.width;
       const height = rect.height;
@@ -54,25 +54,32 @@ export function WavesBackground({
       // Draw multiple wave layers
       for (let layer = 0; layer < 3; layer++) {
         ctx.beginPath();
-        
+
         const layerAmplitude = amplitude * (1 - layer * 0.3);
         const layerFrequency = frequency * (1 + layer * 0.5);
         const layerSpeed = waveSpeed * (1 + layer * 0.2);
-        
+
         for (let x = 0; x <= width; x += 2) {
-          const y = 
+          const y =
             height / 2 +
-            Math.sin(x * layerFrequency + timeRef.current * layerSpeed) * layerAmplitude +
-            Math.sin(x * layerFrequency * 2 + timeRef.current * layerSpeed * 1.5) * (layerAmplitude * 0.5) +
-            Math.sin(x * layerFrequency * 0.5 + timeRef.current * layerSpeed * 0.8) * (layerAmplitude * 0.7);
-          
+            Math.sin(x * layerFrequency + timeRef.current * layerSpeed) *
+              layerAmplitude +
+            Math.sin(
+              x * layerFrequency * 2 + timeRef.current * layerSpeed * 1.5
+            ) *
+              (layerAmplitude * 0.5) +
+            Math.sin(
+              x * layerFrequency * 0.5 + timeRef.current * layerSpeed * 0.8
+            ) *
+              (layerAmplitude * 0.7);
+
           if (x === 0) {
             ctx.moveTo(x, y);
           } else {
             ctx.lineTo(x, y);
           }
         }
-        
+
         ctx.stroke();
       }
 
@@ -99,7 +106,10 @@ export function WavesBackground({
   return (
     <canvas
       ref={canvasRef}
-      className={cn("absolute inset-0 w-full h-full pointer-events-none", className)}
+      className={cn(
+        "absolute inset-0 w-full h-full pointer-events-none",
+        className
+      )}
       style={{ backgroundColor }}
     />
   );

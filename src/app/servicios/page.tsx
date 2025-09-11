@@ -29,7 +29,7 @@ export default function ServiciosPage() {
   const services = [
     {
       id: "importaciones",
-      title: "Gestión de Importaciones",
+      title: "Importaciones",
       icon: Package,
       description:
         "Administramos todo el proceso de importación desde el país de origen hasta tu almacén, incluyendo documentación, aduanas y logística.",
@@ -42,7 +42,7 @@ export default function ServiciosPage() {
     },
     {
       id: "asesoramiento",
-      title: "Asesoramiento Comercial",
+      title: "Asesoramiento",
       icon: Users,
       description:
         "Brindamos consultoría especializada para optimizar tus operaciones de comercio internacional y maximizar la eficiencia de tus importaciones.",
@@ -55,7 +55,7 @@ export default function ServiciosPage() {
     },
     {
       id: "plataforma",
-      title: "Plataforma Digital",
+      title: "Plataforma",
       icon: Laptop,
       description:
         "Accede a nuestra plataforma digital que centraliza la gestión de cotizaciones, contratos y seguimiento de envíos en un solo lugar.",
@@ -68,7 +68,7 @@ export default function ServiciosPage() {
     },
     {
       id: "financiamiento",
-      title: "Financiamiento y Pagos",
+      title: "Financiamiento",
       icon: CreditCard,
       description:
         "Facilitamos soluciones de financiamiento y gestión de pagos internacionales para hacer más fluidas tus operaciones comerciales.",
@@ -81,7 +81,7 @@ export default function ServiciosPage() {
     },
     {
       id: "logistica",
-      title: "Logística y Distribución",
+      title: "Logística",
       icon: Truck,
       description:
         "Coordinamos la logística completa desde el puerto de entrada hasta el destino final, asegurando la entrega oportuna y en perfectas condiciones.",
@@ -149,46 +149,48 @@ export default function ServiciosPage() {
             {...fadeInUp}
             transition={{ ...fadeInUp.transition, delay: 0.4 }}
           >
-            <motion.div
-              className="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-10 lg:mb-12"
-              variants={staggerContainer}
-              initial="initial"
-              animate="animate"
-            >
-              {services.map((service, index) => {
-                const IconComponent = service.icon;
-                return (
-                  <motion.button
-                    key={service.id}
-                    onClick={() => setActiveTab(service.id)}
-                    className={`flex flex-col items-center gap-2 sm:gap-3 transition-all duration-200 p-2 sm:p-3 rounded-lg hover:bg-gray-50 ${
-                      activeTab === service.id
-                        ? "text-[#81D843] bg-gray-50"
-                        : "text-[#6B6B6B] hover:text-[#262626]"
-                    }`}
-                    variants={scaleIn}
-                    transition={{ ...scaleIn.transition, delay: index * 0.1 }}
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
-                    <div className="text-center">
-                      <span className="text-xs sm:text-sm lg:text-base font-medium block">
-                        {service.title}
-                      </span>
-                      {activeTab === service.id && (
-                        <motion.div
-                          className="w-full h-0.5 bg-[#81D843] mt-1 sm:mt-2"
-                          initial={{ scaleX: 0 }}
-                          animate={{ scaleX: 1 }}
-                          transition={{ duration: 0.3, ease: "easeOut" }}
-                        ></motion.div>
-                      )}
-                    </div>
-                  </motion.button>
-                );
-              })}
-            </motion.div>
+            <div className="w-full overflow-hidden">
+              <motion.div
+                className="flex overflow-x-auto scrollbar-hide gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-10 lg:mb-12 pb-4 pr-4 justify-center"
+                variants={staggerContainer}
+                initial="initial"
+                animate="animate"
+              >
+                {services.map((service, index) => {
+                  const IconComponent = service.icon;
+                  return (
+                    <motion.button
+                      key={service.id}
+                      onClick={() => setActiveTab(service.id)}
+                      className={`flex flex-col items-center gap-2 sm:gap-3 transition-all duration-200 p-2 sm:p-3 rounded-lg hover:bg-gray-50 flex-shrink-0 min-w-[100px] sm:min-w-[110px] lg:min-w-[120px] ${
+                        activeTab === service.id
+                          ? "text-[#81D843] bg-gray-50"
+                          : "text-[#6B6B6B] hover:text-[#262626]"
+                      }`}
+                      variants={scaleIn}
+                      transition={{ ...scaleIn.transition, delay: index * 0.1 }}
+                      whileHover={{ scale: 1.05, y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
+                      <div className="text-center">
+                        <span className="text-xs sm:text-sm lg:text-base font-medium block">
+                          {service.title}
+                        </span>
+                        {activeTab === service.id && (
+                          <motion.div
+                            className="w-full h-0.5 bg-[#81D843] mt-1 sm:mt-2"
+                            initial={{ scaleX: 0 }}
+                            animate={{ scaleX: 1 }}
+                            transition={{ duration: 0.3, ease: "easeOut" }}
+                          ></motion.div>
+                        )}
+                      </div>
+                    </motion.button>
+                  );
+                })}
+              </motion.div>
+            </div>
 
             {/* Active Service Content */}
             {activeService && (

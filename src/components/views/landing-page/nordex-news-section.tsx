@@ -23,7 +23,8 @@ export default function NordexNewsSection() {
       category: "Economía",
       date: "4 Sep 2025",
       readTime: "3 min",
-      image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=400&fit=crop",
+      image:
+        "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=400&fit=crop",
       featured: true,
     },
     {
@@ -34,7 +35,8 @@ export default function NordexNewsSection() {
       category: "Economía",
       date: "3 Sep 2025",
       readTime: "2 min",
-      image: "https://images.unsplash.com/photo-1640340434855-6084b1f4901c?w=600&h=300&fit=crop",
+      image:
+        "https://images.unsplash.com/photo-1640340434855-6084b1f4901c?w=600&h=300&fit=crop",
     },
     {
       id: 3,
@@ -44,7 +46,8 @@ export default function NordexNewsSection() {
       category: "Tecnología",
       date: "2 Sep 2025",
       readTime: "4 min",
-      image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=300&fit=crop",
+      image:
+        "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=300&fit=crop",
     },
     {
       id: 4,
@@ -54,34 +57,38 @@ export default function NordexNewsSection() {
       category: "Mercado",
       date: "2 Sep 2025",
       readTime: "3 min",
-      image: "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=600&h=300&fit=crop",
+      image:
+        "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=600&h=300&fit=crop",
     },
   ];
 
   return (
-    <section id="noticias" className="bg-[#FFFFFF] py-20">
+    <section
+      id="noticias"
+      className="bg-[#FFFFFF] py-16 sm:py-20 md:py-24 lg:py-28"
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
-          className="flex gap-4 py-12 flex-col items-start mb-8"
+          className="text-center mb-12 sm:mb-16"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           transition={{ duration: 0.6 }}
           viewport={{ once: true, amount: 0.3 }}
         >
-          <motion.div {...fadeInUp}>
+          <motion.div {...fadeInUp} className="mb-6">
             <Badge className="bg-[#051D67] text-white hover:bg-[#041655]">
               Noticias
             </Badge>
           </motion.div>
           <motion.div
-            className="flex gap-2 flex-col"
+            className="flex flex-col items-center gap-4"
             {...fadeInLeft}
             transition={{ ...fadeInLeft.transition, delay: 0.2 }}
           >
-            <h2 className="text-[30px] sm:text-[48px] tracking-tighter lg:max-w-xl font-regular text-[#262626] font-sans font-bold">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl tracking-tighter max-w-4xl font-regular text-[#262626] font-sans font-bold">
               Noticias y Actualizaciones
             </h2>
-            <p className="text-[16px] max-w-xl lg:max-w-xl leading-relaxed tracking-tight text-[#262626A3] font-serif">
+            <p className="text-base sm:text-lg md:text-xl max-w-3xl leading-relaxed tracking-tight text-[#262626A3] font-serif">
               Mantente informado sobre nuestros logros, nuevos servicios y las
               últimas tendencias en comercio internacional.
             </p>
@@ -89,7 +96,7 @@ export default function NordexNewsSection() {
         </motion.div>
 
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-12"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 mb-12 sm:mb-16"
           variants={staggerContainer}
           initial="initial"
           whileInView="animate"
@@ -109,13 +116,15 @@ export default function NordexNewsSection() {
             >
               <div className="space-y-4 flex-1">
                 <div className="aspect-[16/9] bg-gray-200 rounded-lg mb-4 overflow-hidden">
-                  <img 
-                    src={article.image} 
+                  <img
+                    src={article.image}
                     alt={article.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      e.currentTarget.parentElement?.classList.add('bg-gray-200');
+                      e.currentTarget.style.display = "none";
+                      e.currentTarget.parentElement?.classList.add(
+                        "bg-gray-200"
+                      );
                     }}
                   />
                 </div>

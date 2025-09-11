@@ -14,7 +14,12 @@ import {
 } from "lucide-react";
 import FooterGridBackground from "@/components/ui/footer-grid-background";
 import { motion } from "framer-motion";
-import { fadeInUp, fadeInLeft, fadeInRight, staggerContainer } from "@/lib/animations";
+import {
+  fadeInUp,
+  fadeInLeft,
+  fadeInRight,
+  staggerContainer,
+} from "@/lib/animations";
 
 export default function NordexFooterSection() {
   const navigationLinks = [
@@ -34,18 +39,15 @@ export default function NordexFooterSection() {
     <footer className="bg-[#051D67] text-white relative overflow-hidden">
       <FooterGridBackground />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <motion.div 
-          className="py-10 grid lg:grid-cols-4 gap-8"
+        <motion.div
+          className="py-12 sm:py-16 lg:py-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-12"
           variants={staggerContainer}
           initial="initial"
           whileInView="animate"
           viewport={{ once: true, amount: 0.3 }}
         >
           {/* Primera columna - Información de NORDEX */}
-          <motion.div 
-            className="flex flex-col space-y-6"
-            {...fadeInLeft}
-          >
+          <motion.div className="flex flex-col space-y-6" {...fadeInLeft}>
             <div className="flex flex-col space-y-4">
               <img
                 src="/logos/logo Nordex_Mesa de trabajo 1 copia 2 (1).png"
@@ -60,7 +62,7 @@ export default function NordexFooterSection() {
           </motion.div>
 
           {/* Segunda columna - Navegación */}
-          <motion.div 
+          <motion.div
             className="space-y-6"
             {...fadeInUp}
             transition={{ ...fadeInUp.transition, delay: 0.2 }}
@@ -83,7 +85,7 @@ export default function NordexFooterSection() {
           </motion.div>
 
           {/* Tercera columna - Contacto */}
-          <motion.div 
+          <motion.div
             className="space-y-4"
             {...fadeInRight}
             transition={{ ...fadeInRight.transition, delay: 0.4 }}
@@ -95,7 +97,8 @@ export default function NordexFooterSection() {
               <div className="flex items-start space-x-3">
                 <MapPin className="w-4 h-4 text-white mt-1 flex-shrink-0" />
                 <span className="text-white/80 text-sm font-serif">
-                  Av. San Martin, calle J, Manzana 40, Plaza Empresarial, Santa Cruz - Bolivia
+                  Av. San Martin, calle J, Manzana 40, Plaza Empresarial, Santa
+                  Cruz - Bolivia
                 </span>
               </div>
               <div className="flex items-center space-x-3">
@@ -120,7 +123,7 @@ export default function NordexFooterSection() {
           </motion.div>
 
           {/* Cuarta columna - Redes Sociales */}
-          <motion.div 
+          <motion.div
             className="space-y-4"
             {...fadeInRight}
             transition={{ ...fadeInRight.transition, delay: 0.6 }}
@@ -149,7 +152,7 @@ export default function NordexFooterSection() {
           </motion.div>
         </motion.div>
 
-        <motion.div 
+        <motion.div
           className="py-6 border-t border-white/20 mt-8"
           {...fadeInUp}
           transition={{ ...fadeInUp.transition, delay: 0.8 }}
