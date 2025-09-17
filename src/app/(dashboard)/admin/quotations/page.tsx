@@ -37,7 +37,6 @@ import {
   type QuotationFilters,
 } from "@/hooks/use-admin-quotations";
 import { formatCurrency } from "@/lib/utils";
-import { CreateContractDialog } from "@/components/admin/contracts/create-contract-dialog";
 
 const STATUS_FILTERS = [
   { value: "todos", label: "Todos" },
@@ -106,13 +105,7 @@ export default function AdminQuotations() {
     search: "",
   });
   const [searchTerm, setSearchTerm] = useState("");
-  const [createContractDialog, setCreateContractDialog] = useState<{
-    open: boolean;
-    quotation: any;
-  }>({
-    open: false,
-    quotation: null,
-  });
+  const [creatingContract, setCreatingContract] = useState<string | null>(null);
 
   const { data, isLoading, error, refetch } = useAdminQuotations(filters);
 
@@ -125,15 +118,34 @@ export default function AdminQuotations() {
     setFilters((prev) => ({ ...prev, search: searchTerm }));
   };
 
-  const handleCreateContract = (quotation: any) => {
-    setCreateContractDialog({
-      open: true,
-      quotation,
-    });
-  };
+  const handleCreateContract = async (quotation: any) => {
+    setCreatingContract(quotation.id);
+    try {
+      const response = await fetch("/api/admin/contracts/auto-create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          quotationId: quotation.id,
+        }),
+      });
 
-  const handleContractCreated = () => {
-    refetch();
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Error al crear el contrato");
+      }
+
+      const result = await response.json();
+
+      // Redirect to the contract detail page
+      window.location.href = `/admin/contracts/${result.contract.id}`;
+    } catch (error) {
+      console.error("Error creating contract:", error);
+      alert(error instanceof Error ? error.message : "Error desconocido");
+    } finally {
+      setCreatingContract(null);
+    }
   };
 
   if (isLoading) {
@@ -342,9 +354,19 @@ export default function AdminQuotations() {
                         variant="default"
                         size="sm"
                         onClick={() => handleCreateContract(quotation)}
+                        disabled={creatingContract === quotation.id}
                       >
-                        <Building2 className="h-4 w-4 mr-2" />
-                        Crear Contrato
+                        {creatingContract === quotation.id ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Creando...
+                          </>
+                        ) : (
+                          <>
+                            <Building2 className="h-4 w-4 mr-2" />
+                            Crear Contrato
+                          </>
+                        )}
                       </Button>
                     )}
                     <Link href={`/admin/quotations/${quotation.id}`}>
@@ -372,18 +394,6 @@ export default function AdminQuotations() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Create Contract Dialog */}
-      {createContractDialog.quotation && (
-        <CreateContractDialog
-          open={createContractDialog.open}
-          onOpenChange={(open) =>
-            setCreateContractDialog((prev) => ({ ...prev, open }))
-          }
-          quotation={createContractDialog.quotation}
-          onSuccess={handleContractCreated}
-        />
-      )}
     </div>
   );
 }

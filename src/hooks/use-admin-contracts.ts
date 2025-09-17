@@ -135,6 +135,7 @@ export interface AdminContractDetail {
   startDate: string;
   endDate: string;
   signedAt: string | null;
+  content?: string | null;
   terms: string;
   conditions: string | null;
   createdAt: string;

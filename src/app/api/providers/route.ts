@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
         bankingDetails: true,
         email: true,
         phone: true,
+        additionalInfo: true,
         createdAt: true,
       },
     });

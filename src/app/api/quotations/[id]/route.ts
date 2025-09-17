@@ -185,16 +185,17 @@ export async function PUT(
           },
         });
 
-        // Notify all admin users (in-app notification)
+        // Notify all admin users (in-app notification) - they need to generate contract
         await Promise.all(
           adminUsers.map((admin) =>
-            createSystemNotification("REQUEST_APPROVED", admin.id, {
+            createSystemNotification("QUOTATION_ACCEPTED", admin.id, {
               requestId: quotation.requestId,
               requestCode: quotation.request.code,
               quotationId: quotationId,
               quotationCode: quotation.code,
               companyName: quotation.request.company.name,
               amount: quotation.amount,
+              action: "GENERATE_CONTRACT", // Indicate that contract generation is needed
             })
           )
         );

@@ -1,0 +1,527 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { TextStyle } from "@tiptap/extension-text-style";
+import { Color } from "@tiptap/extension-color";
+import { TextAlign } from "@tiptap/extension-text-align";
+import { Underline } from "@tiptap/extension-underline";
+import { FontFamily } from "@tiptap/extension-font-family";
+import { pdf } from "@react-pdf/renderer";
+import ContractPDF from "./contract-pdf";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Bold,
+  Italic,
+  Underline as UnderlineIcon,
+  Strikethrough,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
+  List,
+  ListOrdered,
+  Quote,
+  Undo,
+  Redo,
+  Save,
+  Eye,
+  Download,
+  Type,
+  Palette,
+  FileText,
+} from "lucide-react";
+
+interface ContractEditorProps {
+  initialContent: string;
+  onSave: (content: string) => void;
+  onPreview: (content: string) => void;
+  onDownload: (content: string) => void;
+  contractCode: string;
+  contract?: any; // Contract data for PDF generation
+  isReadOnly?: boolean;
+}
+
+export default function ContractEditor({
+  initialContent,
+  onSave,
+  onPreview,
+  onDownload,
+  contractCode,
+  contract,
+  isReadOnly = false,
+}: ContractEditorProps) {
+  const [isSaving, setIsSaving] = useState(false);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        bulletList: {
+          keepMarks: true,
+          keepAttributes: false,
+        },
+        orderedList: {
+          keepMarks: true,
+          keepAttributes: false,
+        },
+      }),
+      TextStyle,
+      Color,
+      TextAlign.configure({
+        types: ["heading", "paragraph"],
+      }),
+      Underline,
+      FontFamily.configure({
+        types: ["textStyle"],
+      }),
+    ],
+    content: initialContent,
+    editable: !isReadOnly,
+    immediatelyRender: false,
+    editorProps: {
+      attributes: {
+        class:
+          "prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[600px] p-6",
+      },
+    },
+  });
+
+  // Update editor content when initialContent changes
+  useEffect(() => {
+    if (editor && initialContent !== editor.getHTML()) {
+      editor.commands.setContent(initialContent);
+    }
+  }, [initialContent, editor]);
+
+  const handleSave = async () => {
+    if (!editor) return;
+
+    setIsSaving(true);
+    try {
+      await onSave(editor.getHTML());
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePreview = () => {
+    if (!editor) return;
+    const content = editor.getHTML();
+    setIsPreviewMode(!isPreviewMode);
+    onPreview(content);
+  };
+
+  const handleDownload = async () => {
+    if (!editor || !contract) return;
+
+    setIsGeneratingPDF(true);
+    try {
+      const content = editor.getHTML();
+
+      // Try react-pdf first
+      try {
+        const blob = await pdf(
+          <ContractPDF contract={contract} content={content} />
+        ).toBlob();
+
+        // Create download link
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `contrato-${contractCode}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        console.log("PDF generated and downloaded successfully!");
+        return;
+      } catch (pdfError) {
+        console.warn("React-PDF failed, trying alternative method:", pdfError);
+
+        // Fallback: Generate HTML and use browser's print to PDF
+        const printWindow = window.open("", "_blank");
+        if (printWindow) {
+          printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>Contrato ${contractCode}</title>
+              <style>
+                body { 
+                  font-family: Arial, sans-serif; 
+                  line-height: 1.6; 
+                  max-width: 800px; 
+                  margin: 0 auto; 
+                  padding: 20px;
+                }
+                h1 { text-align: center; font-size: 18px; margin-bottom: 30px; }
+                h2 { font-size: 12px; font-weight: bold; margin-top: 20px; margin-bottom: 10px; }
+                p { text-align: justify; margin-bottom: 15px; }
+                .bold { font-weight: bold; }
+                .list-item { margin-left: 20px; margin-bottom: 5px; }
+                .banking-details { margin-left: 20px; margin-bottom: 15px; }
+                .signature-section { margin-top: 40px; display: flex; justify-content: space-between; }
+                .signature-block { text-align: center; width: 45%; }
+                .signature-name { margin-bottom: 20px; font-size: 11px; }
+                .signature-title { font-size: 9px; }
+                .center-text { text-align: center; margin-top: 30px; margin-bottom: 20px; }
+                @media print {
+                  body { margin: 0; padding: 40px; }
+                }
+              </style>
+            </head>
+            <body>
+              ${content}
+            </body>
+            </html>
+          `);
+          printWindow.document.close();
+
+          // Wait for content to load, then trigger print
+          setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+          }, 500);
+        }
+      }
+
+      // Also call the original onDownload for any additional handling
+      onDownload(content);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("Error al generar el PDF. Intentando método alternativo...");
+      // Final fallback to original download method
+      onDownload(editor.getHTML());
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
+  if (!editor) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <FileText className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-muted-foreground">Cargando editor...</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Editor de Contrato - {contractCode}
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handlePreview}>
+              <Eye className="h-4 w-4 mr-2" />
+              {isPreviewMode ? "Editar" : "Vista Previa"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownload}
+              disabled={isGeneratingPDF}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              {isGeneratingPDF ? "Generando PDF..." : "Descargar PDF"}
+            </Button>
+            <Button size="sm" onClick={handleSave} disabled={isSaving}>
+              <Save className="h-4 w-4 mr-2" />
+              {isSaving ? "Guardando..." : "Guardar"}
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {!isPreviewMode && !isReadOnly && (
+          <div className="border rounded-lg mb-4">
+            {/* Toolbar */}
+            <div className="flex flex-wrap items-center gap-1 p-2 border-b bg-gray-50">
+              {/* Text Formatting */}
+              <div className="flex items-center gap-1">
+                <Button
+                  variant={editor.isActive("bold") ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => editor.chain().focus().toggleBold().run()}
+                >
+                  <Bold className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={editor.isActive("italic") ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => editor.chain().focus().toggleItalic().run()}
+                >
+                  <Italic className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={editor.isActive("underline") ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => editor.chain().focus().toggleUnderline().run()}
+                >
+                  <UnderlineIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={editor.isActive("strike") ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => editor.chain().focus().toggleStrike().run()}
+                >
+                  <Strikethrough className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <Separator orientation="vertical" className="h-6" />
+
+              {/* Text Alignment */}
+              <div className="flex items-center gap-1">
+                <Button
+                  variant={
+                    editor.isActive({ textAlign: "left" }) ? "default" : "ghost"
+                  }
+                  size="sm"
+                  onClick={() =>
+                    editor.chain().focus().setTextAlign("left").run()
+                  }
+                >
+                  <AlignLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={
+                    editor.isActive({ textAlign: "center" })
+                      ? "default"
+                      : "ghost"
+                  }
+                  size="sm"
+                  onClick={() =>
+                    editor.chain().focus().setTextAlign("center").run()
+                  }
+                >
+                  <AlignCenter className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={
+                    editor.isActive({ textAlign: "right" })
+                      ? "default"
+                      : "ghost"
+                  }
+                  size="sm"
+                  onClick={() =>
+                    editor.chain().focus().setTextAlign("right").run()
+                  }
+                >
+                  <AlignRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={
+                    editor.isActive({ textAlign: "justify" })
+                      ? "default"
+                      : "ghost"
+                  }
+                  size="sm"
+                  onClick={() =>
+                    editor.chain().focus().setTextAlign("justify").run()
+                  }
+                >
+                  <AlignJustify className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <Separator orientation="vertical" className="h-6" />
+
+              {/* Lists */}
+              <div className="flex items-center gap-1">
+                <Button
+                  variant={editor.isActive("bulletList") ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() =>
+                    editor.chain().focus().toggleBulletList().run()
+                  }
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={editor.isActive("orderedList") ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() =>
+                    editor.chain().focus().toggleOrderedList().run()
+                  }
+                >
+                  <ListOrdered className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={editor.isActive("blockquote") ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() =>
+                    editor.chain().focus().toggleBlockquote().run()
+                  }
+                >
+                  <Quote className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <Separator orientation="vertical" className="h-6" />
+
+              {/* Headings */}
+              <div className="flex items-center gap-1">
+                <Select
+                  value={
+                    editor.getAttributes("heading").level?.toString() ||
+                    "paragraph"
+                  }
+                  onValueChange={(value) => {
+                    if (value === "paragraph") {
+                      editor.chain().focus().setParagraph().run();
+                    } else {
+                      editor
+                        .chain()
+                        .focus()
+                        .toggleHeading({
+                          level: parseInt(value) as 1 | 2 | 3 | 4 | 5 | 6,
+                        })
+                        .run();
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-32 h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="paragraph">Párrafo</SelectItem>
+                    <SelectItem value="1">Título 1</SelectItem>
+                    <SelectItem value="2">Título 2</SelectItem>
+                    <SelectItem value="3">Título 3</SelectItem>
+                    <SelectItem value="4">Título 4</SelectItem>
+                    <SelectItem value="5">Título 5</SelectItem>
+                    <SelectItem value="6">Título 6</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Separator orientation="vertical" className="h-6" />
+
+              {/* Font Family */}
+              <div className="flex items-center gap-1">
+                <Type className="h-4 w-4 text-muted-foreground" />
+                <Select
+                  value={
+                    editor.getAttributes("textStyle").fontFamily || "default"
+                  }
+                  onValueChange={(value) => {
+                    if (value === "default") {
+                      editor.chain().focus().unsetFontFamily().run();
+                    } else {
+                      editor.chain().focus().setFontFamily(value).run();
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-32 h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="default">Fuente</SelectItem>
+                    <SelectItem value="Arial">Arial</SelectItem>
+                    <SelectItem value="Times New Roman">
+                      Times New Roman
+                    </SelectItem>
+                    <SelectItem value="Georgia">Georgia</SelectItem>
+                    <SelectItem value="Helvetica">Helvetica</SelectItem>
+                    <SelectItem value="Courier New">Courier New</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Separator orientation="vertical" className="h-6" />
+
+              {/* Text Color */}
+              <div className="flex items-center gap-1">
+                <Palette className="h-4 w-4 text-muted-foreground" />
+                <input
+                  type="color"
+                  value={editor.getAttributes("textStyle").color || "#000000"}
+                  onChange={(e) =>
+                    editor.chain().focus().setColor(e.target.value).run()
+                  }
+                  className="w-8 h-8 border rounded cursor-pointer"
+                  title="Color del texto"
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => editor.chain().focus().unsetColor().run()}
+                >
+                  Quitar color
+                </Button>
+              </div>
+
+              <Separator orientation="vertical" className="h-6" />
+
+              {/* Undo/Redo */}
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => editor.chain().focus().undo().run()}
+                  disabled={!editor.can().undo()}
+                >
+                  <Undo className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => editor.chain().focus().redo().run()}
+                  disabled={!editor.can().redo()}
+                >
+                  <Redo className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Editor Content */}
+        <div className="border rounded-lg overflow-hidden">
+          <div className="bg-white">
+            <EditorContent
+              editor={editor}
+              className="min-h-[600px] max-h-[800px] overflow-y-auto"
+            />
+          </div>
+        </div>
+
+        {isPreviewMode && (
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center gap-2 text-blue-700 mb-2">
+              <Eye className="h-4 w-4" />
+              <span className="font-medium">Vista Previa</span>
+            </div>
+            <p className="text-sm text-blue-600">
+              Esta es una vista previa de cómo se verá el contrato. Haz clic en
+              "Editar" para volver al modo de edición.
+            </p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

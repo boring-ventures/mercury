@@ -36,6 +36,24 @@ import { useProviders } from "@/hooks/use-providers";
 import { toast } from "@/components/ui/use-toast";
 import { uploadDocument } from "@/lib/supabase/upload-documents";
 
+// Extended Provider interface to include additionalInfo
+interface ExtendedProvider {
+  id: string;
+  name: string;
+  country: string;
+  bankingDetails: {
+    bankName?: string;
+    accountNumber?: string;
+    swiftCode?: string;
+    bankAddress?: string;
+    beneficiaryName?: string;
+  } | null;
+  email: string | null;
+  phone: string | null;
+  additionalInfo: string | null;
+  createdAt: string;
+}
+
 interface DocumentFile {
   file: File;
   filename: string;
@@ -104,7 +122,7 @@ export default function NuevaSolicitud() {
   const handleProviderSelect = (providerId: string) => {
     const selectedProvider = providersData?.providers.find(
       (p) => p.id === providerId
-    );
+    ) as ExtendedProvider | undefined;
     if (!selectedProvider) return;
 
     setFormData((prev) => ({
@@ -120,6 +138,7 @@ export default function NuevaSolicitud() {
         selectedProvider.bankingDetails?.beneficiaryName || "",
       providerEmail: selectedProvider.email || "",
       providerPhone: selectedProvider.phone || "",
+      providerAdditionalInfo: selectedProvider.additionalInfo || "",
     }));
 
     toast({

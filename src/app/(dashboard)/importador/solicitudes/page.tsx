@@ -69,7 +69,6 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/components/ui/use-toast";
 import { formatCurrency, formatExchangeRate } from "@/lib/utils";
-import ContractPreviewForm from "@/components/importador/contract-preview-form";
 
 // Updated workflow steps (removed Pago Inicial)
 const WORKFLOW_STEPS = [
@@ -917,13 +916,6 @@ function SolicitudCard({ solicitud }: { solicitud: ImportadorSolicitudItem }) {
     solicitud.quotations &&
     solicitud.quotations.length > 0;
 
-  // Check if this is a contract step (quotation approved)
-  const isContractStep =
-    currentStep === 3 &&
-    solicitud.quotations &&
-    solicitud.quotations.length > 0 &&
-    solicitud.quotations.some((q) => q.status === "ACCEPTED");
-
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-4">
@@ -969,24 +961,6 @@ function SolicitudCard({ solicitud }: { solicitud: ImportadorSolicitudItem }) {
           </p>
         </div>
 
-        {/* Success Message for Approved Quotation */}
-        {isContractStep && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-            <div className="flex items-start gap-2">
-              <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-green-900">
-                  ¡Cotización Aprobada!
-                </p>
-                <p className="text-xs text-green-700 mt-1">
-                  Ahora puede completar los datos del contrato para continuar
-                  con el proceso.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Workflow Steps */}
         <WorkflowSteps
           currentStep={currentStep}
@@ -1013,50 +987,10 @@ function SolicitudCard({ solicitud }: { solicitud: ImportadorSolicitudItem }) {
                 window.location.reload(); // Simple approach for now
               }}
             />
-          ) : isContractStep ? (
-            <ContractPreviewForm
-              solicitudId={solicitud.code || solicitud.id}
-              quotation={{
-                id: solicitud.quotations![0].id,
-                code: solicitud.quotations![0].code,
-                amount: solicitud.quotations![0].amount,
-                currency: solicitud.quotations![0].currency,
-                totalInBs: solicitud.quotations![0].totalInBs || 0,
-                terms: solicitud.quotations![0].terms,
-                notes: solicitud.quotations![0].notes,
-                createdAt: solicitud.quotations![0].createdAt,
-              }}
-              company={{
-                name: solicitud.company?.name,
-                nit: solicitud.company?.nit,
-                city: solicitud.company?.city,
-                contactName: solicitud.company?.contactName,
-                contactPosition: solicitud.company?.contactPosition,
-                email: solicitud.company?.email,
-                phone: solicitud.company?.phone,
-                address: solicitud.company?.address,
-                bankingDetails: solicitud.company?.bankingDetails,
-                documents: solicitud.company?.documents,
-              }}
-              request={{
-                description: solicitud.description,
-                provider: {
-                  name: solicitud.provider?.name,
-                  country: solicitud.provider?.country,
-                  bankingDetails: solicitud.provider?.bankingDetails,
-                  email: solicitud.provider?.email,
-                  phone: solicitud.provider?.phone,
-                },
-                documents: solicitud.documents,
-              }}
-              onContractCreated={() => {
-                // This will trigger a refetch when contract is created
-                window.location.reload(); // Simple approach for now
-              }}
-            />
           ) : (
-            /* Only show action button if it's not step 1 (Esperar Cotización doesn't do anything) */
-            currentStep !== 1 && (
+            /* Only show action button if it's not step 1 or 3 (Esperar Cotización and Cotización Aprobada don't do anything) */
+            currentStep !== 1 &&
+            currentStep !== 3 && (
               <Button
                 className="flex-1"
                 asChild

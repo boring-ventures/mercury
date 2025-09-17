@@ -70,7 +70,6 @@ import {
   formatExchangeRate,
   formatPercentage,
 } from "@/lib/utils";
-import ContractPreviewForm from "@/components/importador/contract-preview-form";
 import { ContractPreviewModal } from "@/components/importador/contract-preview-modal";
 
 // Updated workflow steps (removed Pago Inicial)
@@ -994,55 +993,25 @@ function QuotationCard({
             </span>
           </div>
 
-          {/* Contract Generation Section */}
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <h4 className="font-medium text-green-900 mb-2">
-              Generar Contrato de Servicio
-            </h4>
-            <p className="text-sm text-green-700 mb-4">
-              Ahora puede generar el contrato de servicio completando los datos
-              requeridos.
-            </p>
-
-            <ContractPreviewForm
-              solicitudId={
-                quotation.request?.code || quotation.request?.id || ""
-              }
-              quotation={{
-                id: quotation.id,
-                code: quotation.code,
-                amount: quotation.amount,
-                currency: quotation.currency,
-                totalInBs: quotation.totalInBs || 0,
-                terms: quotation.terms,
-                notes: quotation.notes,
-                createdAt: quotation.createdAt,
-              }}
-              company={{
-                name: quotation.request?.company?.name,
-                nit: quotation.request?.company?.nit,
-                city: quotation.request?.company?.city,
-                contactName: quotation.request?.company?.contactName,
-                contactPosition: quotation.request?.company?.contactPosition,
-                email: quotation.request?.company?.email,
-                phone: quotation.request?.company?.phone,
-                address: quotation.request?.company?.city, // Using city as address for now
-              }}
-              request={{
-                description: quotation.request?.description,
-                provider: {
-                  name: quotation.request?.provider?.name,
-                  country: quotation.request?.provider?.country,
-                  bankingDetails: quotation.request?.provider?.bankingDetails,
-                  email: quotation.request?.provider?.email,
-                  phone: quotation.request?.provider?.phone,
-                },
-              }}
-              onContractCreated={() => {
-                // Refresh the data after contract creation
-                onUpdate();
-              }}
-            />
+          {/* Contract Generation Notice */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <Clock className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <h4 className="font-medium text-blue-900 mb-2">
+                  Contrato en Proceso
+                </h4>
+                <p className="text-sm text-blue-700 mb-2">
+                  El administrador generará el contrato de servicio basado en la
+                  cotización aceptada. Te notificaremos cuando el contrato esté
+                  listo para tu revisión.
+                </p>
+                <p className="text-xs text-blue-600">
+                  Una vez generado, podrás revisar y aceptar el contrato en la
+                  sección de contratos.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       )}

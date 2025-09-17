@@ -424,8 +424,8 @@ export function useRequestWorkflow() {
         href: `/importador/solicitudes/${request?.code || request?.id}`,
       },
       3: {
-        text: "Generar Contrato",
-        href: `/importador/solicitudes/${request?.code || request?.id}/contrato`,
+        text: "Cotización Aprobada",
+        href: `/importador/solicitudes/${request?.code || request?.id}`,
       },
       4: {
         text: "Ver Pago Proveedor",

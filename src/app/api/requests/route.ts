@@ -371,6 +371,23 @@ export async function POST(request: NextRequest) {
           },
         },
       });
+    } else {
+      // Update existing provider with new information
+      provider = await prisma.provider.update({
+        where: { id: provider.id },
+        data: {
+          email: providerEmail,
+          phone: providerPhone,
+          additionalInfo: providerAdditionalInfo,
+          bankingDetails: {
+            bankName: providerBankName,
+            accountNumber: providerAccountNumber,
+            swiftCode: providerSwiftCode,
+            bankAddress: providerBankAddress,
+            beneficiaryName: providerBeneficiaryName,
+          },
+        },
+      });
     }
 
     // Generate unique request code

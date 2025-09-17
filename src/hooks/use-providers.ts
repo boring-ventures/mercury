@@ -13,6 +13,7 @@ interface Provider {
   } | null;
   email: string | null;
   phone: string | null;
+  additionalInfo: string | null;
   createdAt: string;
 }
 

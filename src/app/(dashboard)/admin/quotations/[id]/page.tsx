@@ -120,14 +120,42 @@ export default function AdminQuotationDetail() {
   const handleCreateContract = async () => {
     try {
       setIsCreatingContract(true);
-      const res = await fetch("/api/admin/contracts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quotationId }),
-      });
-      if (!res.ok) throw new Error("Failed to create contract");
+      const res = await fetch(
+        `/api/quotations/${quotationId}/generate-contract`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            // Basic contract data - admin can fill in details later
+            representativeName:
+              quotation?.request?.company?.contactName || "Por definir",
+            representativeCI: "Por definir",
+            representativeRole:
+              quotation?.request?.company?.contactPosition ||
+              "Representante Legal",
+            notaryName: "Por definir",
+            testimonioNumber: "000/0000",
+            testimonioDate: new Date().toISOString(),
+            powerNumber: "000/0000",
+            powerDate: new Date().toISOString(),
+            bankName: "Por definir",
+            accountHolder: "Por definir",
+            accountNumber: "Por definir",
+            accountType: "Por definir",
+            contractTitle: `Contrato de Servicio - ${quotation?.code}`,
+            contractDescription:
+              quotation?.description ||
+              "Servicio de pago a proveedores internacionales",
+            startDate: new Date().toISOString(),
+            endDate: new Date(
+              Date.now() + 30 * 24 * 60 * 60 * 1000
+            ).toISOString(), // 30 days from now
+          }),
+        }
+      );
+      if (!res.ok) throw new Error("Failed to generate contract");
       const data = await res.json();
-      window.location.href = `/admin/contracts/${data.contract.id}`;
+      window.location.href = `/admin/contracts/${data.contractId}`;
     } catch (err) {
       console.error(err);
     } finally {
@@ -475,7 +503,9 @@ export default function AdminQuotationDetail() {
                 disabled={isCreatingContract || quotation.status !== "ACCEPTED"}
               >
                 <FileText className="h-4 w-4 mr-2" />
-                {isCreatingContract ? "Creando contrato..." : "Crear contrato"}
+                {isCreatingContract
+                  ? "Generando contrato..."
+                  : "Generar contrato"}
               </Button>
             </CardContent>
           </Card>

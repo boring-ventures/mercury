@@ -59,10 +59,10 @@ export async function POST(
       return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
 
-    // Verify user is an importador
-    if (profile.role !== "IMPORTADOR") {
+    // Verify user is an admin (SUPERADMIN)
+    if (profile.role !== "SUPERADMIN") {
       return NextResponse.json(
-        { error: "Only importers can generate contracts" },
+        { error: "Only administrators can generate contracts" },
         { status: 403 }
       );
     }
@@ -89,13 +89,7 @@ export async function POST(
       );
     }
 
-    // Verify quotation belongs to user's company
-    if (quotation.companyId !== profile.companyId) {
-      return NextResponse.json(
-        { error: "Quotation does not belong to your company" },
-        { status: 403 }
-      );
-    }
+    // Admin can generate contracts for any company, no ownership validation needed
 
     // Verify quotation is accepted
     if (quotation.status !== "ACCEPTED") {
@@ -139,7 +133,7 @@ export async function POST(
         requestId: quotation.requestId,
         quotationId: quotationId,
         companyId: quotation.companyId,
-        createdById: profile.id,
+        createdById: profile.id, // Admin creates the contract
         // Store additional contract data in a JSON field for template generation
         additionalData: {
           representative: {
@@ -243,24 +237,25 @@ export async function POST(
       },
     });
 
-    // Notify admin about contract generation
+    // Notify importer about contract generation
     try {
-      // Get admin users to notify
-      const adminUsers = await prisma.profile.findMany({
-        where: {
-          role: "SUPERADMIN",
-          status: "ACTIVE",
-        },
+      // Get the importer (request creator) to notify
+      const importerProfile = await prisma.profile.findUnique({
+        where: { id: quotation.request.createdById },
         select: {
           id: true,
           email: true,
+          firstName: true,
+          lastName: true,
         },
       });
 
-      // Notify all admin users (in-app notification)
-      await Promise.all(
-        adminUsers.map((admin) =>
-          createSystemNotification("CONTRACT_GENERATED", admin.id, {
+      if (importerProfile) {
+        // Notify the importer (in-app notification)
+        await createSystemNotification(
+          "CONTRACT_GENERATED",
+          importerProfile.id,
+          {
             contractId: contract.id,
             contractCode: contract.code,
             quotationId: quotationId,
@@ -269,36 +264,32 @@ export async function POST(
             requestCode: quotation.request.code,
             companyName: quotation.request.company.name,
             amount: contract.amount,
-          })
-        )
-      );
+          }
+        );
 
-      // Send email to admins who have an email configured
-      const adminEmails = adminUsers
-        .map((a) => a.email)
-        .filter((e): e is string => Boolean(e));
+        // Send email to importer if they have an email configured
+        if (importerProfile.email) {
+          const emailContent = generateContractGeneratedAdminEmail({
+            contractCode: contract.code,
+            quotationCode: quotation.code,
+            requestCode: quotation.request.code,
+            companyName: quotation.request.company.name,
+            amount: Number(contract.amount),
+            currency: contract.currency,
+            importerName:
+              importerProfile.firstName && importerProfile.lastName
+                ? `${importerProfile.firstName} ${importerProfile.lastName}`
+                : importerProfile.email || "Importador",
+            generatedAt: new Date().toISOString(),
+          });
 
-      if (adminEmails.length > 0) {
-        const emailContent = generateContractGeneratedAdminEmail({
-          contractCode: contract.code,
-          quotationCode: quotation.code,
-          requestCode: quotation.request.code,
-          companyName: quotation.request.company.name,
-          amount: Number(contract.amount),
-          currency: contract.currency,
-          importerName:
-            profile.firstName && profile.lastName
-              ? `${profile.firstName} ${profile.lastName}`
-              : profile.email || "Importador",
-          generatedAt: new Date().toISOString(),
-        });
-
-        await resend.emails.send({
-          from: FROM_EMAIL,
-          to: adminEmails,
-          subject: `Nuevo Contrato Generado - ${contract.code}`,
-          html: emailContent,
-        });
+          await resend.emails.send({
+            from: FROM_EMAIL,
+            to: importerProfile.email,
+            subject: `Contrato Generado - ${contract.code}`,
+            html: emailContent,
+          });
+        }
       }
     } catch (error) {
       console.error("Error sending notifications:", error);
