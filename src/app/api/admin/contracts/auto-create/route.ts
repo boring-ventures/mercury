@@ -102,10 +102,7 @@ function generateContractContent(
       companyData.name || quotation.request.company.name || "_________________",
     "{importer.nit}":
       companyData.nit || quotation.request.company.nit || "_________________",
-    "{importer.address}":
-      companyData.address ||
-      quotation.request.company.address ||
-      "_________________",
+    "{importer.address}": "_________________",
     "{importer.city}":
       companyData.city || quotation.request.company.city || "_________________",
     "{importer.representative.role}":
@@ -375,7 +372,6 @@ export async function POST(request: NextRequest) {
       companyData: {
         name: quotation.request.company.name,
         nit: quotation.request.company.nit,
-        address: quotation.request.company.address || "",
         city: quotation.request.company.city,
         phone: quotation.request.company.phone,
         email: quotation.request.company.email,
@@ -450,8 +446,10 @@ export async function POST(request: NextRequest) {
           quotation.terms ||
           "Términos y condiciones estándar del servicio de importación.",
         conditions: "Condiciones especiales según la cotización aprobada.",
-        additionalData: additionalData,
-        content: initialContent,
+        additionalData: {
+          ...additionalData,
+          content: initialContent,
+        },
         companyId: quotation.companyId,
         createdById: profile.id,
         quotationId: quotation.id,

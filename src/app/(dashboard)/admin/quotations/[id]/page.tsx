@@ -127,12 +127,9 @@ export default function AdminQuotationDetail() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             // Basic contract data - admin can fill in details later
-            representativeName:
-              quotation?.request?.company?.contactName || "Por definir",
+            representativeName: "Por definir",
             representativeCI: "Por definir",
-            representativeRole:
-              quotation?.request?.company?.contactPosition ||
-              "Representante Legal",
+            representativeRole: "Representante Legal",
             notaryName: "Por definir",
             testimonioNumber: "000/0000",
             testimonioDate: new Date().toISOString(),
@@ -144,7 +141,6 @@ export default function AdminQuotationDetail() {
             accountType: "Por definir",
             contractTitle: `Contrato de Servicio - ${quotation?.code}`,
             contractDescription:
-              quotation?.description ||
               "Servicio de pago a proveedores internacionales",
             startDate: new Date().toISOString(),
             endDate: new Date(

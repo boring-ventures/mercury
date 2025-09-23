@@ -47,7 +47,7 @@ export async function PUT(
 
     console.log("Contract content API - Profile:", profile);
 
-    if (!profile || profile.role !== "ADMIN") {
+    if (!profile || profile.role !== "SUPERADMIN") {
       return NextResponse.json(
         {
           error: "Unauthorized",
@@ -61,11 +61,11 @@ export async function PUT(
       );
     }
 
-    // Update contract content
+    // Update contract additionalData with content
     const updatedContract = await prisma.contract.update({
       where: { id: contractId },
       data: {
-        content: content,
+        additionalData: { content: content },
         updatedAt: new Date(),
       },
       include: {
@@ -109,23 +109,21 @@ export async function GET(
     if (!session)
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-    // Get user profile
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id, role")
-      .eq("id", session.user.id)
-      .single();
+    // Get user profile using Prisma (same as PUT method)
+    const profile = await prisma.profile.findUnique({
+      where: { userId: session.user.id },
+    });
 
-    if (!profile || profile.role !== "ADMIN") {
+    if (!profile || profile.role !== "SUPERADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    // Get contract content
+    // Get contract with additionalData
     const contract = await prisma.contract.findUnique({
       where: { id: contractId },
       select: {
         id: true,
-        content: true,
+        additionalData: true,
         code: true,
         title: true,
         status: true,
@@ -143,7 +141,7 @@ export async function GET(
       success: true,
       contract: {
         id: contract.id,
-        content: contract.content || "",
+        content: (contract.additionalData as any)?.content || "",
         code: contract.code,
         title: contract.title,
         status: contract.status,
