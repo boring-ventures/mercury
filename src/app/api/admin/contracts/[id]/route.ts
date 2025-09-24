@@ -53,13 +53,21 @@ export async function GET(
       include: {
         request: {
           include: {
-            company: true,
+            company: {
+              include: {
+                documents: true,
+              },
+            },
             provider: true,
           },
         },
         quotation: true,
         createdBy: true,
-        company: true,
+        company: {
+          include: {
+            documents: true,
+          },
+        },
       },
     });
 
@@ -97,6 +105,14 @@ export async function GET(
               country: contract.request.company.country,
               email: contract.request.company.email,
               phone: contract.request.company.phone,
+              nit: contract.request.company.nit,
+              city: contract.request.company.city,
+              address:
+                contract.request.company.address ||
+                `${contract.request.company.city}, ${contract.request.company.country}`,
+              contactName: contract.request.company.contactName,
+              contactPosition: contract.request.company.contactPosition,
+              documents: contract.request.company.documents,
             },
             provider: contract.request.provider
               ? {
@@ -125,6 +141,16 @@ export async function GET(
       company: {
         name: contract.company.name,
         country: contract.company.country,
+        nit: contract.company.nit,
+        city: contract.company.city,
+        address:
+          contract.company.address ||
+          `${contract.company.city}, ${contract.company.country}`,
+        contactName: contract.company.contactName,
+        contactPosition: contract.company.contactPosition,
+        email: contract.company.email,
+        phone: contract.company.phone,
+        documents: contract.company.documents,
       },
     };
 
@@ -181,7 +207,8 @@ export async function PATCH(
 
     // Determine update type based on request body
     const isDateUpdate = body.startDate && body.endDate;
-    const isFormDataUpdate = body.companyData || body.contactData || body.providerData;
+    const isFormDataUpdate =
+      body.companyData || body.contactData || body.providerData;
 
     let updateData: any = {};
 

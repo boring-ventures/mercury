@@ -186,11 +186,11 @@ QUINTA: PRECIO Y FORMA DE PAGO.-
 
 El IMPORTADOR transferirá al PROVEEDOR para la ejecución de las operaciones mencionadas el total de lo descrito en la cláusula Tercera, bajo el concepto de Pagos a Proveedores Extranjeros, así mismo, pagará al PROVEEDOR por concepto de honorarios un total de {service.feeWords} bolivianos (Bs {service.fee}), para lo cual el PROVEEDOR emitirá la factura correspondiente al servicio por el monto total de los honorarios percibidos al finalizar la ejecución de la OPERACIÓN, dejándose constancia que los pagos serán realizado mediante transferencia bancaria a la cuenta empresarial del PROVEEDOR:
 
-Nombre del Banco: {provider.bankName}
-Titular: {provider.beneficiaryName}
-Número de cuenta: {provider.accountNumber}
+Nombre del Banco: Banco Mercantil Santa Cruz S.A
+Titular: J&R Asesores de Mercado S.R.L.
+Número de cuenta: 4011108567
 Moneda: Dólares Estadounidenses
-Tipo: {provider.accountType}
+Tipo: Cuenta Corriente
 
 SEXTA: PLAZO DE CUMPLIMIENTO.- 
 

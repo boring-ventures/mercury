@@ -155,13 +155,26 @@ export interface AdminContractDetail {
       country: string;
       email: string;
       phone: string;
+      nit: string;
+      city: string;
+      address: string;
+      contactName: string;
+      contactPosition: string;
+      documents: any[];
     };
     provider?: {
       name: string;
       country: string;
       email: string;
       phone: string;
-      bankingDetails: any;
+      bankingDetails: {
+        bankName?: string;
+        accountNumber?: string;
+        swiftCode?: string;
+        beneficiaryName?: string;
+        bankAddress?: string;
+        accountType?: string;
+      } | null;
     } | null;
   } | null;
   quotation: {
@@ -178,6 +191,14 @@ export interface AdminContractDetail {
   company: {
     name: string;
     country: string;
+    nit: string;
+    city: string;
+    address: string;
+    contactName: string;
+    contactPosition: string;
+    email: string;
+    phone: string;
+    documents: any[];
   };
 }
 

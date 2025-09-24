@@ -34,12 +34,20 @@ export async function GET(
     const contract = await prisma.contract.findUnique({
       where: { id: contractId },
       include: {
-        company: true,
+        company: {
+          include: {
+            documents: true,
+          },
+        },
         quotation: {
           include: {
             request: {
               include: {
-                company: true,
+                company: {
+                  include: {
+                    documents: true,
+                  },
+                },
                 createdBy: true,
               },
             },
@@ -47,7 +55,11 @@ export async function GET(
         },
         request: {
           include: {
-            company: true,
+            company: {
+              include: {
+                documents: true,
+              },
+            },
             provider: true,
           },
         },
