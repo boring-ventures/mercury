@@ -107,9 +107,7 @@ export async function GET(
               phone: contract.request.company.phone,
               nit: contract.request.company.nit,
               city: contract.request.company.city,
-              address:
-                contract.request.company.address ||
-                `${contract.request.company.city}, ${contract.request.company.country}`,
+              address: `${contract.request.company.city || "Ciudad"}, ${contract.request.company.country || "País"}`,
               contactName: contract.request.company.contactName,
               contactPosition: contract.request.company.contactPosition,
               documents: contract.request.company.documents,
@@ -143,9 +141,7 @@ export async function GET(
         country: contract.company.country,
         nit: contract.company.nit,
         city: contract.company.city,
-        address:
-          contract.company.address ||
-          `${contract.company.city}, ${contract.company.country}`,
+        address: `${contract.company.city || "Ciudad"}, ${contract.company.country || "País"}`,
         contactName: contract.company.contactName,
         contactPosition: contract.company.contactPosition,
         email: contract.company.email,

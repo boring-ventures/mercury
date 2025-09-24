@@ -195,7 +195,7 @@ const ContractPDF: React.FC<ContractPDFProps> = ({ contract, content }) => {
 
     // More comprehensive regex to capture elements with their styling
     const elementRegex =
-      /<(h[1-6]|p|ul|ol|blockquote|div)([^>]*)>(.*?)<\/\1>/gis;
+      /<(h[1-6]|p|ul|ol|blockquote|div)([^>]*)>([\s\S]*?)<\/\1>/gi;
     const matches = Array.from(cleanHtml.matchAll(elementRegex));
 
     if (matches.length === 0) {
@@ -286,7 +286,7 @@ const ContractPDF: React.FC<ContractPDFProps> = ({ contract, content }) => {
           });
         }
       } else if (tag === "ul" || tag === "ol") {
-        const listItems = innerContent.match(/<li[^>]*>(.*?)<\/li>/gis);
+        const listItems = innerContent.match(/<li[^>]*>([\s\S]*?)<\/li>/gi);
         if (listItems) {
           listItems.forEach((item) => {
             const itemContent = item
