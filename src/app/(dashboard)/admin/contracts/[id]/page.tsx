@@ -155,7 +155,10 @@ export default function AdminContractDetail() {
     // Deep dive into contract structure
     console.log("Contract.request:", contract.request);
     if (contract.request?.company) {
-      console.log("Request company keys:", Object.keys(contract.request.company));
+      console.log(
+        "Request company keys:",
+        Object.keys(contract.request.company)
+      );
       console.log("Request company data:", contract.request.company);
     }
 
@@ -289,17 +292,18 @@ export default function AdminContractDetail() {
         additionalData?.contactData?.name ||
         `${contract.createdBy?.firstName || ""} ${contract.createdBy?.lastName || ""}`.trim() ||
         "Representante Legal",
-      "{importer.ci}":
-        (() => {
-          // Try to extract CI from documents like the auto-create route does
-          const carnetDocument = contract.request?.company?.documents?.find(
-            (doc: any) => doc.type === 'CARNET_IDENTIDAD' && doc.documentInfo
-          );
-          return carnetDocument?.documentInfo ||
-                 contactData.ci ||
-                 additionalData?.contactData?.ci ||
-                 "_________________";
-        })(),
+      "{importer.ci}": (() => {
+        // Try to extract CI from documents like the auto-create route does
+        const carnetDocument = contract.request?.company?.documents?.find(
+          (doc: any) => doc.type === "CARNET_IDENTIDAD" && doc.documentInfo
+        );
+        return (
+          carnetDocument?.documentInfo ||
+          contactData.ci ||
+          additionalData?.contactData?.ci ||
+          "_________________"
+        );
+      })(),
       "{beneficiary.name}":
         contract.request?.provider?.name || "_________________",
       "{provider.name}":
@@ -381,11 +385,11 @@ export default function AdminContractDetail() {
 <p style="text-align: justify; margin-bottom: 1rem;">El IMPORTADOR transferirá al PROVEEDOR para la ejecución de las operaciones mencionadas el total de lo descrito en la cláusula Tercera, bajo el concepto de Pagos a Proveedores Extranjeros, así mismo, pagará al PROVEEDOR por concepto de honorarios un total de {service.feeWords} bolivianos (Bs {service.fee}), para lo cual el PROVEEDOR emitirá la factura correspondiente al servicio por el monto total de los honorarios percibidos al finalizar la ejecución de la OPERACIÓN, dejándose constancia que los pagos serán realizado mediante transferencia bancaria a la cuenta empresarial del PROVEEDOR:</p>
 
 <div style="margin-left: 2rem; margin-bottom: 2rem;">
-<p><strong>Nombre del Banco:</strong> {provider.bankName}</p>
-<p><strong>Titular:</strong> {provider.beneficiaryName}</p>
-<p><strong>Número de cuenta:</strong> {provider.accountNumber}</p>
-<p><strong>Moneda:</strong> Dólares Estadounidenses</p>
-<p><strong>Tipo:</strong> {provider.accountType}</p>
+<p><strong>Nombre del Banco:</strong> Banco Mercantil Santa Cruz S.A</p>
+<p><strong>Titular:</strong> J&R Asesores de Mercado S.R.L.</p>
+<p><strong>Número de cuenta:</strong> 4011108567</p>
+<p><strong>Moneda:</strong> bolivianos</p>
+<p><strong>Tipo:</strong> Cuenta Corriente</p>
 </div>
 
 <h2 style="font-weight: bold; margin-top: 2rem; margin-bottom: 1rem;">SEXTA: PLAZO DE CUMPLIMIENTO.-</h2>
@@ -458,23 +462,26 @@ export default function AdminContractDetail() {
 
 <p style="text-align: center; margin-top: 3rem; margin-bottom: 2rem;">Santa Cruz, {contract.date}.</p>
 
-<div style="display: flex; justify-content: space-between; margin-top: 3rem;">
-<div style="text-align: center;">
-<p style="margin-bottom: 3rem;">{importer.representative.name}</p>
-<p>Pp. / IMPORTADOR</p>
-</div>
-<div style="text-align: center;">
-<p style="margin-bottom: 3rem;">Jimena León Céspedes</p>
-<p>Pp. / PROVEEDOR</p>
-</div>
-</div>`;
+
+<p style="margin-top: 4rem; text-align: center;">
+<strong>{importer.representative.name}</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>Jimena León Céspedes</strong>
+</p>
+<p style="text-align: center;">
+<strong>Pp. / IMPORTADOR</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>Pp. / PROVEEDOR</strong>
+</p>`;
 
     console.log("Replacements:", replacements);
 
     let contractText = contractTemplate;
     Object.entries(replacements).forEach(([placeholder, value]) => {
-      const count = (contractText.match(new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g")) || []).length;
-      console.log(`Replacing ${placeholder} (found ${count} times) with: ${value}`);
+      const count = (
+        contractText.match(
+          new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g")
+        ) || []
+      ).length;
+      console.log(
+        `Replacing ${placeholder} (found ${count} times) with: ${value}`
+      );
       contractText = contractText.replace(
         new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"),
         value
@@ -740,7 +747,8 @@ export default function AdminContractDetail() {
                   })}
                 </p>
               </div>
-              {(contract.status === "DRAFT" || contract.status === "ACTIVE") && (
+              {(contract.status === "DRAFT" ||
+                contract.status === "ACTIVE") && (
                 <Button
                   variant="outline"
                   size="sm"
