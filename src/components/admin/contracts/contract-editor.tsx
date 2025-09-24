@@ -130,6 +130,9 @@ export default function ContractEditor({
     try {
       const content = editor.getHTML();
 
+      // Save the contract content first
+      await onSave(content);
+
       // Try react-pdf first
       try {
         const blob = await pdf(
@@ -140,7 +143,7 @@ export default function ContractEditor({
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = `contrato-${contractCode}.pdf`;
+        link.download = `contrato-${contractCode}-${new Date().toISOString().split('T')[0]}.pdf`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -159,32 +162,112 @@ export default function ContractEditor({
             <html>
             <head>
               <title>Contrato ${contractCode}</title>
+              <meta charset="UTF-8">
               <style>
-                body { 
-                  font-family: Arial, sans-serif; 
-                  line-height: 1.6; 
-                  max-width: 800px; 
-                  margin: 0 auto; 
-                  padding: 20px;
+                @page {
+                  margin: 2cm;
+                  size: A4;
                 }
-                h1 { text-align: center; font-size: 18px; margin-bottom: 30px; }
-                h2 { font-size: 12px; font-weight: bold; margin-top: 20px; margin-bottom: 10px; }
-                p { text-align: justify; margin-bottom: 15px; }
+                body {
+                  font-family: 'Times New Roman', serif;
+                  line-height: 1.6;
+                  max-width: 800px;
+                  margin: 0 auto;
+                  padding: 0;
+                  font-size: 12px;
+                  color: #000;
+                }
+                h1 {
+                  text-align: center;
+                  font-size: 16px;
+                  font-weight: bold;
+                  margin: 25px 0 20px 0;
+                  text-transform: uppercase;
+                  page-break-after: avoid;
+                }
+                h2 {
+                  font-size: 12px;
+                  font-weight: bold;
+                  margin: 25px 0 10px 0;
+                  text-transform: uppercase;
+                  page-break-after: avoid;
+                }
+                h3, h4, h5, h6 {
+                  font-size: 11px;
+                  font-weight: bold;
+                  margin: 15px 0 8px 0;
+                  page-break-after: avoid;
+                }
+                p {
+                  text-align: justify;
+                  margin-bottom: 15px;
+                  text-indent: 0;
+                  line-height: 1.6;
+                }
+                ul, ol {
+                  margin: 10px 0;
+                  padding-left: 20px;
+                }
+                li {
+                  margin-bottom: 5px;
+                  line-height: 1.5;
+                }
+                strong, b {
+                  font-weight: bold;
+                }
+                em, i {
+                  font-style: italic;
+                }
+                u {
+                  text-decoration: underline;
+                }
                 .bold { font-weight: bold; }
                 .list-item { margin-left: 20px; margin-bottom: 5px; }
-                .banking-details { margin-left: 20px; margin-bottom: 15px; }
-                .signature-section { margin-top: 40px; display: flex; justify-content: space-between; }
-                .signature-block { text-align: center; width: 45%; }
-                .signature-name { margin-bottom: 20px; font-size: 11px; }
-                .signature-title { font-size: 9px; }
-                .center-text { text-align: center; margin-top: 30px; margin-bottom: 20px; }
+                .banking-details {
+                  margin-left: 20px;
+                  margin-bottom: 15px;
+                  padding: 10px;
+                  border: 1px solid #ccc;
+                  background-color: #f9f9f9;
+                }
+                .signature-section {
+                  margin-top: 60px;
+                  display: flex;
+                  justify-content: space-between;
+                  page-break-inside: avoid;
+                }
+                .signature-block {
+                  text-align: center;
+                  width: 45%;
+                  border-top: 1px solid #000;
+                  padding-top: 10px;
+                }
+                .signature-name {
+                  margin-bottom: 30px;
+                  font-size: 11px;
+                  font-weight: bold;
+                }
+                .signature-title {
+                  font-size: 10px;
+                  font-weight: bold;
+                }
+                .center-text {
+                  text-align: center;
+                  margin-top: 40px;
+                  margin-bottom: 30px;
+                  font-weight: bold;
+                }
                 @media print {
-                  body { margin: 0; padding: 40px; }
+                  body { margin: 0; padding: 0; }
+                  .no-print { display: none; }
                 }
               </style>
             </head>
             <body>
               ${content}
+              <div class='no-print' style='margin-top: 20px; text-align: center; background: #f0f0f0; padding: 10px; border-radius: 5px;'>
+                <p><strong>Instrucciones:</strong> Use Ctrl+P para imprimir o guardar como PDF</p>
+              </div>
             </body>
             </html>
           `);
@@ -193,8 +276,8 @@ export default function ContractEditor({
           // Wait for content to load, then trigger print
           setTimeout(() => {
             printWindow.print();
-            printWindow.close();
-          }, 500);
+            // Don't auto-close the window, let user close it manually
+          }, 1000);
         }
       }
 
@@ -202,7 +285,7 @@ export default function ContractEditor({
       onDownload(content);
     } catch (error) {
       console.error("Error generating PDF:", error);
-      alert("Error al generar el PDF. Intentando método alternativo...");
+      alert("Error al generar el PDF. Por favor, intente nuevamente o use el método de impresión alternativo.");
       // Final fallback to original download method
       onDownload(editor.getHTML());
     } finally {
@@ -243,11 +326,17 @@ export default function ContractEditor({
               size="sm"
               onClick={handleDownload}
               disabled={isGeneratingPDF}
+              title="Descargar contrato como PDF"
             >
               <Download className="h-4 w-4 mr-2" />
               {isGeneratingPDF ? "Generando PDF..." : "Descargar PDF"}
             </Button>
-            <Button size="sm" onClick={handleSave} disabled={isSaving}>
+            <Button
+              size="sm"
+              onClick={handleSave}
+              disabled={isSaving}
+              title="Guardar cambios en el contrato"
+            >
               <Save className="h-4 w-4 mr-2" />
               {isSaving ? "Guardando..." : "Guardar"}
             </Button>
@@ -517,7 +606,7 @@ export default function ContractEditor({
             </div>
             <p className="text-sm text-blue-600">
               Esta es una vista previa de cómo se verá el contrato. Haz clic en
-              "Editar" para volver al modo de edición.
+              &quot;Editar&quot; para volver al modo de edición.
             </p>
           </div>
         )}

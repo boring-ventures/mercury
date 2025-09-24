@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
 
 // --- TYPE DEFINITIONS ---
@@ -33,10 +34,12 @@ const TestimonialCard = ({
   <div
     className={`${delay} flex items-start gap-3 rounded-2xl bg-white/90 backdrop-blur-sm border border-white/20 p-4 shadow-lg`}
   >
-    <img
+    <Image
       src={testimonial.avatarSrc}
       className="h-10 w-10 object-cover rounded-full"
       alt="avatar"
+      width={40}
+      height={40}
     />
     <div className="text-sm leading-snug">
       <p className="flex items-center gap-1 font-medium text-gray-900">

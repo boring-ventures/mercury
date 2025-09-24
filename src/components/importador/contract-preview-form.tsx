@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -353,7 +353,7 @@ export default function ContractPreviewForm({
   const { data: contractStatus } = useContractStatus(quotation.id);
 
   // Extract CI information from documents (check both request and company documents)
-  const getCIFromDocuments = () => {
+  const getCIFromDocuments = useCallback(() => {
     // First check request documents
     if (request?.documents) {
       const carnetDocument = request.documents.find(
@@ -375,7 +375,7 @@ export default function ContractPreviewForm({
     }
 
     return "";
-  };
+  }, [request?.documents, company?.documents]);
 
   // Helper function to safely get banking details
   const getBankingDetails = (bankingDetails: any) => {
@@ -512,7 +512,7 @@ export default function ContractPreviewForm({
         "",
       providerAccountType: "",
     }));
-  }, [company, request, contractStatus]);
+  }, [company, request, contractStatus, getCIFromDocuments]);
 
   const handleInputChange = (field: keyof ContractFormData, value: string) => {
     console.log("Form field changed:", field, "Value:", value);
@@ -523,7 +523,7 @@ export default function ContractPreviewForm({
   };
 
   // Generate contract preview with form data
-  const generateContractPreview = () => {
+  const generateContractPreview = useCallback(() => {
     // Helper function to format numbers to words
     const numberToWords = (num: number): string => {
       if (!num || isNaN(num)) return "cero";
@@ -675,7 +675,7 @@ export default function ContractPreviewForm({
     });
 
     return contractText;
-  };
+  }, [formData]);
 
   // Generate initial contract if it doesn't exist
   const handleGenerateContract = async () => {
@@ -873,7 +873,7 @@ export default function ContractPreviewForm({
     );
     const preview = generateContractPreview();
     setContractPreview(preview);
-  }, [formData]);
+  }, [formData, generateContractPreview]);
 
   // Download DOCX function
   const handleDownloadDOCX = async () => {

@@ -6,11 +6,11 @@ import prisma from "@/lib/prisma";
 // PUT: Update contract content
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { content } = await request.json();
-    const contractId = params.id;
+    const { id: contractId } = await params;
 
     console.log("Contract content API - Contract ID:", contractId);
     console.log("Contract content API - Content length:", content?.length);
@@ -96,10 +96,10 @@ export async function PUT(
 // GET: Get contract content
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const contractId = params.id;
+    const { id: contractId } = await params;
 
     // Auth admin
     const supabase = createServerComponentClient({ cookies });

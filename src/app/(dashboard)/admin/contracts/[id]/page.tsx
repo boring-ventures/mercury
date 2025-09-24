@@ -126,7 +126,6 @@ export default function AdminContractDetail() {
     startDate: string;
     endDate: string;
   } | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
   const [contractContent, setContractContent] = useState("");
   const [isSavingContent, setIsSavingContent] = useState(false);
 
@@ -137,11 +136,41 @@ export default function AdminContractDetail() {
 
   // Generate full contract content (same as preview)
   const generateFullContractContent = (contract: any) => {
+    console.log("Generating contract content for:", contract.code);
+    console.log("Full contract object:", contract);
+
     const additionalData = (contract.additionalData as any) || {};
     const companyData = additionalData.companyData || {};
     const contactData = additionalData.contactData || {};
     const providerData = additionalData.providerData || {};
     const banking = additionalData.banking || {};
+
+    console.log("=== DEBUGGING CONTRACT DATA STRUCTURE ===");
+    console.log("Full contract keys:", Object.keys(contract));
+    console.log("Additional data keys:", Object.keys(additionalData));
+    console.log("Additional data:", additionalData);
+    console.log("Company data:", companyData);
+    console.log("Contact data:", contactData);
+
+    // Deep dive into contract structure
+    console.log("Contract.request:", contract.request);
+    if (contract.request?.company) {
+      console.log("Request company keys:", Object.keys(contract.request.company));
+      console.log("Request company data:", contract.request.company);
+    }
+
+    console.log("Contract.company:", contract.company);
+    if (contract.company) {
+      console.log("Contract company keys:", Object.keys(contract.company));
+    }
+
+    // Check documents
+    if (contract.request?.company?.documents) {
+      console.log("Company documents:", contract.request.company.documents);
+    }
+
+    console.log("Request created by:", contract.request?.createdBy);
+    console.log("=== END DEBUG ===");
 
     // Helper function to format numbers to words
     const numberToWords = (num: number): string => {
@@ -224,28 +253,53 @@ export default function AdminContractDetail() {
 
     const replacements = {
       "{importer.company}":
-        companyData.name ||
         contract.request?.company?.name ||
-        "_________________",
+        companyData.name ||
+        contract.company?.name ||
+        additionalData?.companyData?.name ||
+        "Empresa Importadora",
       "{importer.nit}":
-        companyData.nit ||
         contract.request?.company?.nit ||
-        "_________________",
+        companyData.nit ||
+        contract.company?.nit ||
+        additionalData?.companyData?.nit ||
+        "NIT no especificado",
       "{importer.address}":
-        companyData.address ||
         contract.request?.company?.address ||
-        "_________________",
+        companyData.address ||
+        contract.company?.address ||
+        additionalData?.companyData?.address ||
+        "Dirección no especificada",
       "{importer.city}":
-        companyData.city ||
         contract.request?.company?.city ||
-        "_________________",
+        companyData.city ||
+        contract.company?.city ||
+        additionalData?.companyData?.city ||
+        "Ciudad no especificada",
       "{importer.representative.role}":
-        contactData.position || "_________________",
+        contract.request?.company?.contactPosition ||
+        contactData.position ||
+        companyData.contactPosition ||
+        "Representante Legal",
       "{importer.representative.name}":
-        contactData.name ||
         contract.request?.company?.contactName ||
-        "_________________",
-      "{importer.ci}": contactData.ci || "_________________",
+        `${contract.request?.createdBy?.firstName || ""} ${contract.request?.createdBy?.lastName || ""}`.trim() ||
+        contactData.name ||
+        companyData.contactName ||
+        additionalData?.contactData?.name ||
+        `${contract.createdBy?.firstName || ""} ${contract.createdBy?.lastName || ""}`.trim() ||
+        "Representante Legal",
+      "{importer.ci}":
+        (() => {
+          // Try to extract CI from documents like the auto-create route does
+          const carnetDocument = contract.request?.company?.documents?.find(
+            (doc: any) => doc.type === 'CARNET_IDENTIDAD' && doc.documentInfo
+          );
+          return carnetDocument?.documentInfo ||
+                 contactData.ci ||
+                 additionalData?.contactData?.ci ||
+                 "_________________";
+        })(),
       "{beneficiary.name}":
         contract.request?.provider?.name || "_________________",
       "{provider.name}":
@@ -415,14 +469,21 @@ export default function AdminContractDetail() {
 </div>
 </div>`;
 
+    console.log("Replacements:", replacements);
+
     let contractText = contractTemplate;
     Object.entries(replacements).forEach(([placeholder, value]) => {
+      const count = (contractText.match(new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g")) || []).length;
+      console.log(`Replacing ${placeholder} (found ${count} times) with: ${value}`);
       contractText = contractText.replace(
         new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"),
         value
       );
     });
 
+    console.log("Final contract text length:", contractText.length);
+
+    // The template is already in HTML format, just return the processed text
     return contractText;
   };
 
@@ -431,12 +492,15 @@ export default function AdminContractDetail() {
     console.log("Contract loaded:", contract);
     console.log("Contract content:", contract?.content);
 
-    if (contract?.content) {
-      setContractContent(contract.content);
-    } else if (contract) {
-      // Generate the full contract content using the same logic as the preview
-      const fullContent = generateFullContractContent(contract);
-      setContractContent(fullContent);
+    if (contract) {
+      // Always generate the full contract content with variables replaced
+      // If there's saved content, use it; otherwise generate from template
+      if (contract.content && contract.content.trim()) {
+        setContractContent(contract.content);
+      } else {
+        const fullContent = generateFullContractContent(contract);
+        setContractContent(fullContent);
+      }
     }
   }, [contract]);
 
@@ -570,373 +634,123 @@ export default function AdminContractDetail() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Information */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Basic Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Información General</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Código
-                  </label>
-                  <p className="text-lg font-medium">{contract.code}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Estado
-                  </label>
-                  <div className="mt-1">
-                    <StatusBadge status={contract.status} />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Monto
-                  </label>
-                  <p className="text-lg font-medium">
-                    {formatCurrency(contract.amount, contract.currency)}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Período
-                  </label>
-                  <p className="text-lg font-medium">
-                    {format(new Date(contract.startDate), "dd/MM/yyyy", {
-                      locale: es,
-                    })}{" "}
-                    -{" "}
-                    {format(new Date(contract.endDate), "dd/MM/yyyy", {
-                      locale: es,
-                    })}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Fecha de Firma
-                  </label>
-                  <p className="text-lg font-medium">
-                    {contract.signedAt
-                      ? format(new Date(contract.signedAt), "dd/MM/yyyy", {
-                          locale: es,
-                        })
-                      : "No firmado"}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Fecha de Creación
-                  </label>
-                  <p className="text-lg font-medium">
-                    {format(new Date(contract.createdAt), "dd/MM/yyyy", {
-                      locale: es,
-                    })}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Description */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Descripción</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm">{contract.description}</p>
-            </CardContent>
-          </Card>
-
-          {/* Terms and Conditions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Términos y Condiciones</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">
-                  Términos
-                </label>
-                <p className="text-sm mt-1">{contract.terms}</p>
-              </div>
-              {contract.conditions && (
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Condiciones Especiales
-                  </label>
-                  <p className="text-sm mt-1">{contract.conditions}</p>
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+        {/* Contract Editor - Main Focus */}
+        <div className="xl:col-span-3 space-y-6">
+          {/* Contract Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <h2 className="text-2xl font-bold">Edición del Contrato</h2>
+              {contract.status === "DRAFT" && (
+                <div className="flex items-center gap-2 px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
+                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                  Borrador - Editable
                 </div>
               )}
-            </CardContent>
-          </Card>
-
-          {/* Submitted Form Data */}
-          {contract.additionalData && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Datos Enviados por el Importador</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {(() => {
-                  const additionalData = contract.additionalData as any;
-                  const companyData = additionalData?.companyData || {};
-                  const contactData = additionalData?.contactData || {};
-                  const providerData = additionalData?.providerData || {};
-
-                  return (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Company Information */}
-                      <div className="space-y-3">
-                        <h4 className="text-sm font-medium text-gray-900 flex items-center gap-2">
-                          <Building className="h-4 w-4" />
-                          Información de la Empresa
-                        </h4>
-                        <div className="space-y-2 text-sm">
-                          <div>
-                            <span className="font-medium text-gray-600">
-                              Nombre:
-                            </span>
-                            <span className="ml-2">
-                              {companyData.name || "—"}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="font-medium text-gray-600">
-                              NIT:
-                            </span>
-                            <span className="ml-2">
-                              {companyData.nit || "—"}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="font-medium text-gray-600">
-                              Dirección:
-                            </span>
-                            <span className="ml-2">
-                              {companyData.address || "—"}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="font-medium text-gray-600">
-                              Ciudad:
-                            </span>
-                            <span className="ml-2">
-                              {companyData.city || "—"}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="font-medium text-gray-600">
-                              Teléfono:
-                            </span>
-                            <span className="ml-2">
-                              {companyData.phone || "—"}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="font-medium text-gray-600">
-                              Email:
-                            </span>
-                            <span className="ml-2">
-                              {companyData.email || "—"}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Contact Information */}
-                      <div className="space-y-3">
-                        <h4 className="text-sm font-medium text-gray-900 flex items-center gap-2">
-                          <User className="h-4 w-4" />
-                          Persona de Contacto
-                        </h4>
-                        <div className="space-y-2 text-sm">
-                          <div>
-                            <span className="font-medium text-gray-600">
-                              Nombre:
-                            </span>
-                            <span className="ml-2">
-                              {contactData.name || "—"}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="font-medium text-gray-600">
-                              Cargo:
-                            </span>
-                            <span className="ml-2">
-                              {contactData.position || "—"}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="font-medium text-gray-600">
-                              Teléfono:
-                            </span>
-                            <span className="ml-2">
-                              {contactData.phone || "—"}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="font-medium text-gray-600">
-                              Email:
-                            </span>
-                            <span className="ml-2">
-                              {contactData.email || "—"}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="font-medium text-gray-600">
-                              Cédula:
-                            </span>
-                            <span className="ml-2">
-                              {contactData.ci || "—"}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Provider Information */}
-                      {Object.keys(providerData).length > 0 && (
-                        <div className="space-y-3 md:col-span-2">
-                          <h4 className="text-sm font-medium text-gray-900 flex items-center gap-2">
-                            <Building className="h-4 w-4" />
-                            Información del Proveedor
-                          </h4>
-                          <div className="space-y-2 text-sm">
-                            <div>
-                              <span className="font-medium text-gray-600">
-                                Tipo de Cuenta:
-                              </span>
-                              <span className="ml-2">
-                                {providerData.accountType || "—"}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Contract Editor/Preview Toggle */}
-          <div className="mb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <h3 className="text-lg font-semibold">Contrato</h3>
-                {isEditing && (
-                  <div className="flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                    Modo Edición
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant={isEditing ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setIsEditing(!isEditing)}
-                >
-                  {isEditing ? "Vista Previa" : "Editar Contrato"}
-                </Button>
-              </div>
+              {contract.status === "COMPLETED" && (
+                <div className="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  Solo Lectura
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Contract Editor or Preview */}
-          {isEditing ? (
-            <ContractEditor
-              initialContent={contractContent}
-              onSave={handleSaveContent}
-              onPreview={handlePreview}
-              onDownload={handleDownload}
-              contractCode={contract?.code || contractId}
-              contract={contract}
-              isReadOnly={false}
-            />
-          ) : (
-            <ContractPreview
-              contract={contract}
-              onDatesChanged={handleContractDatesChanged}
-              isDateSelectionEnabled={contract?.status === "ACTIVE"}
-            />
-          )}
+          {/* Contract Editor - Always visible and editable */}
+          <ContractEditor
+            initialContent={contractContent}
+            onSave={handleSaveContent}
+            onPreview={handlePreview}
+            onDownload={handleDownload}
+            contractCode={contract?.code || contractId}
+            contract={contract}
+            isReadOnly={contract.status === "COMPLETED"}
+          />
         </div>
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Request Information */}
+          {/* Contract Information */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                Solicitud Relacionada
-              </CardTitle>
+              <CardTitle>Información del Contrato</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-muted-foreground">
                   Código
                 </label>
-                <p className="text-sm font-medium">
-                  {contract.request?.code || "—"}
-                </p>
+                <p className="text-lg font-medium">{contract.code}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">
-                  Descripción
+                  Estado
                 </label>
-                <p className="text-sm">
-                  {contract.request?.description || "—"}
-                </p>
+                <div className="mt-1">
+                  <StatusBadge status={contract.status} />
+                </div>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">
                   Monto
                 </label>
+                <p className="text-lg font-medium">
+                  {formatCurrency(contract.amount, contract.currency)}
+                </p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">
+                  Fecha de Creación
+                </label>
                 <p className="text-sm">
-                  {formatCurrency(
-                    contract.request?.amount,
-                    contract.request?.currency
-                  )}
+                  {format(new Date(contract.createdAt), "dd/MM/yyyy", {
+                    locale: es,
+                  })}
                 </p>
               </div>
             </CardContent>
           </Card>
 
-          {/* Quotation Information */}
+          {/* Contract Dates - Editable */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Cotización Relacionada
+                <Calendar className="h-5 w-5" />
+                Fechas del Contrato
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-muted-foreground">
-                  Código
+                  Fecha de Inicio
                 </label>
                 <p className="text-sm font-medium">
-                  {contract.quotation?.code}
+                  {format(new Date(contract.startDate), "dd/MM/yyyy", {
+                    locale: es,
+                  })}
                 </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">
-                  Monto
+                  Fecha de Finalización
                 </label>
-                <p className="text-sm">
-                  {formatCurrency(
-                    contract.quotation?.amount,
-                    contract.quotation?.currency
-                  )}
+                <p className="text-sm font-medium">
+                  {format(new Date(contract.endDate), "dd/MM/yyyy", {
+                    locale: es,
+                  })}
                 </p>
               </div>
+              {(contract.status === "DRAFT" || contract.status === "ACTIVE") && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => setShowDateEdit(true)}
+                >
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Modificar Fechas
+                </Button>
+              )}
             </CardContent>
           </Card>
 
@@ -957,56 +771,36 @@ export default function AdminContractDetail() {
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">
-                  País
-                </label>
-                <p className="text-sm">{contract.company.country}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">
                   Email
                 </label>
                 <p className="text-sm">{contract.request?.company.email}</p>
               </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">
-                  Teléfono
-                </label>
-                <p className="text-sm">{contract.request?.company.phone}</p>
-              </div>
             </CardContent>
           </Card>
 
-          {/* Created By */}
+          {/* Quotation Reference */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Creado por
+                <FileText className="h-5 w-5" />
+                Cotización
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-muted-foreground">
-                  Nombre
+                  Código
                 </label>
                 <p className="text-sm font-medium">
-                  {contract.createdBy.firstName} {contract.createdBy.lastName}
+                  {contract.quotation?.code}
                 </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">
-                  Email
+                  Solicitud
                 </label>
-                <p className="text-sm">{contract.createdBy.email}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">
-                  Fecha de Creación
-                </label>
-                <p className="text-sm">
-                  {format(new Date(contract.createdAt), "dd/MM/yyyy HH:mm", {
-                    locale: es,
-                  })}
+                <p className="text-sm font-medium">
+                  {contract.request?.code || "—"}
                 </p>
               </div>
             </CardContent>
@@ -1018,30 +812,6 @@ export default function AdminContractDetail() {
               <CardTitle>Acciones</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Button
-                className="w-full"
-                variant="outline"
-                onClick={async () => {
-                  try {
-                    const res = await fetch(
-                      `/api/contracts/${contractId}/docx`
-                    );
-                    if (!res.ok) throw new Error("No se pudo generar el DOCX");
-                    const blob = await res.blob();
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.href = url;
-                    a.download = `contrato-${contract?.code || contractId}.docx`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                  } catch (e) {
-                    console.error(e);
-                  }
-                }}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Descargar DOCX
-              </Button>
               {/* Contract Completion Form - Only show for DRAFT contracts */}
               {contract && contract.status === "ACTIVE" && (
                 <ContractCompletionForm
