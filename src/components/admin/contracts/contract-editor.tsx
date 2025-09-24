@@ -133,7 +133,331 @@ export default function ContractEditor({
       // Save the contract content first
       await onSave(content);
 
-      // Try react-pdf first
+      // Enhanced HTML-to-PDF generation with better styling preservation
+      const generatePDFFromHTML = () => {
+        const printWindow = window.open("", "_blank");
+        if (printWindow) {
+          printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>Contrato ${contractCode}</title>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <style>
+                @page {
+                  margin: 2cm 2.5cm;
+                  size: A4;
+                  @bottom-center {
+                    content: "Página " counter(page) " de " counter(pages);
+                    font-size: 10px;
+                    color: #666;
+                  }
+                }
+                
+                * {
+                  box-sizing: border-box;
+                }
+                
+                body {
+                  font-family: 'Times New Roman', 'Times', serif;
+                  line-height: 1.6;
+                  max-width: 100%;
+                  margin: 0;
+                  padding: 0;
+                  font-size: 12px;
+                  color: #000;
+                  background: white;
+                  -webkit-font-smoothing: antialiased;
+                  -moz-osx-font-smoothing: grayscale;
+                }
+                
+                /* Preserve TipTap editor styles */
+                .ProseMirror {
+                  outline: none;
+                }
+                
+                /* Headings */
+                h1 {
+                  text-align: center;
+                  font-size: 18px;
+                  font-weight: bold;
+                  margin: 30px 0 25px 0;
+                  text-transform: uppercase;
+                  page-break-after: avoid;
+                  letter-spacing: 1px;
+                }
+                
+                h2 {
+                  font-size: 13px;
+                  font-weight: bold;
+                  margin: 25px 0 12px 0;
+                  text-transform: uppercase;
+                  page-break-after: avoid;
+                  letter-spacing: 0.5px;
+                }
+                
+                h3 {
+                  font-size: 12px;
+                  font-weight: bold;
+                  margin: 20px 0 10px 0;
+                  page-break-after: avoid;
+                }
+                
+                h4, h5, h6 {
+                  font-size: 11px;
+                  font-weight: bold;
+                  margin: 15px 0 8px 0;
+                  page-break-after: avoid;
+                }
+                
+                /* Paragraphs */
+                p {
+                  text-align: justify;
+                  margin-bottom: 15px;
+                  text-indent: 0;
+                  line-height: 1.6;
+                  orphans: 3;
+                  widows: 3;
+                }
+                
+                /* Text alignment classes from TipTap */
+                [style*="text-align: left"], .text-left {
+                  text-align: left !important;
+                }
+                [style*="text-align: center"], .text-center {
+                  text-align: center !important;
+                }
+                [style*="text-align: right"], .text-right {
+                  text-align: right !important;
+                }
+                [style*="text-align: justify"], .text-justify {
+                  text-align: justify !important;
+                }
+                
+                /* Lists */
+                ul, ol {
+                  margin: 10px 0 15px 0;
+                  padding-left: 25px;
+                }
+                
+                li {
+                  margin-bottom: 8px;
+                  line-height: 1.5;
+                  page-break-inside: avoid;
+                }
+                
+                ul li {
+                  list-style-type: disc;
+                }
+                
+                ol li {
+                  list-style-type: decimal;
+                }
+                
+                /* Text formatting */
+                strong, b {
+                  font-weight: bold;
+                }
+                
+                em, i {
+                  font-style: italic;
+                }
+                
+                u {
+                  text-decoration: underline;
+                }
+                
+                s, strike {
+                  text-decoration: line-through;
+                }
+                
+                /* Font families from TipTap */
+                [style*="font-family: Arial"] {
+                  font-family: Arial, sans-serif !important;
+                }
+                [style*="font-family: 'Times New Roman'"] {
+                  font-family: 'Times New Roman', Times, serif !important;
+                }
+                [style*="font-family: Georgia"] {
+                  font-family: Georgia, serif !important;
+                }
+                [style*="font-family: Helvetica"] {
+                  font-family: Helvetica, Arial, sans-serif !important;
+                }
+                [style*="font-family: 'Courier New'"] {
+                  font-family: 'Courier New', Courier, monospace !important;
+                }
+                
+                /* Colors */
+                [style*="color:"] {
+                  /* Preserve inline color styles */
+                }
+                
+                /* Special contract elements */
+                .banking-details {
+                  margin: 15px 20px;
+                  padding: 12px;
+                  border: 1px solid #333;
+                  background-color: #f9f9f9;
+                  page-break-inside: avoid;
+                }
+                
+                .signature-section {
+                  margin-top: 80px;
+                  display: flex;
+                  justify-content: space-between;
+                  page-break-inside: avoid;
+                  page-break-before: avoid;
+                }
+                
+                .signature-block {
+                  text-align: center;
+                  width: 45%;
+                  border-top: 2px solid #000;
+                  padding-top: 15px;
+                }
+                
+                .signature-name {
+                  margin-bottom: 40px;
+                  font-size: 12px;
+                  font-weight: bold;
+                }
+                
+                .signature-title {
+                  font-size: 10px;
+                  font-weight: bold;
+                  text-transform: uppercase;
+                }
+                
+                /* Blockquotes */
+                blockquote {
+                  margin: 15px 0;
+                  padding: 10px 20px;
+                  border-left: 3px solid #ccc;
+                  font-style: italic;
+                  background-color: #f9f9f9;
+                }
+                
+                /* Tables (if any) */
+                table {
+                  width: 100%;
+                  border-collapse: collapse;
+                  margin: 15px 0;
+                  page-break-inside: avoid;
+                }
+                
+                th, td {
+                  border: 1px solid #333;
+                  padding: 8px;
+                  text-align: left;
+                  font-size: 11px;
+                }
+                
+                th {
+                  background-color: #f0f0f0;
+                  font-weight: bold;
+                }
+                
+                /* Print-specific styles */
+                @media print {
+                  body {
+                    margin: 0;
+                    padding: 0;
+                    background: white !important;
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
+                  }
+                  
+                  .no-print {
+                    display: none !important;
+                  }
+                  
+                  /* Ensure proper page breaks */
+                  h1, h2, h3, h4, h5, h6 {
+                    page-break-after: avoid;
+                  }
+                  
+                  p, li {
+                    orphans: 3;
+                    widows: 3;
+                  }
+                  
+                  .signature-section {
+                    page-break-inside: avoid;
+                  }
+                }
+                
+                /* Loading and instruction styles */
+                .pdf-instructions {
+                  position: fixed;
+                  top: 0;
+                  left: 0;
+                  right: 0;
+                  background: #2563eb;
+                  color: white;
+                  padding: 15px;
+                  text-align: center;
+                  font-size: 14px;
+                  font-weight: bold;
+                  z-index: 1000;
+                  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                }
+                
+                .pdf-content {
+                  margin-top: 60px;
+                  padding: 20px 0;
+                }
+                
+                @media print {
+                  .pdf-instructions {
+                    display: none !important;
+                  }
+                  .pdf-content {
+                    margin-top: 0;
+                    padding: 0;
+                  }
+                }
+              </style>
+            </head>
+            <body>
+              <div class="pdf-instructions no-print">
+                📄 Presione Ctrl+P (Windows) o Cmd+P (Mac) para guardar como PDF
+                <div style="margin-top: 5px; font-size: 12px; opacity: 0.9;">
+                  En la ventana de impresión, seleccione "Guardar como PDF" como destino
+                </div>
+              </div>
+              
+              <div class="pdf-content">
+                ${content}
+              </div>
+              
+              <script>
+                // Auto-focus the window and show print dialog after content loads
+                window.addEventListener('load', function() {
+                  setTimeout(function() {
+                    window.focus();
+                    // Uncomment the next line if you want to auto-trigger print dialog
+                    // window.print();
+                  }, 500);
+                });
+                
+                // Handle keyboard shortcuts
+                document.addEventListener('keydown', function(e) {
+                  if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+                    e.preventDefault();
+                    window.print();
+                  }
+                });
+              </script>
+            </body>
+            </html>
+          `);
+          printWindow.document.close();
+        }
+      };
+
+      // Try react-pdf first for automated PDF generation
       try {
         const blob = await pdf(
           <ContractPDF contract={contract} content={content} />
@@ -143,149 +467,28 @@ export default function ContractEditor({
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = `contrato-${contractCode}-${new Date().toISOString().split('T')[0]}.pdf`;
+        link.download = `contrato-${contractCode}-${new Date().toISOString().split("T")[0]}.pdf`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
 
-        console.log("PDF generated and downloaded successfully!");
+        console.log(
+          "PDF generated and downloaded successfully using react-pdf!"
+        );
         return;
       } catch (pdfError) {
-        console.warn("React-PDF failed, trying alternative method:", pdfError);
+        console.warn("React-PDF failed, using enhanced HTML method:", pdfError);
 
-        // Fallback: Generate HTML and use browser's print to PDF
-        const printWindow = window.open("", "_blank");
-        if (printWindow) {
-          printWindow.document.write(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <title>Contrato ${contractCode}</title>
-              <meta charset="UTF-8">
-              <style>
-                @page {
-                  margin: 2cm;
-                  size: A4;
-                }
-                body {
-                  font-family: 'Times New Roman', serif;
-                  line-height: 1.6;
-                  max-width: 800px;
-                  margin: 0 auto;
-                  padding: 0;
-                  font-size: 12px;
-                  color: #000;
-                }
-                h1 {
-                  text-align: center;
-                  font-size: 16px;
-                  font-weight: bold;
-                  margin: 25px 0 20px 0;
-                  text-transform: uppercase;
-                  page-break-after: avoid;
-                }
-                h2 {
-                  font-size: 12px;
-                  font-weight: bold;
-                  margin: 25px 0 10px 0;
-                  text-transform: uppercase;
-                  page-break-after: avoid;
-                }
-                h3, h4, h5, h6 {
-                  font-size: 11px;
-                  font-weight: bold;
-                  margin: 15px 0 8px 0;
-                  page-break-after: avoid;
-                }
-                p {
-                  text-align: justify;
-                  margin-bottom: 15px;
-                  text-indent: 0;
-                  line-height: 1.6;
-                }
-                ul, ol {
-                  margin: 10px 0;
-                  padding-left: 20px;
-                }
-                li {
-                  margin-bottom: 5px;
-                  line-height: 1.5;
-                }
-                strong, b {
-                  font-weight: bold;
-                }
-                em, i {
-                  font-style: italic;
-                }
-                u {
-                  text-decoration: underline;
-                }
-                .bold { font-weight: bold; }
-                .list-item { margin-left: 20px; margin-bottom: 5px; }
-                .banking-details {
-                  margin-left: 20px;
-                  margin-bottom: 15px;
-                  padding: 10px;
-                  border: 1px solid #ccc;
-                  background-color: #f9f9f9;
-                }
-                .signature-section {
-                  margin-top: 60px;
-                  display: flex;
-                  justify-content: space-between;
-                  page-break-inside: avoid;
-                }
-                .signature-block {
-                  text-align: center;
-                  width: 45%;
-                  border-top: 1px solid #000;
-                  padding-top: 10px;
-                }
-                .signature-name {
-                  margin-bottom: 30px;
-                  font-size: 11px;
-                  font-weight: bold;
-                }
-                .signature-title {
-                  font-size: 10px;
-                  font-weight: bold;
-                }
-                .center-text {
-                  text-align: center;
-                  margin-top: 40px;
-                  margin-bottom: 30px;
-                  font-weight: bold;
-                }
-                @media print {
-                  body { margin: 0; padding: 0; }
-                  .no-print { display: none; }
-                }
-              </style>
-            </head>
-            <body>
-              ${content}
-              <div class='no-print' style='margin-top: 20px; text-align: center; background: #f0f0f0; padding: 10px; border-radius: 5px;'>
-                <p><strong>Instrucciones:</strong> Use Ctrl+P para imprimir o guardar como PDF</p>
-              </div>
-            </body>
-            </html>
-          `);
-          printWindow.document.close();
-
-          // Wait for content to load, then trigger print
-          setTimeout(() => {
-            printWindow.print();
-            // Don't auto-close the window, let user close it manually
-          }, 1000);
-        }
+        // Use enhanced HTML-to-PDF method
+        generatePDFFromHTML();
       }
 
       // Also call the original onDownload for any additional handling
       onDownload(content);
     } catch (error) {
       console.error("Error generating PDF:", error);
-      alert("Error al generar el PDF. Por favor, intente nuevamente o use el método de impresión alternativo.");
+      alert("Error al generar el PDF. Por favor, intente nuevamente.");
       // Final fallback to original download method
       onDownload(editor.getHTML());
     } finally {
@@ -326,7 +529,7 @@ export default function ContractEditor({
               size="sm"
               onClick={handleDownload}
               disabled={isGeneratingPDF}
-              title="Descargar contrato como PDF"
+              title="Descargar contrato como PDF con el mismo formato que ve en pantalla"
             >
               <Download className="h-4 w-4 mr-2" />
               {isGeneratingPDF ? "Generando PDF..." : "Descargar PDF"}

@@ -19,71 +19,148 @@ Font.register({
   ],
 });
 
-// Create styles
+// Create styles with enhanced formatting support
 const styles = StyleSheet.create({
   page: {
     flexDirection: "column",
     backgroundColor: "#FFFFFF",
     padding: 40,
-    fontFamily: "Helvetica", // Fallback to Helvetica if Inter is not available
+    fontFamily: "Helvetica",
     fontSize: 11,
-    lineHeight: 1.5,
+    lineHeight: 1.6,
+    color: "#000000",
   },
-  header: {
-    textAlign: "center",
+  // Headings
+  heading1: {
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 30,
+    marginBottom: 25,
+    marginTop: 30,
     textTransform: "uppercase",
-  },
-  heading1: {
-    textAlign: "center",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 20,
-    marginTop: 20,
-    textTransform: "uppercase",
+    letterSpacing: 1,
   },
   heading2: {
+    fontSize: 13,
+    fontWeight: "bold",
+    marginTop: 25,
+    marginBottom: 12,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  heading3: {
     fontSize: 12,
     fontWeight: "bold",
     marginTop: 20,
     marginBottom: 10,
-    textTransform: "uppercase",
   },
+  heading4: {
+    fontSize: 11,
+    fontWeight: "bold",
+    marginTop: 15,
+    marginBottom: 8,
+  },
+  heading5: {
+    fontSize: 11,
+    fontWeight: "bold",
+    marginTop: 15,
+    marginBottom: 8,
+  },
+  heading6: {
+    fontSize: 11,
+    fontWeight: "bold",
+    marginTop: 15,
+    marginBottom: 8,
+  },
+  // Paragraphs and text
   paragraph: {
-    textAlign: "justify",
+    fontSize: 11,
     marginBottom: 15,
-    fontSize: 11,
+    lineHeight: 1.6,
   },
-  listItem: {
-    marginLeft: 20,
-    marginBottom: 5,
+  paragraphCenter: {
     fontSize: 11,
-  },
-  centerText: {
+    marginBottom: 15,
+    lineHeight: 1.6,
     textAlign: "center",
-    marginTop: 30,
-    marginBottom: 20,
-    fontSize: 11,
   },
+  paragraphLeft: {
+    fontSize: 11,
+    marginBottom: 15,
+    lineHeight: 1.6,
+    textAlign: "left",
+  },
+  paragraphRight: {
+    fontSize: 11,
+    marginBottom: 15,
+    lineHeight: 1.6,
+    textAlign: "right",
+  },
+  paragraphJustify: {
+    fontSize: 11,
+    marginBottom: 15,
+    lineHeight: 1.6,
+    textAlign: "justify",
+  },
+  // Lists
+  listItem: {
+    marginLeft: 25,
+    marginBottom: 8,
+    fontSize: 11,
+    lineHeight: 1.5,
+  },
+  // Blockquotes
+  blockquote: {
+    marginLeft: 20,
+    marginRight: 20,
+    marginBottom: 15,
+    paddingLeft: 15,
+    borderLeft: "3pt solid #cccccc",
+    fontSize: 11,
+    fontStyle: "italic",
+    backgroundColor: "#f9f9f9",
+    padding: 10,
+  },
+  // Text formatting
+  bold: {
+    fontWeight: "bold",
+  },
+  italic: {
+    fontStyle: "italic",
+  },
+  underline: {
+    textDecoration: "underline",
+  },
+  // Font families
+  fontTimes: {
+    fontFamily: "Times-Roman",
+  },
+  fontHelvetica: {
+    fontFamily: "Helvetica",
+  },
+  fontCourier: {
+    fontFamily: "Courier",
+  },
+  // Special elements
   signatureSection: {
-    marginTop: 40,
+    marginTop: 60,
     flexDirection: "row",
     justifyContent: "space-between",
   },
   signatureBlock: {
     textAlign: "center",
     width: "45%",
+    borderTop: "2pt solid #000000",
+    paddingTop: 15,
   },
   signatureName: {
-    marginBottom: 20,
-    fontSize: 11,
+    marginBottom: 30,
+    fontSize: 12,
     fontWeight: "bold",
   },
   signatureTitle: {
     fontSize: 10,
     fontWeight: "bold",
+    textTransform: "uppercase",
   },
 });
 
@@ -93,74 +170,170 @@ interface ContractPDFProps {
 }
 
 const ContractPDF: React.FC<ContractPDFProps> = ({ contract, content }) => {
-  // Helper function to parse HTML and extract structured content
+  // Enhanced HTML parser with better formatting preservation
   const parseHtmlContent = (html: string) => {
-    // Simple HTML parser for our needs
-    const sections: { type: string; content: string; level?: number }[] = [];
+    const sections: {
+      type: string;
+      content: string;
+      level?: number;
+      alignment?: string;
+      isBold?: boolean;
+      isItalic?: boolean;
+      isUnderline?: boolean;
+      color?: string;
+      fontFamily?: string;
+    }[] = [];
 
-    // Split by common HTML elements
-    const parts = html.split(/(<h[1-6][^>]*>.*?<\/h[1-6]>|<p[^>]*>.*?<\/p>|<ul[^>]*>.*?<\/ul>|<ol[^>]*>.*?<\/ol>)/gi);
+    // Clean up HTML entities first
+    const cleanHtml = html
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'");
 
-    parts.forEach(part => {
-      if (!part.trim()) return;
+    // More comprehensive regex to capture elements with their styling
+    const elementRegex =
+      /<(h[1-6]|p|ul|ol|blockquote|div)([^>]*)>(.*?)<\/\1>/gis;
+    const matches = Array.from(cleanHtml.matchAll(elementRegex));
 
-      // Clean up the content
-      const cleanContent = part
-        .replace(/&nbsp;/g, " ")
-        .replace(/&amp;/g, "&")
-        .replace(/&lt;/g, "<")
-        .replace(/&gt;/g, ">")
-        .replace(/&quot;/g, '"')
-        .replace(/\s+/g, " ")
-        .trim();
+    if (matches.length === 0) {
+      // If no structured elements found, treat as plain text
+      const plainText = cleanHtml.replace(/<[^>]*>/g, "").trim();
+      if (plainText) {
+        sections.push({
+          type: "paragraph",
+          content: plainText,
+        });
+      }
+      return sections;
+    }
 
-      if (cleanContent.match(/<h([1-6])[^>]*>(.*?)<\/h[1-6]>/i)) {
-        const match = cleanContent.match(/<h([1-6])[^>]*>(.*?)<\/h[1-6]>/i);
-        if (match) {
-          sections.push({
-            type: 'heading',
-            content: match[2].replace(/<[^>]*>/g, '').trim(),
-            level: parseInt(match[1])
-          });
-        }
-      } else if (cleanContent.match(/<p[^>]*>(.*?)<\/p>/i)) {
-        const match = cleanContent.match(/<p[^>]*>(.*?)<\/p>/i);
-        if (match) {
-          const paragraphContent = match[1].replace(/<[^>]*>/g, '').trim();
-          if (paragraphContent) {
-            sections.push({
-              type: 'paragraph',
-              content: paragraphContent
-            });
-          }
-        }
-      } else if (cleanContent.match(/<[uo]l[^>]*>(.*?)<\/[uo]l>/i)) {
-        const match = cleanContent.match(/<[uo]l[^>]*>(.*?)<\/[uo]l>/i);
-        if (match) {
-          const listItems = match[1].match(/<li[^>]*>(.*?)<\/li>/gi);
-          if (listItems) {
-            listItems.forEach(item => {
-              const itemContent = item.replace(/<[^>]*>/g, '').trim();
-              if (itemContent) {
-                sections.push({
-                  type: 'listItem',
-                  content: itemContent
-                });
-              }
-            });
-          }
-        }
-      } else {
-        // Plain text
-        const textContent = cleanContent.replace(/<[^>]*>/g, '').trim();
+    matches.forEach((match) => {
+      const [fullMatch, tag, attributes, innerContent] = match;
+
+      // Extract styling information from attributes
+      const styleMatch = attributes.match(/style="([^"]*)"/);
+      const style = styleMatch ? styleMatch[1] : "";
+
+      // Parse alignment
+      let alignment = "justify"; // default
+      if (
+        style.includes("text-align: center") ||
+        attributes.includes("center")
+      ) {
+        alignment = "center";
+      } else if (style.includes("text-align: left")) {
+        alignment = "left";
+      } else if (style.includes("text-align: right")) {
+        alignment = "right";
+      } else if (style.includes("text-align: justify")) {
+        alignment = "justify";
+      }
+
+      // Parse text formatting
+      const isBold =
+        innerContent.includes("<strong>") ||
+        innerContent.includes("<b>") ||
+        style.includes("font-weight: bold");
+      const isItalic =
+        innerContent.includes("<em>") ||
+        innerContent.includes("<i>") ||
+        style.includes("font-style: italic");
+      const isUnderline =
+        innerContent.includes("<u>") ||
+        style.includes("text-decoration: underline");
+
+      // Parse color
+      const colorMatch = style.match(/color:\s*([^;]+)/);
+      const color = colorMatch ? colorMatch[1].trim() : undefined;
+
+      // Parse font family
+      const fontMatch = style.match(/font-family:\s*([^;]+)/);
+      const fontFamily = fontMatch
+        ? fontMatch[1].replace(/['"]/g, "").trim()
+        : undefined;
+
+      if (tag.match(/h[1-6]/)) {
+        const level = parseInt(tag.charAt(1));
+        const textContent = innerContent.replace(/<[^>]*>/g, "").trim();
         if (textContent) {
           sections.push({
-            type: 'paragraph',
-            content: textContent
+            type: "heading",
+            content: textContent,
+            level,
+            alignment,
+            isBold,
+            isItalic,
+            isUnderline,
+            color,
+            fontFamily,
+          });
+        }
+      } else if (tag === "p" || tag === "div") {
+        const textContent = innerContent.replace(/<[^>]*>/g, "").trim();
+        if (textContent) {
+          sections.push({
+            type: "paragraph",
+            content: textContent,
+            alignment,
+            isBold,
+            isItalic,
+            isUnderline,
+            color,
+            fontFamily,
+          });
+        }
+      } else if (tag === "ul" || tag === "ol") {
+        const listItems = innerContent.match(/<li[^>]*>(.*?)<\/li>/gis);
+        if (listItems) {
+          listItems.forEach((item) => {
+            const itemContent = item
+              .replace(/<li[^>]*>|<\/li>/g, "")
+              .replace(/<[^>]*>/g, "")
+              .trim();
+            if (itemContent) {
+              sections.push({
+                type: "listItem",
+                content: itemContent,
+                alignment,
+                isBold,
+                isItalic,
+                isUnderline,
+                color,
+                fontFamily,
+              });
+            }
+          });
+        }
+      } else if (tag === "blockquote") {
+        const textContent = innerContent.replace(/<[^>]*>/g, "").trim();
+        if (textContent) {
+          sections.push({
+            type: "blockquote",
+            content: textContent,
+            alignment,
+            isBold,
+            isItalic,
+            isUnderline,
+            color,
+            fontFamily,
           });
         }
       }
     });
+
+    // If no sections were parsed, fall back to simple text extraction
+    if (sections.length === 0) {
+      const plainText = cleanHtml.replace(/<[^>]*>/g, "").trim();
+      if (plainText) {
+        sections.push({
+          type: "paragraph",
+          content: plainText,
+        });
+      }
+    }
 
     return sections;
   };
@@ -256,30 +429,127 @@ const ContractPDF: React.FC<ContractPDFProps> = ({ contract, content }) => {
   const amount = Number(contract.amount) || 0;
   const fee = Math.round(amount * 0.05);
 
-  // Helper function to get style based on section type
-  const getStyleForSection = (section: { type: string; level?: number }) => {
+  // Helper function to get style based on section properties
+  const getStyleForSection = (section: {
+    type: string;
+    level?: number;
+    alignment?: string;
+    isBold?: boolean;
+    isItalic?: boolean;
+    isUnderline?: boolean;
+    color?: string;
+    fontFamily?: string;
+  }) => {
+    const baseStyles: any[] = [];
+
+    // Base style based on type
     switch (section.type) {
-      case 'heading':
-        if (section.level === 1) return styles.heading1;
-        if (section.level === 2) return styles.heading2;
-        return styles.heading2; // Default to h2 style for other headings
-      case 'listItem':
-        return styles.listItem;
-      case 'paragraph':
+      case "heading":
+        switch (section.level) {
+          case 1:
+            baseStyles.push(styles.heading1);
+            break;
+          case 2:
+            baseStyles.push(styles.heading2);
+            break;
+          case 3:
+            baseStyles.push(styles.heading3);
+            break;
+          case 4:
+            baseStyles.push(styles.heading4);
+            break;
+          case 5:
+            baseStyles.push(styles.heading5);
+            break;
+          case 6:
+            baseStyles.push(styles.heading6);
+            break;
+          default:
+            baseStyles.push(styles.heading2);
+        }
+        break;
+      case "listItem":
+        baseStyles.push(styles.listItem);
+        break;
+      case "blockquote":
+        baseStyles.push(styles.blockquote);
+        break;
+      case "paragraph":
       default:
-        return styles.paragraph;
+        // Add alignment-specific paragraph style
+        switch (section.alignment) {
+          case "center":
+            baseStyles.push(styles.paragraphCenter);
+            break;
+          case "left":
+            baseStyles.push(styles.paragraphLeft);
+            break;
+          case "right":
+            baseStyles.push(styles.paragraphRight);
+            break;
+          case "justify":
+          default:
+            baseStyles.push(styles.paragraphJustify);
+            break;
+        }
+        break;
     }
+
+    // Add text formatting
+    if (section.isBold) baseStyles.push(styles.bold);
+    if (section.isItalic) baseStyles.push(styles.italic);
+    if (section.isUnderline) baseStyles.push(styles.underline);
+
+    // Add font family
+    if (section.fontFamily) {
+      if (section.fontFamily.toLowerCase().includes("times")) {
+        baseStyles.push(styles.fontTimes);
+      } else if (section.fontFamily.toLowerCase().includes("courier")) {
+        baseStyles.push(styles.fontCourier);
+      } else if (
+        section.fontFamily.toLowerCase().includes("helvetica") ||
+        section.fontFamily.toLowerCase().includes("arial")
+      ) {
+        baseStyles.push(styles.fontHelvetica);
+      }
+    }
+
+    // Add custom styles for color and alignment
+    const customStyle: any = {};
+
+    if (
+      section.color &&
+      section.color !== "#000000" &&
+      section.color !== "black"
+    ) {
+      customStyle.color = section.color;
+    }
+
+    // Override alignment for headings if specified
+    if (section.type === "heading" && section.alignment) {
+      customStyle.textAlign = section.alignment;
+    }
+
+    return [...baseStyles, customStyle];
   };
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         {sections.length > 0 ? (
-          sections.map((section, index) => (
-            <Text key={index} style={getStyleForSection(section)}>
-              {section.type === 'listItem' ? `• ${section.content}` : section.content}
-            </Text>
-          ))
+          sections.map((section, index) => {
+            const sectionStyles = getStyleForSection(section);
+            const displayContent =
+              section.type === "listItem"
+                ? `• ${section.content}`
+                : section.content;
+
+            return (
+              <Text key={index} style={sectionStyles}>
+                {displayContent}
+              </Text>
+            );
+          })
         ) : (
           <Text style={styles.paragraph}>
             No hay contenido disponible para mostrar en el PDF.
