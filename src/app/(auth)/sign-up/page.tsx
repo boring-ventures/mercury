@@ -429,7 +429,7 @@ export default function RegisterPage() {
       const file = e.target.files[0];
 
       // File validation
-      const maxSize = 5 * 1024 * 1024; // 5MB
+      const maxSize = 20 * 1024 * 1024; // 10MB
       const allowedTypes = [
         "image/jpeg",
         "image/jpg",
@@ -443,7 +443,7 @@ export default function RegisterPage() {
       if (file.size > maxSize) {
         toast({
           title: "Archivo muy grande",
-          description: `El archivo excede el tamaño máximo de 5MB. Tamaño actual: ${(file.size / 1024 / 1024).toFixed(1)}MB`,
+          description: `El archivo excede el tamaño máximo de 10MB. Tamaño actual: ${(file.size / 1024 / 1024).toFixed(1)}MB`,
           variant: "destructive",
         });
         return;
@@ -721,7 +721,7 @@ export default function RegisterPage() {
             </div>
           )}
           <p className="text-xs text-muted-foreground mt-1">
-            Formato: PDF, JPG, PNG (máx. 5MB)
+            Formato: PDF, JPG, PNG (máx. 10MB)
           </p>
 
           {/* Document Information Text Input */}
@@ -1309,7 +1309,7 @@ export default function RegisterPage() {
                             <AlertCircle className="w-5 h-5 text-primary mt-0.5 mr-2 flex-shrink-0" />
                             <p className="text-sm text-muted-foreground">
                               Todos los documentos deben estar en formato PDF,
-                              JPG o PNG y no exceder los 5MB. Los documentos
+                              JPG o PNG y no exceder los 10MB. Los documentos
                               serán revisados por nuestro equipo antes de
                               aprobar su cuenta.
                             </p>
