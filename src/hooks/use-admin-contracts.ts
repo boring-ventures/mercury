@@ -143,7 +143,32 @@ export interface AdminContractDetail {
     companyData?: any;
     contactData?: any;
     providerData?: any;
+    payment?: any;
   };
+  payments?: Array<{
+    id: string;
+    code: string;
+    amount: number;
+    currency: string;
+    status: string;
+    type: string;
+    description: string;
+    reference: string | null;
+    dueDate: string | null;
+    paidAt: string | null;
+    createdAt: string;
+  }>;
+  documents?: Array<{
+    id: string;
+    filename: string;
+    fileUrl: string;
+    fileSize: number;
+    mimeType: string;
+    type: string;
+    status: string | null;
+    documentInfo: string | null;
+    createdAt: string;
+  }>;
   request: {
     id: string;
     code: string;

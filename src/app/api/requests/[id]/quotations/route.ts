@@ -97,26 +97,61 @@ export async function POST(
       );
     }
 
-    // Generate quotation code
-    const generateQuotationCode = () => {
-      const timestamp = Date.now().toString().slice(-6);
-      const random = Math.random().toString(36).substring(2, 5).toUpperCase();
-      return `COT-${timestamp}-${random}`;
+    // Generate quotation code with new format: [CompanyPrefix][Month][Year][SequentialNumber]
+    const generateQuotationCode = async (companyName: string) => {
+      // Generate company prefix: first two letters or first letter of each word
+      const generateCompanyPrefix = (name: string): string => {
+        const words = name.trim().split(/\s+/);
+        if (words.length === 1) {
+          // Single word: take first two letters
+          return words[0].substring(0, 2).toUpperCase();
+        } else {
+          // Multiple words: take first letter of each word
+          return words
+            .map((word) => word.charAt(0))
+            .join("")
+            .toUpperCase();
+        }
+      };
+
+      const companyPrefix = generateCompanyPrefix(companyName);
+
+      // Get current month and year
+      const now = new Date();
+      const month = (now.getMonth() + 1).toString().padStart(2, "0"); // 01-12
+      const year = now.getFullYear().toString().slice(-2); // Last 2 digits
+
+      // Find the highest sequential number for this company in the current month/year
+      const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+      const existingQuotations = await prisma.quotation.findMany({
+        where: {
+          companyId: requestData.companyId,
+          createdAt: {
+            gte: currentMonthStart,
+            lt: nextMonthStart,
+          },
+        },
+        select: { code: true },
+      });
+
+      // Extract sequential numbers from existing codes and find the next one
+      const pattern = new RegExp(`^${companyPrefix}${month}${year}(\\d{2})$`);
+      const existingNumbers = existingQuotations
+        .map((q) => {
+          const match = q.code.match(pattern);
+          return match ? parseInt(match[1], 10) : 0;
+        })
+        .filter((num) => num > 0);
+
+      const nextSequentialNumber =
+        existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
+
+      return `${companyPrefix}${month}${year}${nextSequentialNumber.toString().padStart(2, "0")}`;
     };
 
-    let quotationCode = generateQuotationCode();
-
-    // Ensure code is unique
-    let existingQuotation = await prisma.quotation.findUnique({
-      where: { code: quotationCode },
-    });
-
-    while (existingQuotation) {
-      quotationCode = generateQuotationCode();
-      existingQuotation = await prisma.quotation.findUnique({
-        where: { code: quotationCode },
-      });
-    }
+    const quotationCode = await generateQuotationCode(requestData.company.name);
 
     // Create the quotation
     const quotation = await prisma.quotation.create({

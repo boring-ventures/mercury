@@ -14,6 +14,7 @@ import {
   Eye,
   Maximize2,
   X,
+  FileSignature,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useImporterContracts } from "@/hooks/use-importer-contracts";
@@ -132,6 +133,28 @@ function ProviderPaymentProofDisplay({
   const providerProofDoc = contract.documents?.find(
     (doc: any) => doc.type === "COMPROBANTE_PAGO_PROVEEDOR"
   );
+
+  // If there's no document but the status is PROVIDER_PAID, show a message
+  if (!providerProofDoc && contract.status === "PROVIDER_PAID") {
+    return (
+      <Card className="border-l-4 border-l-blue-500 bg-blue-50">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-sm font-medium text-blue-900">
+            <CheckCircle className="h-4 w-4" />
+            Pago al Proveedor Completado
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="bg-white p-3 rounded-lg border">
+            <p className="text-sm text-blue-800">
+              El administrador ha marcado el pago al proveedor como completado.
+              No se ha adjuntado un comprobante de pago.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (!providerProofDoc) {
     return null;
@@ -342,6 +365,36 @@ export default function ImporterContracts() {
   const { toast } = useToast();
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [showDocumentPreview, setShowDocumentPreview] = useState(false);
+  const [acceptingContractId, setAcceptingContractId] = useState<string | null>(null);
+
+  const handleAcceptContract = async (contractId: string) => {
+    setAcceptingContractId(contractId);
+    try {
+      const response = await fetch(`/api/contracts/${contractId}/accept`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al aceptar el contrato");
+      }
+
+      toast({
+        title: "Contrato aceptado",
+        description: "Has aceptado el contrato exitosamente. El administrador procederá con el siguiente paso.",
+      });
+
+      refetch();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo aceptar el contrato. Intenta de nuevo.",
+        variant: "destructive",
+      });
+    } finally {
+      setAcceptingContractId(null);
+    }
+  };
 
   const handlePreviewDocument = (document: any) => {
     setSelectedDocument(document);
@@ -523,12 +576,35 @@ export default function ImporterContracts() {
                   )}
 
                   {/* Provider Payment Proof Display */}
-                  {contract.status === "PAYMENT_COMPLETED" && (
+                  {(contract.status === "PROVIDER_PAID" || contract.status === "PAYMENT_COMPLETED") && (
                     <ProviderPaymentProofDisplay
                       contract={contract}
                       onPreviewDocument={handlePreviewDocument}
                       onDownloadDocument={handleDownloadDocument}
                     />
+                  )}
+
+                  {/* Contract Acceptance for DRAFT status */}
+                  {contract.status === "DRAFT" && (
+                    <div className="border-2 border-dashed border-green-300 rounded-lg p-6 bg-green-50">
+                      <div className="text-center">
+                        <FileSignature className="h-8 w-8 text-green-500 mx-auto mb-2" />
+                        <h4 className="font-medium text-green-900 mb-2">
+                          Contrato Pendiente de Aceptación
+                        </h4>
+                        <p className="text-sm text-green-700 mb-4">
+                          El administrador ha generado este contrato. Por favor revisa los términos y acepta el contrato para continuar.
+                        </p>
+                        <Button
+                          onClick={() => handleAcceptContract(contract.id)}
+                          disabled={acceptingContractId === contract.id}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          {acceptingContractId === contract.id ? "Aceptando..." : "Aceptar Contrato"}
+                        </Button>
+                      </div>
+                    </div>
                   )}
 
                   {/* Payment Proof Upload */}

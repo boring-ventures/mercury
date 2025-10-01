@@ -7,13 +7,60 @@ import { notifyAllAdmins } from "@/lib/notifications";
 import { resend, FROM_EMAIL } from "@/lib/resend";
 import { capitalizeCountry } from "@/lib/utils";
 
-// Helper function to generate request code
-function generateRequestCode(): string {
-  const timestamp = Date.now().toString().slice(-6);
-  const random = Math.floor(Math.random() * 1000)
-    .toString()
-    .padStart(3, "0");
-  return `SH-${timestamp}${random}`;
+// Helper function to generate request code with new format: [CompanyPrefix][Month][Year][SequentialNumber]
+async function generateRequestCode(companyName: string): Promise<string> {
+  // Generate company prefix: first two letters or first letter of each word
+  const generateCompanyPrefix = (name: string): string => {
+    const words = name.trim().split(/\s+/);
+    if (words.length === 1) {
+      // Single word: take first two letters
+      return words[0].substring(0, 2).toUpperCase();
+    } else {
+      // Multiple words: take first letter of each word
+      return words
+        .map((word) => word.charAt(0))
+        .join("")
+        .toUpperCase();
+    }
+  };
+
+  const companyPrefix = generateCompanyPrefix(companyName);
+
+  // Get current month and year
+  const now = new Date();
+  const month = (now.getMonth() + 1).toString().padStart(2, "0"); // 01-12
+  const year = now.getFullYear().toString().slice(-2); // Last 2 digits
+
+  // Find the highest sequential number for this company in the current month/year
+  const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+  const existingRequests = await prisma.request.findMany({
+    where: {
+      company: {
+        name: companyName,
+      },
+      createdAt: {
+        gte: currentMonthStart,
+        lt: nextMonthStart,
+      },
+    },
+    select: { code: true },
+  });
+
+  // Extract sequential numbers from existing codes and find the next one
+  const pattern = new RegExp(`^${companyPrefix}${month}${year}(\\d{2})$`);
+  const existingNumbers = existingRequests
+    .map((r) => {
+      const match = r.code.match(pattern);
+      return match ? parseInt(match[1], 10) : 0;
+    })
+    .filter((num) => num > 0);
+
+  const nextSequentialNumber =
+    existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
+
+  return `${companyPrefix}${month}${year}${nextSequentialNumber.toString().padStart(2, "0")}`;
 }
 
 interface DocumentUpload {
@@ -392,19 +439,18 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Generate unique request code
-    let code = generateRequestCode();
-    let existingRequest = await prisma.request.findUnique({
-      where: { code },
+    // Get company information for request code generation
+    const company = await prisma.company.findUnique({
+      where: { id: profile.companyId },
+      select: { name: true },
     });
 
-    // Ensure code is unique
-    while (existingRequest) {
-      code = generateRequestCode();
-      existingRequest = await prisma.request.findUnique({
-        where: { code },
-      });
+    if (!company) {
+      return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
+
+    // Generate unique request code
+    const code = await generateRequestCode(company.name);
 
     // Create the request
     const newRequest = await prisma.request.create({

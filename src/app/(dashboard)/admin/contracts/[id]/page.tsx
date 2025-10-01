@@ -36,6 +36,10 @@ import ContractPreview from "@/components/admin/contracts/contract-preview";
 import ContractEditor from "@/components/admin/contracts/contract-editor";
 import { ContractDateEdit } from "@/components/admin/contracts/contract-date-edit";
 import { ContractCompletionForm } from "@/components/admin/contracts/contract-completion-form";
+import {
+  Upload,
+  Paperclip,
+} from "lucide-react";
 
 function StatusBadge({ status }: { status: string }) {
   const getStatusConfig = (status: string) => {
@@ -46,10 +50,39 @@ function StatusBadge({ status }: { status: string }) {
           variant: "secondary" as const,
           icon: "FileText",
         };
-
+      case "ACTIVE":
+        return {
+          label: "Activo",
+          variant: "default" as const,
+          icon: "CheckCircle",
+        };
       case "COMPLETED":
         return {
           label: "Completado",
+          variant: "default" as const,
+          icon: "CheckSquare",
+        };
+      case "PAYMENT_PENDING":
+        return {
+          label: "Pago Pendiente",
+          variant: "secondary" as const,
+          icon: "Clock",
+        };
+      case "PAYMENT_REVIEWED":
+        return {
+          label: "Pago Revisado",
+          variant: "default" as const,
+          icon: "CheckCircle",
+        };
+      case "PROVIDER_PAID":
+        return {
+          label: "Proveedor Pagado",
+          variant: "default" as const,
+          icon: "CheckCircle",
+        };
+      case "PAYMENT_COMPLETED":
+        return {
+          label: "Pago Completado",
           variant: "default" as const,
           icon: "CheckSquare",
         };
@@ -114,12 +147,339 @@ function isExpired(endDate: string): boolean {
   return new Date(endDate) < new Date();
 }
 
+// Payment Review Component
+function PaymentReviewSection({ contract, onReviewComplete }: { contract: any; onReviewComplete: () => void }) {
+  const [isReviewing, setIsReviewing] = useState(false);
+  const [reviewNotes, setReviewNotes] = useState("");
+  const { toast } = useToast();
+
+  const payment = contract.payments?.[0];
+  const paymentDocument = contract.documents?.find((doc: any) => doc.type === "COMPROBANTE_PAGO");
+
+  if (!payment || !paymentDocument) {
+    return null;
+  }
+
+  const handleReview = async (action: "APPROVE" | "REJECT") => {
+    setIsReviewing(true);
+    try {
+      const response = await fetch(`/api/admin/payments/${payment.id}/review`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, reviewNotes }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al revisar el pago");
+      }
+
+      toast({
+        title: action === "APPROVE" ? "Pago aprobado" : "Pago rechazado",
+        description: `El pago ha sido ${action === "APPROVE" ? "aprobado" : "rechazado"} exitosamente.`,
+      });
+
+      onReviewComplete();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo completar la revisión del pago.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsReviewing(false);
+    }
+  };
+
+  return (
+    <Card className="border-2 border-yellow-300 bg-yellow-50">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-yellow-900">
+          <AlertCircle className="h-5 w-5" />
+          Revisar Comprobante de Pago
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div>
+          <label className="text-sm font-medium text-gray-700">Documento</label>
+          <div className="flex items-center gap-2 mt-1">
+            <Paperclip className="h-4 w-4 text-gray-500" />
+            <a
+              href={paymentDocument.fileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              {paymentDocument.filename}
+            </a>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Subido el {new Date(paymentDocument.createdAt).toLocaleDateString("es-ES")}
+          </p>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-gray-700">Notas de Revisión</label>
+          <textarea
+            className="w-full mt-1 p-2 border rounded-md"
+            rows={3}
+            value={reviewNotes}
+            onChange={(e) => setReviewNotes(e.target.value)}
+            placeholder="Escribe comentarios sobre la revisión..."
+          />
+        </div>
+
+        <div className="flex gap-2">
+          <Button
+            onClick={() => handleReview("APPROVE")}
+            disabled={isReviewing}
+            className="flex-1 bg-green-600 hover:bg-green-700"
+          >
+            <CheckCircle className="h-4 w-4 mr-2" />
+            Aprobar Pago
+          </Button>
+          <Button
+            onClick={() => handleReview("REJECT")}
+            disabled={isReviewing}
+            variant="destructive"
+            className="flex-1"
+          >
+            <XCircle className="h-4 w-4 mr-2" />
+            Rechazar Pago
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Provider Payment Upload Component
+function ProviderPaymentUploadSection({ contract, onUploadComplete }: { contract: any; onUploadComplete: () => void }) {
+  const [isUploading, setIsUploading] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [notes, setNotes] = useState("");
+  const { toast } = useToast();
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!file) {
+      toast({
+        title: "Error",
+        description: "Por favor selecciona un archivo",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("contractId", contract.id);
+      formData.append("paymentId", contract.payments[0].id);
+      formData.append("notes", notes);
+
+      const response = await fetch("/api/admin/payments/upload-provider-proof", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al subir el comprobante");
+      }
+
+      toast({
+        title: "Comprobante subido",
+        description: "El comprobante de pago al proveedor ha sido subido exitosamente.",
+      });
+
+      setFile(null);
+      setNotes("");
+      onUploadComplete();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo subir el comprobante de pago.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleMarkProviderPaid = async () => {
+    setIsUploading(true);
+    try {
+      const payment = contract.payments[0];
+      const response = await fetch(`/api/admin/payments/${payment.id}/review`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "MARK_PROVIDER_PAID", reviewNotes: notes }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al marcar como pagado");
+      }
+
+      toast({
+        title: "Pago registrado",
+        description: "El pago al proveedor ha sido registrado exitosamente.",
+      });
+
+      onUploadComplete();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo registrar el pago al proveedor.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  return (
+    <Card className="border-2 border-blue-300 bg-blue-50">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-blue-900">
+          <Upload className="h-5 w-5" />
+          Pago al Proveedor
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-blue-800">
+          El pago del importador ha sido aprobado. Ahora debes realizar el pago al proveedor y subir el comprobante.
+        </p>
+
+        <div>
+          <label className="text-sm font-medium text-gray-700">Comprobante de Pago al Proveedor</label>
+          <input
+            type="file"
+            accept="application/pdf,image/*"
+            onChange={handleFileChange}
+            className="w-full mt-1 p-2 border rounded-md"
+          />
+          {file && (
+            <p className="text-xs text-gray-600 mt-1">
+              Archivo seleccionado: {file.name}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-gray-700">Notas</label>
+          <textarea
+            className="w-full mt-1 p-2 border rounded-md"
+            rows={3}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Información adicional sobre el pago..."
+          />
+        </div>
+
+        <div className="flex gap-2">
+          <Button
+            onClick={handleUpload}
+            disabled={isUploading || !file}
+            className="flex-1"
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Subir Comprobante
+          </Button>
+          <Button
+            onClick={handleMarkProviderPaid}
+            disabled={isUploading}
+            variant="outline"
+            className="flex-1"
+          >
+            <CheckCircle className="h-4 w-4 mr-2" />
+            Marcar como Pagado
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Payment Documents Display
+function PaymentDocumentsDisplay({ contract }: { contract: any }) {
+  const importerPaymentDoc = contract.documents?.find((doc: any) => doc.type === "COMPROBANTE_PAGO");
+  const providerPaymentDoc = contract.documents?.find((doc: any) => doc.type === "COMPROBANTE_PAGO_PROVEEDOR");
+
+  if (!importerPaymentDoc && !providerPaymentDoc) {
+    return null;
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <FileText className="h-5 w-5" />
+          Documentos de Pago
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {importerPaymentDoc && (
+          <div className="p-3 border rounded-md">
+            <p className="text-sm font-medium text-gray-700 mb-2">Comprobante del Importador</p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Paperclip className="h-4 w-4 text-gray-500" />
+                <span className="text-sm">{importerPaymentDoc.filename}</span>
+              </div>
+              <Button size="sm" variant="outline" asChild>
+                <a href={importerPaymentDoc.fileUrl} target="_blank" rel="noopener noreferrer">
+                  <Eye className="h-4 w-4 mr-2" />
+                  Ver
+                </a>
+              </Button>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Subido el {new Date(importerPaymentDoc.createdAt).toLocaleDateString("es-ES")}
+            </p>
+          </div>
+        )}
+
+        {providerPaymentDoc && (
+          <div className="p-3 border rounded-md bg-green-50">
+            <p className="text-sm font-medium text-gray-700 mb-2">Comprobante al Proveedor</p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Paperclip className="h-4 w-4 text-gray-500" />
+                <span className="text-sm">{providerPaymentDoc.filename}</span>
+              </div>
+              <Button size="sm" variant="outline" asChild>
+                <a href={providerPaymentDoc.fileUrl} target="_blank" rel="noopener noreferrer">
+                  <Eye className="h-4 w-4 mr-2" />
+                  Ver
+                </a>
+              </Button>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Subido el {new Date(providerPaymentDoc.createdAt).toLocaleDateString("es-ES")}
+            </p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function AdminContractDetail() {
   const params = useParams();
   const contractId = params.id as string;
-  const { data, isLoading, error } = useAdminContract(contractId);
+  const queryClient = useQueryClient();
+  const { data, isLoading, error, refetch } = useAdminContract(contractId);
   const contract = data?.contract;
   const { toast } = useToast();
+
+  const handleRefresh = () => {
+    refetch();
+  };
 
   const [showDateEdit, setShowDateEdit] = useState(false);
   const [selectedContractDates, setSelectedContractDates] = useState<{
@@ -648,13 +1008,13 @@ export default function AdminContractDetail() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <h2 className="text-2xl font-bold">Edición del Contrato</h2>
-              {contract.status === "DRAFT" && (
+              {(contract.status === "DRAFT" || contract.status === "ACTIVE") && (
                 <div className="flex items-center gap-2 px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
                   <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                  Borrador - Editable
+                  Editable
                 </div>
               )}
-              {contract.status === "COMPLETED" && (
+              {(contract.status === "COMPLETED" || contract.status === "PAYMENT_PENDING" || contract.status === "PAYMENT_REVIEWED" || contract.status === "PROVIDER_PAID" || contract.status === "PAYMENT_COMPLETED") && (
                 <div className="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                   Solo Lectura
@@ -671,8 +1031,21 @@ export default function AdminContractDetail() {
             onDownload={handleDownload}
             contractCode={contract?.code || contractId}
             contract={contract}
-            isReadOnly={contract.status === "COMPLETED"}
+            isReadOnly={contract.status !== "DRAFT" && contract.status !== "ACTIVE"}
           />
+
+          {/* Payment Review Section - Show when status is PAYMENT_PENDING */}
+          {contract.status === "PAYMENT_PENDING" && (
+            <PaymentReviewSection contract={contract} onReviewComplete={handleRefresh} />
+          )}
+
+          {/* Provider Payment Upload Section - Show when status is PAYMENT_REVIEWED */}
+          {contract.status === "PAYMENT_REVIEWED" && (
+            <ProviderPaymentUploadSection contract={contract} onUploadComplete={handleRefresh} />
+          )}
+
+          {/* Payment Documents Display - Show when there are payment documents */}
+          <PaymentDocumentsDisplay contract={contract} />
         </div>
 
         {/* Sidebar */}

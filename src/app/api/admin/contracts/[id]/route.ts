@@ -68,6 +68,16 @@ export async function GET(
             documents: true,
           },
         },
+        payments: {
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
+        documents: {
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
       },
     });
 
@@ -93,6 +103,30 @@ export async function GET(
       conditions: contract.conditions || null,
       createdAt: contract.createdAt.toISOString(),
       additionalData: contract.additionalData,
+      payments: contract.payments?.map((payment) => ({
+        id: payment.id,
+        code: payment.code,
+        amount: toNumber(payment.amount),
+        currency: payment.currency,
+        status: payment.status,
+        type: payment.type,
+        description: payment.description,
+        reference: payment.reference,
+        dueDate: payment.dueDate?.toISOString(),
+        paidAt: payment.paidAt?.toISOString(),
+        createdAt: payment.createdAt.toISOString(),
+      })) || [],
+      documents: contract.documents?.map((doc) => ({
+        id: doc.id,
+        filename: doc.filename,
+        fileUrl: doc.fileUrl,
+        fileSize: doc.fileSize,
+        mimeType: doc.mimeType,
+        type: doc.type,
+        status: doc.status,
+        documentInfo: doc.documentInfo,
+        createdAt: doc.createdAt.toISOString(),
+      })) || [],
       request: contract.request
         ? {
             id: contract.request.id,
