@@ -374,37 +374,72 @@ export function useRequestWorkflow() {
     const hasDraftContract =
       hasContract &&
       request.contracts?.some((c: WorkflowContract) => c.status === "DRAFT");
+    const hasCompletedContract =
+      hasContract &&
+      request.contracts?.some((c: WorkflowContract) => c.status === "COMPLETED");
 
-    // Check if has payments to provider
+    // Check contract payment statuses
+    const hasPaymentPending =
+      hasContract &&
+      request.contracts?.some((c: WorkflowContract) => c.status === "PAYMENT_PENDING");
+    const hasPaymentReviewed =
+      hasContract &&
+      request.contracts?.some((c: WorkflowContract) => c.status === "PAYMENT_REVIEWED");
+    const hasProviderPaid =
+      hasContract &&
+      request.contracts?.some((c: WorkflowContract) => c.status === "PROVIDER_PAID");
+    const hasPaymentCompleted =
+      hasContract &&
+      request.contracts?.some((c: WorkflowContract) => c.status === "PAYMENT_COMPLETED");
+
+    // Check if has payments to provider (legacy check)
     const hasProviderPayment = request.payments && request.payments.length > 0;
-    const hasProviderPaymentCompleted =
-      hasProviderPayment &&
-      request.payments?.some(
-        (p: WorkflowPayment) => p.type === "DEPOSIT" && p.status === "COMPLETED"
-      );
 
     // Check if process is completed
-    const isCompleted = request.status === "COMPLETED";
+    const isCompleted = request.status === "COMPLETED" || hasPaymentCompleted;
 
     let step = 1;
-    if (isCompleted)
-      step = 5; // Factura Final
-    else if (hasProviderPaymentCompleted)
-      step = 4; // Pago a Proveedor
-    else if (hasActiveContract || hasDraftContract)
-      step = 3; // Contrato
-    else if (hasApprovedQuotation)
-      step = 3; // Contrato (quotation approved, ready for contract)
-    else if (hasActiveQuotation)
-      step = 2; // Cotización
-    else step = 1; // Nueva Solicitud
+
+    // Step 5: Factura Final - Payment to provider completed
+    if (isCompleted || hasPaymentCompleted || hasProviderPaid) {
+      step = 5;
+    }
+    // Step 4: Pago a Proveedor - Payment process started (pending, reviewed, or completed)
+    else if (hasPaymentPending || hasPaymentReviewed || hasProviderPayment || hasCompletedContract) {
+      step = 4;
+    }
+    // Step 3: Contrato - Contract exists (draft or active)
+    else if (hasActiveContract || hasDraftContract) {
+      step = 3;
+    }
+    // Step 3: Contrato - Quotation approved, ready for contract
+    else if (hasApprovedQuotation) {
+      step = 3;
+    }
+    // Step 2: Cotización - Active quotation
+    else if (hasActiveQuotation) {
+      step = 2;
+    }
+    // Step 1: Nueva Solicitud - Default
+    else {
+      step = 1;
+    }
 
     console.log("Workflow step calculation:", {
       requestId: request.id || request.code,
       hasQuotation,
       hasActiveQuotation,
       hasApprovedQuotation,
+      hasContract,
+      hasActiveContract,
+      hasDraftContract,
+      hasCompletedContract,
+      hasPaymentPending,
+      hasPaymentReviewed,
+      hasProviderPaid,
+      hasPaymentCompleted,
       quotations: request.quotations,
+      contracts: request.contracts,
       step,
       requestStatus: request.status,
     });
