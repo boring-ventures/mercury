@@ -18,7 +18,7 @@ import {
   Calendar,
   DollarSign,
 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/use-toast";
 import Image from "next/image";
 import {
   Dialog,
