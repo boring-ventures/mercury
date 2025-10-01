@@ -425,144 +425,136 @@ function QuotationReviewModal({
               </div>
             )}
 
-          {/* Quotation Summary */}
+          {/* Header with Status and Dates */}
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center">
-                <p className="text-xs text-blue-600 mb-1">Monto Principal</p>
-                <p className="font-bold text-lg text-blue-900">
-                  {formatCurrency(quotation.amount, quotation.currency)}
-                </p>
-              </div>
-              <div className="text-center">
-                <p className="text-xs text-blue-600 mb-1">Total en Bs</p>
-                <p className="font-bold text-lg text-blue-900">
-                  {formatCurrency(quotation.totalInBs, "Bs")}
-                </p>
-              </div>
-              <div className="text-center">
-                <p className="text-xs text-blue-600 mb-1">Estado</p>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
                 <Badge className={getStatusColor(quotation.status)}>
                   {getStatusLabel(quotation.status)}
                 </Badge>
+                <span className="text-sm text-gray-600">
+                  Cotización {quotation.code}
+                </span>
+              </div>
+              <div className="text-right text-sm text-gray-600">
+                <div className="flex items-center gap-1 mb-1">
+                  <Calendar className="h-4 w-4" />
+                  Creada:{" "}
+                  {format(new Date(quotation.createdAt), "dd/MM/yyyy", {
+                    locale: es,
+                  })}
+                </div>
+                <div className="flex items-center gap-1">
+                  <Clock className="h-4 w-4" />
+                  Válida hasta:{" "}
+                  {format(new Date(quotation.validUntil), "dd/MM/yyyy", {
+                    locale: es,
+                  })}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Status and Date */}
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-600">
-              <Calendar className="h-4 w-4 inline mr-1" />
-              Creada el:{" "}
-              {format(new Date(quotation.createdAt), "dd/MM/yyyy", {
-                locale: es,
-              })}
-            </div>
-            <div className="text-sm text-gray-600">
-              <Clock className="h-4 w-4 inline mr-1" />
-              Válida hasta:{" "}
-              {format(new Date(quotation.validUntil), "dd/MM/yyyy", {
-                locale: es,
-              })}
-            </div>
-          </div>
+          {/* Main Quotation Details */}
+          <div className="space-y-4">
+            {/* Conversion Flow */}
+            <div className="bg-gradient-to-r from-blue-50 to-green-50 p-4 rounded-lg border border-blue-200">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                {/* USD Amount */}
+                <div className="text-center">
+                  <p className="text-sm text-blue-600 mb-1">
+                    Monto a enviar (USD)
+                  </p>
+                  <p className="font-bold text-2xl text-blue-900">
+                    {formatCurrency(quotation.amount, quotation.currency)}
+                  </p>
+                </div>
 
-          {/* Amount Breakdown */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-gray-50 p-3 rounded-lg">
-              <p className="text-xs text-gray-600 mb-1">Monto Principal</p>
-              <p className="font-semibold">
-                {formatCurrency(quotation.amount, quotation.currency)}
-              </p>
+                {/* Exchange Rate */}
+                <div className="text-center">
+                  <p className="text-sm text-gray-600 mb-1">Tipo de cambio</p>
+                  <p className="font-bold text-lg text-gray-900">
+                    {quotation.exchangeRate
+                      ? `1 USD = ${formatExchangeRate(quotation.exchangeRate)} Bs`
+                      : "No disponible"}
+                  </p>
+                  <div className="flex justify-center mt-2">
+                    <ArrowRight className="h-4 w-4 text-gray-500" />
+                  </div>
+                </div>
+
+                {/* Converted Amount */}
+                <div className="text-center">
+                  <p className="text-sm text-green-600 mb-1">
+                    Monto a enviar en Bs
+                  </p>
+                  <p className="font-bold text-2xl text-green-900">
+                    {formatCurrency(quotation.amountInBs, "Bs")}
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="bg-gray-50 p-3 rounded-lg">
-              <p className="text-xs text-gray-600 mb-1">Servicio de Gestión</p>
-              <p className="font-semibold">
-                {formatCurrency(quotation.managementServiceBs, "Bs")}
+
+            {/* Banking Fees */}
+            <div className="bg-gray-50 p-4 rounded-lg border">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Swift Fees */}
+                <div className="text-center">
+                  <p className="text-sm text-gray-600 mb-1">Swift Bancario</p>
+                  <div className="space-y-1">
+                    <p className="font-bold text-lg text-gray-900">
+                      {formatCurrency(quotation.swiftBankUSD, "USD")}
+                    </p>
+                    <p className="text-sm text-gray-500">→</p>
+                    <p className="font-bold text-lg text-gray-900">
+                      {formatCurrency(quotation.swiftBankBs, "Bs")}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Banco Corresponsal Fees */}
+                <div className="text-center">
+                  <p className="text-sm text-gray-600 mb-1">
+                    Banco Corresponsal
+                  </p>
+                  <div className="space-y-1">
+                    <p className="font-bold text-lg text-gray-900">
+                      {formatCurrency(quotation.correspondentBankUSD, "USD")}
+                    </p>
+                    <p className="text-sm text-gray-500">→</p>
+                    <p className="font-bold text-lg text-gray-900">
+                      {formatCurrency(quotation.correspondentBankBs, "Bs")}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Service Fee */}
+            <div className="bg-gray-50 p-4 rounded-lg border">
+              <div className="text-center">
+                <p className="text-sm text-gray-600 mb-2">
+                  Servicio de gestión (Bs)
+                </p>
+                <p className="font-bold text-xl text-gray-900">
+                  {formatCurrency(quotation.managementServiceBs, "Bs")}
+                </p>
                 {quotation.managementServicePercentage && (
-                  <span className="text-xs text-gray-500 block">
+                  <p className="text-xs text-gray-500 mt-1">
                     ({quotation.managementServicePercentage}%)
-                  </span>
+                  </p>
                 )}
-              </p>
+              </div>
             </div>
-            <div className="bg-gray-50 p-3 rounded-lg">
-              <p className="text-xs text-gray-600 mb-1">Banco Corresponsal</p>
-              <p className="font-semibold">
-                {formatCurrency(quotation.correspondentBankUSD, "USD")}
-              </p>
-            </div>
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <p className="text-xs text-blue-600 mb-1">Total en Bs</p>
-              <p className="font-bold text-lg text-blue-900">
-                {formatCurrency(quotation.totalInBs, "Bs")}
-              </p>
-            </div>
-          </div>
 
-          {/* Exchange Rate and Banking Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-green-50 p-3 rounded-lg">
-              <div className="flex items-center gap-2 mb-1">
-                <TrendingUp className="h-4 w-4 text-green-600" />
-                <p className="text-xs text-green-600 font-medium">
-                  Tipo de Cambio
+            {/* Final Total */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border-2 border-blue-300">
+              <div className="text-center">
+                <p className="text-lg text-blue-600 mb-2 font-bold">
+                  TOTAL EN BS
                 </p>
-              </div>
-              <p className="font-semibold text-green-900">
-                {quotation.exchangeRate
-                  ? `1 USD = ${formatExchangeRate(quotation.exchangeRate)} Bs`
-                  : "No disponible"}
-              </p>
-            </div>
-            <div className="bg-purple-50 p-3 rounded-lg">
-              <div className="flex items-center gap-2 mb-1">
-                <Banknote className="h-4 w-4 text-purple-600" />
-                <p className="text-xs text-purple-600 font-medium">
-                  Monto en Bs
-                </p>
-              </div>
-              <p className="font-semibold text-purple-900">
-                {formatCurrency(quotation.amountInBs, "Bs")}
-              </p>
-            </div>
-          </div>
-
-          {/* Banking Fees Breakdown */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <div className="flex items-center gap-2 mb-3">
-              <Calculator className="h-5 w-5 text-gray-700" />
-              <h4 className="font-medium text-gray-900">
-                Desglose de Comisiones Bancarias
-              </h4>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">
-                  Banco Corresponsal (Bs)
-                </p>
-                <p className="font-semibold">
-                  {formatCurrency(quotation.correspondentBankBs, "Bs")}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600 mb-1">
-                  Banco Corresponsal (USD)
-                </p>
-                <p className="font-semibold">
-                  {formatCurrency(quotation.correspondentBankUSD, "USD")}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600 mb-1">SWIFT Bank (Bs)</p>
-                <p className="font-semibold">
-                  {formatCurrency(quotation.swiftBankBs, "Bs")}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600 mb-1">SWIFT Bank (USD)</p>
-                <p className="font-semibold">
-                  {formatCurrency(quotation.swiftBankUSD, "USD")}
+                <p className="font-bold text-4xl text-blue-900">
+                  {formatCurrency(quotation.totalInBs, "Bs")}
                 </p>
               </div>
             </div>

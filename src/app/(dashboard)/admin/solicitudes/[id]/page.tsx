@@ -2889,7 +2889,10 @@ export default function AdminSolicitudDetail() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="font-medium">Documentos:</span>
-                    <span>{request.documents?.length || 0}</span>
+                    <span>
+                      {(request.documents?.length || 0) +
+                        (userDocumentsData?.totalDocuments || 0)}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="font-medium">Creado por:</span>
@@ -3271,23 +3274,25 @@ export default function AdminSolicitudDetail() {
                       Cargando documentos del usuario...
                     </span>
                   </div>
-                ) : userDocumentsData?.documents &&
-                  userDocumentsData.documents.length > 0 ? (
+                ) : userDocumentsData?.companyRegistrationDocuments &&
+                  userDocumentsData.companyRegistrationDocuments.length > 0 ? (
                   <div className="space-y-3">
-                    {userDocumentsData.documents.map((document: any) => (
-                      <DocumentCard
-                        key={document.id}
-                        document={document}
-                        requestId={request.id}
-                        compact={true}
-                      />
-                    ))}
+                    {userDocumentsData.companyRegistrationDocuments.map(
+                      (document: any) => (
+                        <DocumentCard
+                          key={document.id}
+                          document={document}
+                          requestId={request.id}
+                          compact={true}
+                        />
+                      )
+                    )}
                   </div>
                 ) : (
                   <Card>
                     <CardContent className="py-4">
                       <p className="text-sm text-gray-500 text-center">
-                        No hay documentos adicionales del usuario
+                        No hay documentos de registro de la empresa
                       </p>
                     </CardContent>
                   </Card>

@@ -38,7 +38,8 @@ export async function GET(
       id: note.id,
       content: note.message,
       author: note.profile
-        ? `${note.profile.firstName} ${note.profile.lastName}`
+        ? `${note.profile.firstName || ""} ${note.profile.lastName || ""}`.trim() ||
+          "Usuario"
         : "Sistema",
       createdAt: note.createdAt,
     }));
@@ -130,7 +131,8 @@ export async function POST(
       id: note.id,
       content: note.message,
       author: note.profile
-        ? `${note.profile.firstName} ${note.profile.lastName}`
+        ? `${note.profile.firstName || ""} ${note.profile.lastName || ""}`.trim() ||
+          "Usuario"
         : "Sistema",
       createdAt: note.createdAt,
     };

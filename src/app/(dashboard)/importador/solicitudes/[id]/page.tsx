@@ -581,124 +581,114 @@ function QuotationCard({
       </div>
 
       {/* Amount Breakdown */}
-      <div className="mb-6">
-        <h5 className="font-medium text-gray-900 mb-3">
-          Resumen de Cotización
-        </h5>
-        {/* Summary */}
-        <div className="bg-gray-50 border rounded-lg p-4 mb-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white border rounded-md p-3">
-              <p className="text-xs text-gray-600">Monto Principal</p>
-              <p className="text-lg font-semibold">
+      <div className="mb-6 space-y-4">
+        {/* Conversion Flow */}
+        <div className="bg-gradient-to-r from-blue-50 to-green-50 p-4 rounded-lg border border-blue-200">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+            {/* USD Amount */}
+            <div className="text-center">
+              <p className="text-sm text-blue-600 mb-1">Monto a enviar (USD)</p>
+              <p className="font-bold text-2xl text-blue-900">
                 {formatCurrency(quotation.amount, quotation.currency)}
               </p>
             </div>
-            {quotation.exchangeRate ? (
-              <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-                <p className="text-xs text-blue-700">Tipo de cambio</p>
-                <p className="text-lg font-semibold text-blue-900">
-                  1 USD = {formatExchangeRate(quotation.exchangeRate)} Bs
-                </p>
+
+            {/* Exchange Rate */}
+            <div className="text-center">
+              <p className="text-sm text-gray-600 mb-1">Tipo de cambio</p>
+              <p className="font-bold text-lg text-gray-900">
+                {quotation.exchangeRate
+                  ? `1 USD = ${formatExchangeRate(quotation.exchangeRate)} Bs`
+                  : "No disponible"}
+              </p>
+              <div className="flex justify-center mt-2">
+                <ArrowRight className="h-4 w-4 text-gray-500" />
               </div>
-            ) : null}
-            {computedAmountInBs ? (
-              <div className="bg-white border rounded-md p-3">
-                <p className="text-xs text-gray-600">Monto convertido</p>
-                <p className="text-lg font-semibold text-gray-900">
-                  {formatCurrency(computedAmountInBs, "Bs")}
-                </p>
-              </div>
-            ) : null}
-          </div>
-          <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-600">
-            <span className="px-2 py-1 bg-white border rounded">
-              Válida hasta:{" "}
-              {format(new Date(quotation.validUntil), "dd/MM/yyyy HH:mm", {
-                locale: es,
-              })}
-            </span>
+            </div>
+
+            {/* Converted Amount */}
+            <div className="text-center">
+              <p className="text-sm text-green-600 mb-1">
+                Monto a enviar en Bs
+              </p>
+              <p className="font-bold text-2xl text-green-900">
+                {formatCurrency(computedAmountInBs || 0, "Bs")}
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Detailed breakdown */}
-        <h5 className="font-medium text-gray-900 mb-3">Desglose de Costos</h5>
-        <div className="bg-white border rounded-lg p-4">
-          <div className="flex items-center justify-between text-xs text-gray-500 pb-2 border-b">
-            <span className="font-medium text-gray-700">Concepto</span>
-            <div className="flex items-center gap-8">
-              <span className="w-28 text-right whitespace-nowrap">USD</span>
-              <span className="w-28 text-right whitespace-nowrap">Bs</span>
-            </div>
-          </div>
-          <div className="divide-y">
-            <div className="flex items-center justify-between py-3">
-              <span className="text-sm text-gray-700">SWIFT</span>
-              <div className="flex items-center gap-8">
-                <span className="w-28 text-right font-semibold text-lg">
+        {/* Banking Fees */}
+        <div className="bg-gray-50 p-4 rounded-lg border">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Swift Fees */}
+            <div className="text-center">
+              <p className="text-sm text-gray-600 mb-1">Swift Bancario</p>
+              <div className="space-y-1">
+                <p className="font-bold text-lg text-gray-900">
                   {quotation.swiftBankUSD
                     ? formatCurrency(quotation.swiftBankUSD, quotation.currency)
                     : "—"}
-                </span>
-                <span className="w-28 text-right font-semibold text-lg">
+                </p>
+                <p className="text-sm text-gray-500">→</p>
+                <p className="font-bold text-lg text-gray-900">
                   {quotation.swiftBankBs
                     ? formatCurrency(quotation.swiftBankBs, "Bs")
                     : "—"}
-                </span>
+                </p>
               </div>
             </div>
-            <div className="flex items-center justify-between py-3">
-              <span className="text-sm text-gray-700">Banco Corresponsal</span>
-              <div className="flex items-center gap-8">
-                <span className="w-28 text-right font-semibold text-lg">
+
+            {/* Banco Corresponsal Fees */}
+            <div className="text-center">
+              <p className="text-sm text-gray-600 mb-1">Banco Corresponsal</p>
+              <div className="space-y-1">
+                <p className="font-bold text-lg text-gray-900">
                   {quotation.correspondentBankUSD
                     ? formatCurrency(
                         quotation.correspondentBankUSD,
                         quotation.currency
                       )
                     : "—"}
-                </span>
-                <span className="w-28 text-right font-semibold text-lg">
+                </p>
+                <p className="text-sm text-gray-500">→</p>
+                <p className="font-bold text-lg text-gray-900">
                   {quotation.correspondentBankBs
                     ? formatCurrency(quotation.correspondentBankBs, "Bs")
                     : "—"}
-                </span>
+                </p>
               </div>
             </div>
           </div>
         </div>
-        {/* Management service (local only) */}
-        <div className="bg-white border rounded-lg p-4 mt-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-700">
-              Servicio de Gestión
-            </span>
-            <div className="flex items-center gap-2">
-              {quotation.managementServicePercentage ? (
-                <span className="text-[11px] px-2 py-0.5 bg-gray-50 border rounded">
-                  {formatPercentage(quotation.managementServicePercentage)}%
-                </span>
-              ) : null}
-              <span className="text-lg font-semibold">
-                {quotation.managementServiceBs
-                  ? formatCurrency(quotation.managementServiceBs, "Bs")
-                  : "—"}
-              </span>
-            </div>
+
+        {/* Service Fee */}
+        <div className="bg-gray-50 p-4 rounded-lg border">
+          <div className="text-center">
+            <p className="text-sm text-gray-600 mb-2">
+              Servicio de gestión (Bs)
+            </p>
+            <p className="font-bold text-xl text-gray-900">
+              {quotation.managementServiceBs
+                ? formatCurrency(quotation.managementServiceBs, "Bs")
+                : "—"}
+            </p>
+            {quotation.managementServicePercentage && (
+              <p className="text-xs text-gray-500 mt-1">
+                ({formatPercentage(quotation.managementServicePercentage)}%)
+              </p>
+            )}
           </div>
         </div>
-        {/* Final total row */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
-          <p className="text-sm font-medium text-blue-800 mb-1">
-            Total a pagar (estimado)
-          </p>
-          <p className="text-3xl font-extrabold text-blue-900">
-            {formatCurrency(computedTotalInBs || 0, "Bs")}
-          </p>
-          <p className="text-xs text-blue-800 mt-2">
-            El total incluye los cargos indicados y puede variar por ajustes
-            bancarios.
-          </p>
+
+        {/* Final Total */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border-2 border-blue-300">
+          <div className="text-center">
+            <p className="text-lg text-blue-600 mb-2 font-bold">TOTAL EN BS</p>
+            <p className="font-bold text-4xl text-blue-900">
+              {formatCurrency(computedTotalInBs || 0, "Bs")}
+            </p>
+          </div>
         </div>
       </div>
 

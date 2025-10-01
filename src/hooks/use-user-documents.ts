@@ -20,7 +20,9 @@ interface UserDocument {
 }
 
 interface UserDocumentsResponse {
-  documents: UserDocument[];
+  companyRegistrationDocuments: UserDocument[];
+  requestDocuments: UserDocument[];
+  totalDocuments: number;
 }
 
 export const useUserDocuments = (requestId: string, companyId: string) => {

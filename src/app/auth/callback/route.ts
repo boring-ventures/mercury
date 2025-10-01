@@ -9,7 +9,8 @@ export async function GET(request: NextRequest) {
   const code = requestUrl.searchParams.get("code");
 
   if (code) {
-    const supabase = createRouteHandlerClient({ cookies });
+    const cookieStore = await cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
     const { data } = await supabase.auth.exchangeCodeForSession(code);
 
     // Create user profile in Prisma if it doesn't exist and we have a session

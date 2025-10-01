@@ -46,15 +46,42 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch documents for this company and request
-    const documents = await prisma.document.findMany({
+    // Fetch company registration documents (only registration-related documents)
+    const companyRegistrationDocuments = await prisma.document.findMany({
       where: {
-        OR: [
-          // Documents related to the specific request
-          { requestId: requestId },
-          // Documents uploaded by this company
-          { companyId: companyId },
-        ],
+        companyId: companyId,
+        type: {
+          in: [
+            "CARNET_IDENTIDAD",
+            "NIT",
+            "MATRICULA_COMERCIO",
+            "PODER_REPRESENTANTE",
+          ],
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      include: {
+        company: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    // Fetch request-specific documents (documents uploaded for this specific request)
+    const requestDocuments = await prisma.document.findMany({
+      where: {
+        requestId: requestId,
+        type: {
+          notIn: [
+            "CARNET_IDENTIDAD",
+            "NIT",
+            "MATRICULA_COMERCIO",
+            "PODER_REPRESENTANTE",
+          ],
+        },
       },
       orderBy: { createdAt: "desc" },
       include: {
@@ -73,7 +100,12 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ documents });
+    return NextResponse.json({
+      companyRegistrationDocuments,
+      requestDocuments,
+      totalDocuments:
+        companyRegistrationDocuments.length + requestDocuments.length,
+    });
   } catch (error) {
     console.error("Error fetching user documents:", error);
     return NextResponse.json(

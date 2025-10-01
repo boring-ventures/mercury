@@ -131,11 +131,6 @@ export const importadorSidebarData: SidebarData = {
           icon: LayoutDashboard,
         },
         {
-          title: "Notificaciones",
-          url: "/dashboard/notifications",
-          icon: Bell,
-        },
-        {
           title: "Mis Solicitudes",
           url: "/importador/solicitudes",
           icon: Package,
@@ -174,11 +169,6 @@ export const importadorSidebarData: SidebarData = {
           title: "Mi Perfil",
           url: "/importador/perfil",
           icon: Settings,
-        },
-        {
-          title: "Centro de Ayuda",
-          url: "/help-center",
-          icon: HelpCircle,
         },
       ],
     },
