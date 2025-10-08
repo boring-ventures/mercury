@@ -281,26 +281,7 @@ export default function NuevaSolicitud() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate required fields - now only documents are required
-    if (!formData.amount) {
-      toast({
-        title: "Campo requerido",
-        description: "Por favor ingresa el monto de la solicitud",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Check that at least one document is uploaded
-    if (!documents.proforma && !documents.factura) {
-      toast({
-        title: "Documento requerido",
-        description:
-          "Debes subir al menos un documento: Proforma Invoice o Factura Comercial",
-        variant: "destructive",
-      });
-      return;
-    }
+    // No validation required - all fields are optional
 
     // Prepare documents for submission
     const documentsForSubmission = Object.values(documents).map((doc) => ({
@@ -314,19 +295,19 @@ export default function NuevaSolicitud() {
 
     // Create request - redirect will happen in onSuccess callback
     createRequest({
-      amount: parseFloat(formData.amount),
+      amount: formData.amount ? parseFloat(formData.amount) : undefined,
       currency: formData.currency,
-      description: formData.description,
-      providerName: formData.providerName,
-      providerCountry: formData.providerCountry,
-      providerBankName: formData.providerBankName,
-      providerAccountNumber: formData.providerAccountNumber,
-      providerSwiftCode: formData.providerSwiftCode,
-      providerBankAddress: formData.providerBankAddress,
-      providerBeneficiaryName: formData.providerBeneficiaryName,
-      providerEmail: formData.providerEmail,
-      providerPhone: formData.providerPhone,
-      providerAdditionalInfo: formData.providerAdditionalInfo,
+      description: formData.description || undefined,
+      providerName: formData.providerName || undefined,
+      providerCountry: formData.providerCountry || undefined,
+      providerBankName: formData.providerBankName || undefined,
+      providerAccountNumber: formData.providerAccountNumber || undefined,
+      providerSwiftCode: formData.providerSwiftCode || undefined,
+      providerBankAddress: formData.providerBankAddress || undefined,
+      providerBeneficiaryName: formData.providerBeneficiaryName || undefined,
+      providerEmail: formData.providerEmail || undefined,
+      providerPhone: formData.providerPhone || undefined,
+      providerAdditionalInfo: formData.providerAdditionalInfo || undefined,
       documents: documentsForSubmission,
     });
   };
@@ -788,20 +769,18 @@ export default function NuevaSolicitud() {
               <ul className="text-sm text-blue-800 space-y-1">
                 <li>
                   • <strong>Proforma Invoice:</strong> Documento que detalla los
-                  productos y precios (al menos uno de los dos documentos es
-                  requerido)
+                  productos y precios (opcional)
                 </li>
                 <li>
                   • <strong>Factura Comercial:</strong> Documento oficial de
-                  venta (al menos uno de los dos documentos es requerido)
+                  venta (opcional)
                 </li>
                 <li>• Ambos documentos deben estar en inglés o español</li>
                 <li>
                   • Asegúrate de que los montos coincidan con el valor declarado
                 </li>
                 <li>
-                  • <strong>Importante:</strong> Debes subir al menos uno de los
-                  dos documentos
+                  • <strong>Importante:</strong> Todos los campos son opcionales
                 </li>
               </ul>
             </div>

@@ -13,16 +13,16 @@ export interface RequestFilters {
 }
 
 export interface CreateRequestData {
-  amount: number;
+  amount?: number;
   currency?: string;
-  description: string;
-  providerName: string;
-  providerCountry: string;
-  providerBankName: string;
-  providerAccountNumber: string;
-  providerSwiftCode: string;
+  description?: string;
+  providerName?: string;
+  providerCountry?: string;
+  providerBankName?: string;
+  providerAccountNumber?: string;
+  providerSwiftCode?: string;
   providerBankAddress?: string;
-  providerBeneficiaryName: string;
+  providerBeneficiaryName?: string;
   providerEmail?: string;
   providerPhone?: string;
   providerAdditionalInfo?: string;
@@ -376,21 +376,31 @@ export function useRequestWorkflow() {
       request.contracts?.some((c: WorkflowContract) => c.status === "DRAFT");
     const hasCompletedContract =
       hasContract &&
-      request.contracts?.some((c: WorkflowContract) => c.status === "COMPLETED");
+      request.contracts?.some(
+        (c: WorkflowContract) => c.status === "COMPLETED"
+      );
 
     // Check contract payment statuses
     const hasPaymentPending =
       hasContract &&
-      request.contracts?.some((c: WorkflowContract) => c.status === "PAYMENT_PENDING");
+      request.contracts?.some(
+        (c: WorkflowContract) => c.status === "PAYMENT_PENDING"
+      );
     const hasPaymentReviewed =
       hasContract &&
-      request.contracts?.some((c: WorkflowContract) => c.status === "PAYMENT_REVIEWED");
+      request.contracts?.some(
+        (c: WorkflowContract) => c.status === "PAYMENT_REVIEWED"
+      );
     const hasProviderPaid =
       hasContract &&
-      request.contracts?.some((c: WorkflowContract) => c.status === "PROVIDER_PAID");
+      request.contracts?.some(
+        (c: WorkflowContract) => c.status === "PROVIDER_PAID"
+      );
     const hasPaymentCompleted =
       hasContract &&
-      request.contracts?.some((c: WorkflowContract) => c.status === "PAYMENT_COMPLETED");
+      request.contracts?.some(
+        (c: WorkflowContract) => c.status === "PAYMENT_COMPLETED"
+      );
 
     // Check if has payments to provider (legacy check)
     const hasProviderPayment = request.payments && request.payments.length > 0;
@@ -405,7 +415,12 @@ export function useRequestWorkflow() {
       step = 5;
     }
     // Step 4: Pago a Proveedor - Payment process started (pending, reviewed, or completed)
-    else if (hasPaymentPending || hasPaymentReviewed || hasProviderPayment || hasCompletedContract) {
+    else if (
+      hasPaymentPending ||
+      hasPaymentReviewed ||
+      hasProviderPayment ||
+      hasCompletedContract
+    ) {
       step = 4;
     }
     // Step 3: Contrato - Contract exists (draft or active)

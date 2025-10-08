@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
-import { DocumentType } from "@prisma/client";
 import { notifyAllAdmins } from "@/lib/notifications";
 import { resend, FROM_EMAIL } from "@/lib/resend";
 import { capitalizeCountry } from "@/lib/utils";
@@ -370,28 +369,14 @@ export async function POST(request: NextRequest) {
       documents,
     } = body;
 
-    // Validate required fields
-    if (
-      !amount ||
-      !description ||
-      !providerName ||
-      !providerCountry ||
-      !providerBankName ||
-      !providerAccountNumber ||
-      !providerSwiftCode ||
-      !providerBeneficiaryName
-    ) {
-      return NextResponse.json(
-        { error: "Todos los campos obligatorios deben ser completados" },
-        { status: 400 }
-      );
-    }
+    // No validation required - all fields are optional
+    // Proceed with creating the request
 
-    // Create or find provider
+    // Create or find provider - handle empty fields with defaults
     let provider = await prisma.provider.findFirst({
       where: {
-        name: providerName,
-        country: providerCountry,
+        name: providerName || "Proveedor Sin Nombre",
+        country: providerCountry || "Unknown",
         userId: profile.id,
       },
     });
@@ -399,18 +384,20 @@ export async function POST(request: NextRequest) {
     if (!provider) {
       provider = await prisma.provider.create({
         data: {
-          name: providerName,
-          country: capitalizeCountry(providerCountry),
+          name: providerName || "Proveedor Sin Nombre",
+          country: providerCountry
+            ? capitalizeCountry(providerCountry)
+            : "Unknown",
           userId: profile.id,
-          email: providerEmail,
-          phone: providerPhone,
-          additionalInfo: providerAdditionalInfo,
+          email: providerEmail || null,
+          phone: providerPhone || null,
+          additionalInfo: providerAdditionalInfo || null,
           bankingDetails: {
-            bankName: providerBankName,
-            accountNumber: providerAccountNumber,
-            swiftCode: providerSwiftCode,
-            bankAddress: providerBankAddress,
-            beneficiaryName: providerBeneficiaryName,
+            bankName: providerBankName || null,
+            accountNumber: providerAccountNumber || null,
+            swiftCode: providerSwiftCode || null,
+            bankAddress: providerBankAddress || null,
+            beneficiaryName: providerBeneficiaryName || null,
           },
         },
       });
@@ -419,15 +406,15 @@ export async function POST(request: NextRequest) {
       provider = await prisma.provider.update({
         where: { id: provider.id },
         data: {
-          email: providerEmail,
-          phone: providerPhone,
-          additionalInfo: providerAdditionalInfo,
+          email: providerEmail || null,
+          phone: providerPhone || null,
+          additionalInfo: providerAdditionalInfo || null,
           bankingDetails: {
-            bankName: providerBankName,
-            accountNumber: providerAccountNumber,
-            swiftCode: providerSwiftCode,
-            bankAddress: providerBankAddress,
-            beneficiaryName: providerBeneficiaryName,
+            bankName: providerBankName || null,
+            accountNumber: providerAccountNumber || null,
+            swiftCode: providerSwiftCode || null,
+            bankAddress: providerBankAddress || null,
+            beneficiaryName: providerBeneficiaryName || null,
           },
         },
       });
@@ -446,13 +433,13 @@ export async function POST(request: NextRequest) {
     // Generate unique request code
     const code = await generateRequestCode(company.name);
 
-    // Create the request
+    // Create the request - handle empty fields with defaults
     const newRequest = await prisma.request.create({
       data: {
         code,
-        amount: parseFloat(amount),
+        amount: amount ? parseFloat(amount) : 0,
         currency: currency || "USDT",
-        description,
+        description: description || "Sin descripción",
         status: "PENDING",
         providerId: provider.id,
         companyId: profile.companyId,
@@ -492,7 +479,10 @@ export async function POST(request: NextRequest) {
             fileUrl: doc.fileUrl,
             fileSize: doc.fileSize,
             mimeType: doc.mimeType,
-            type: (doc.type || "PROFORMA_INVOICE") as DocumentType,
+            type: (doc.type || "PROFORMA_INVOICE") as
+              | "PROFORMA_INVOICE"
+              | "FACTURA_COMERCIAL"
+              | "OTHER",
             documentInfo: doc.documentInfo || null, // Include document text information
             requestId: newRequest.id,
             companyId: profile.companyId,
