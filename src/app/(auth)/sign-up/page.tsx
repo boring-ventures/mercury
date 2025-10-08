@@ -429,7 +429,7 @@ export default function RegisterPage() {
       const file = e.target.files[0];
 
       // File validation
-      const maxSize = 20 * 1024 * 1024; // 10MB
+      const maxSize = 30 * 1024 * 1024; // 30MB
       const allowedTypes = [
         "image/jpeg",
         "image/jpg",
@@ -443,7 +443,7 @@ export default function RegisterPage() {
       if (file.size > maxSize) {
         toast({
           title: "Archivo muy grande",
-          description: `El archivo excede el tamaño máximo de 10MB. Tamaño actual: ${(file.size / 1024 / 1024).toFixed(1)}MB`,
+          description: `El archivo excede el tamaño máximo de 30MB. Tamaño actual: ${(file.size / 1024 / 1024).toFixed(1)}MB`,
           variant: "destructive",
         });
         return;

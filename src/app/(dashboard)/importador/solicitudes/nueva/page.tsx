@@ -168,11 +168,11 @@ export default function NuevaSolicitud() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
+    // Validate file size (30MB max)
+    if (file.size > 30 * 1024 * 1024) {
       toast({
         title: "Archivo muy grande",
-        description: "El archivo no puede ser mayor a 5MB",
+        description: "El archivo no puede ser mayor a 30MB",
         variant: "destructive",
       });
       return;
@@ -281,20 +281,11 @@ export default function NuevaSolicitud() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate required fields
-    if (
-      !formData.amount ||
-      !formData.description ||
-      !formData.providerName ||
-      !formData.providerCountry ||
-      !formData.providerBankName ||
-      !formData.providerAccountNumber ||
-      !formData.providerSwiftCode ||
-      !formData.providerBeneficiaryName
-    ) {
+    // Validate required fields - now only documents are required
+    if (!formData.amount) {
       toast({
-        title: "Campos requeridos",
-        description: "Por favor completa todos los campos obligatorios",
+        title: "Campo requerido",
+        description: "Por favor ingresa el monto de la solicitud",
         variant: "destructive",
       });
       return;
@@ -345,14 +336,12 @@ export default function NuevaSolicitud() {
     onFileChange,
     title,
     inputId,
-    required = false,
     isUploading = false,
   }: {
     file?: DocumentFile;
     onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     title: string;
     inputId: string;
-    required?: boolean;
     isUploading?: boolean;
   }) => {
     // Use local state for the textarea to prevent re-renders
@@ -367,9 +356,7 @@ export default function NuevaSolicitud() {
 
     return (
       <div>
-        <Label>
-          {title} {required && "*"}
-        </Label>
+        <Label>{title}</Label>
         <div className="mt-2 border-2 border-dashed rounded-md p-4 text-center">
           {isUploading ? (
             <div className="space-y-2">
@@ -476,10 +463,9 @@ export default function NuevaSolicitud() {
                 className="hidden"
                 onChange={onFileChange}
                 accept=".pdf,.jpg,.jpeg,.png"
-                required={required}
               />
               <p className="text-xs text-muted-foreground">
-                Formatos: PDF, JPG, PNG • Máx: 5MB
+                Formatos: PDF, JPG, PNG • Máx: 30MB
               </p>
             </div>
           )}
@@ -527,12 +513,11 @@ export default function NuevaSolicitud() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="monto">Monto en USD *</Label>
+                <Label htmlFor="monto">Monto en USD</Label>
                 <Input
                   id="monto"
                   type="number"
                   placeholder="1000"
-                  required
                   value={formData.amount}
                   onChange={(e) => handleInputChange("amount", e.target.value)}
                 />
@@ -560,12 +545,11 @@ export default function NuevaSolicitud() {
             </div>
 
             <div>
-              <Label htmlFor="descripcion">Descripción del Envío *</Label>
+              <Label htmlFor="descripcion">Descripción del Envío</Label>
               <Textarea
                 id="descripcion"
                 placeholder="Describe el propósito de la transacción y los productos a importar"
                 rows={3}
-                required
                 value={formData.description}
                 onChange={(e) =>
                   handleInputChange("description", e.target.value)
@@ -615,12 +599,11 @@ export default function NuevaSolicitud() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="proveedor-empresa">
-                  Nombre de la Empresa Beneficiaria*
+                  Nombre de la Empresa Beneficiaria
                 </Label>
                 <Input
                   id="proveedor-empresa"
                   placeholder="Ej: Shanghai Trading Co., Ltd."
-                  required
                   value={formData.providerName}
                   onChange={(e) =>
                     handleInputChange("providerName", e.target.value)
@@ -628,7 +611,7 @@ export default function NuevaSolicitud() {
                 />
               </div>
               <div>
-                <Label htmlFor="proveedor-pais">País del Proveedor *</Label>
+                <Label htmlFor="proveedor-pais">País del Proveedor</Label>
                 <Select
                   value={formData.providerCountry}
                   onValueChange={(value) =>
@@ -651,6 +634,7 @@ export default function NuevaSolicitud() {
                     <SelectItem value="Spain">🇪🇸 España</SelectItem>
                     <SelectItem value="Brazil">🇧🇷 Brasil</SelectItem>
                     <SelectItem value="Mexico">🇲🇽 México</SelectItem>
+                    <SelectItem value="Panama">🇵🇦 Panamá</SelectItem>
                     <SelectItem value="Other">🌍 Otro</SelectItem>
                   </SelectContent>
                 </Select>
@@ -660,12 +644,11 @@ export default function NuevaSolicitud() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="provider-bank-name">
-                  Nombre del Banco del Beneficiario *
+                  Nombre del Banco del Beneficiario
                 </Label>
                 <Input
                   id="provider-bank-name"
                   placeholder="Ej: Bank of China"
-                  required
                   value={formData.providerBankName}
                   onChange={(e) =>
                     handleInputChange("providerBankName", e.target.value)
@@ -674,12 +657,11 @@ export default function NuevaSolicitud() {
               </div>
               <div>
                 <Label htmlFor="provider-account-number">
-                  Número de Cuenta del Beneficiario *
+                  Número de Cuenta del Beneficiario
                 </Label>
                 <Input
                   id="provider-account-number"
                   placeholder="Ej: 1234567890"
-                  required
                   value={formData.providerAccountNumber}
                   onChange={(e) =>
                     handleInputChange("providerAccountNumber", e.target.value)
@@ -690,11 +672,10 @@ export default function NuevaSolicitud() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="provider-swift-code">Código SWIFT/BIC *</Label>
+                <Label htmlFor="provider-swift-code">Código SWIFT/BIC</Label>
                 <Input
                   id="provider-swift-code"
                   placeholder="Ej: BKCHCNBJ"
-                  required
                   value={formData.providerSwiftCode}
                   onChange={(e) =>
                     handleInputChange("providerSwiftCode", e.target.value)
@@ -703,12 +684,11 @@ export default function NuevaSolicitud() {
               </div>
               <div>
                 <Label htmlFor="provider-beneficiary-name">
-                  Nombre del Beneficiario *
+                  Nombre del Beneficiario
                 </Label>
                 <Input
                   id="provider-beneficiary-name"
                   placeholder="Ej: Shanghai Trading Co., Ltd."
-                  required
                   value={formData.providerBeneficiaryName}
                   onChange={(e) =>
                     handleInputChange("providerBeneficiaryName", e.target.value)
@@ -789,7 +769,6 @@ export default function NuevaSolicitud() {
                 onFileChange={(e) => handleFileChange(e, "proforma")}
                 title="Proforma Invoice"
                 inputId="proforma"
-                required={false}
                 isUploading={uploadingFiles.has("proforma")}
               />
 
@@ -798,7 +777,6 @@ export default function NuevaSolicitud() {
                 onFileChange={(e) => handleFileChange(e, "factura")}
                 title="Factura Comercial"
                 inputId="factura"
-                required={false}
                 isUploading={uploadingFiles.has("factura")}
               />
             </div>

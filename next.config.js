@@ -3,6 +3,12 @@ const nextConfig = {
   images: {
     domains: ["hhineqbtekizcogikaef.supabase.co", "images.unsplash.com"],
   },
+  // Configure API routes to handle larger file uploads
+  api: {
+    bodyParser: {
+      sizeLimit: "30mb",
+    },
+  },
   async headers() {
     return [
       {
@@ -31,8 +37,7 @@ const nextConfig = {
           },
           {
             key: "Permissions-Policy",
-            value:
-              "camera=(), microphone=(), geolocation=()",
+            value: "camera=(), microphone=(), geolocation=()",
           },
           {
             key: "Strict-Transport-Security",

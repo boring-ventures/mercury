@@ -210,11 +210,11 @@ export function useRegistration() {
         return { success: false, error: errorMsg };
       }
 
-      // Validate file size (5MB max)
-      const maxFileSize = 5 * 1024 * 1024; // 5MB in bytes
+      // Validate file size (30MB max)
+      const maxFileSize = 30 * 1024 * 1024; // 30MB in bytes
       for (const [docType, file] of Object.entries(documents)) {
         if (file && file.size > maxFileSize) {
-          const errorMsg = `El archivo ${docType} excede el tamaño máximo de 5MB`;
+          const errorMsg = `El archivo ${docType} excede el tamaño máximo de 30MB`;
           setError(errorMsg);
           toast({
             title: "Archivo muy grande",

@@ -2,7 +2,7 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 const STORAGE_BUCKET =
   process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET || "nordex";
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 30 * 1024 * 1024; // 30MB
 const ACCEPTED_DOCUMENT_TYPES = [
   "application/pdf",
   "image/jpeg",
@@ -27,7 +27,7 @@ export async function uploadDocument(
 
   if (file.size > MAX_FILE_SIZE) {
     throw new Error(
-      "File size too large. Please upload a file smaller than 5MB."
+      "File size too large. Please upload a file smaller than 30MB."
     );
   }
 
