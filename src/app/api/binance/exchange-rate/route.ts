@@ -41,7 +41,7 @@ export async function GET(request: Request) {
 
   try {
     const { searchParams } = new URL(request.url);
-    const amount = searchParams.get("amount") || "100"; // Default to 100 USDT
+    const amount = searchParams.get("amount") || "100";
     targetAmount = parseFloat(amount);
 
     console.log("Fetching P2P price from Binance...", {
@@ -49,278 +49,30 @@ export async function GET(request: Request) {
       targetAmount,
     });
 
-    // Progressive loading: fetch pages until we have enough offers
-    const rowsToFetch = 10; // Binance API limit
-    const minUsdtThreshold = 1000; // Minimum USDT amount to prioritize
+    // Configuration
+    const BATCH_SIZE = 10; // Fetch 10 offers per page
+    const MIN_USDT_THRESHOLD = 1000; // Minimum USDT to consider (ignore smaller offers)
+    const MAX_PAGES = 50; // Maximum pages to prevent infinite loops
+
+    // For very large amounts, use a smaller search amount to get more results
+    const searchAmount = targetAmount > 50000 ? "10000" : amount;
+
     let allOffers: any[] = [];
-    let totalAvailableUsdt = 0;
     let page = 1;
-    const maxPages = 10; // Reduced from 20 to prevent too many API calls
 
-    console.log(`Starting progressive loading for ${targetAmount} USDT`);
+    console.log(`Starting progressive batch loading for ${targetAmount} USDT`);
+    console.log(`Strategy: Fetch batches of ${BATCH_SIZE}, filter >= ${MIN_USDT_THRESHOLD} USDT, prioritize by amount`);
+    console.log(`Using search amount: ${searchAmount} USDT (target: ${targetAmount} USDT)`);
 
-    // First pass: try to get enough with high-amount offers (≥1k USDT)
-    while (totalAvailableUsdt < targetAmount && page <= maxPages) {
+    // Keep fetching batches until we have enough offers to cover target amount
+    while (page <= MAX_PAGES) {
+      const currentTotal = allOffers.reduce((sum, o) => sum + o.availableAmount, 0);
+
       console.log(
-        `Fetching page ${page}... (current total: ${totalAvailableUsdt.toFixed(0)} USDT)`
+        `Fetching batch ${page}... (accumulated: ${currentTotal.toFixed(0)} / ${targetAmount} USDT)`
       );
 
-      // Binance P2P API endpoint for USDT/BOB
-      const response = await fetch(
-        "https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "User-Agent": "Mozilla/5.0 (compatible; Next.js App)",
-          },
-          body: JSON.stringify({
-            fiat: "BOB",
-            page: page,
-            rows: rowsToFetch,
-            asset: "USDT",
-            tradeType: "BUY",
-            transAmount: amount,
-            sortType: "price",
-          }),
-          signal: AbortSignal.timeout(10000), // Reduced timeout
-        }
-      );
-
-      console.log(`Page ${page} response status:`, response.status);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`Page ${page} Binance P2P API error:`, errorText);
-        throw new Error(
-          `Binance P2P API responded with status: ${response.status}`
-        );
-      }
-
-      const data = await response.json();
-
-      // More flexible response validation
-      if (!data || typeof data !== "object") {
-        console.error(`Page ${page} invalid response - not an object:`, data);
-        throw new Error(
-          "Invalid response from Binance P2P API - not an object"
-        );
-      }
-
-      console.log(`Page ${page} response keys:`, Object.keys(data));
-      console.log(`Page ${page} response success:`, data.success);
-      console.log(`Page ${page} response data length:`, data.data?.length || 0);
-
-      // Check if we have a valid response structure
-      if (data.success === false) {
-        console.error(`Page ${page} API returned success: false`);
-        throw new Error("Binance P2P API returned an error response");
-      }
-
-      // Debug: log the full response for large amounts
-      if (targetAmount > 100000) {
-        console.log(
-          `Page ${page} full response:`,
-          JSON.stringify(data, null, 2)
-        );
-      }
-
-      // Extract offers from response
-      let offers = [];
-      if (Array.isArray(data)) {
-        offers = data;
-        console.log(`Page ${page} found offers as direct array`);
-      } else if (data.data && Array.isArray(data.data)) {
-        offers = data.data;
-        console.log(`Page ${page} found offers in data array`);
-      } else if (data.offers && Array.isArray(data.offers)) {
-        offers = data.offers;
-        console.log(`Page ${page} found offers in offers array`);
-      } else {
-        const keys = Object.keys(data);
-        console.log(`Page ${page} searching for array in keys:`, keys);
-        for (const key of keys) {
-          if (Array.isArray(data[key])) {
-            offers = data[key];
-            console.log(
-              `Page ${page} found offers array in key: ${key} with ${offers.length} items`
-            );
-            break;
-          }
-        }
-      }
-
-      // Check if we have any offers
-      if (!offers || offers.length === 0) {
-        console.log(`Page ${page} no offers found, stopping pagination`);
-        // If this is the first page and no offers found, it means the amount is too large
-        if (page === 1) {
-          console.log(
-            `No offers found for {formatCurrency(targetAmount, "USD")}T`
-          );
-          return NextResponse.json(
-            {
-              success: false,
-              error: `No P2P offers found for {formatCurrency(targetAmount, "USD")}T. The requested amount may be too large for the current market. Try a smaller amount or check back later.`,
-              targetAmount: targetAmount,
-            },
-            { status: 404 }
-          );
-        }
-        break;
-      }
-
-      console.log(`Page ${page} processing ${offers.length} offers`);
-
-      // Process and validate offers from this page
-      const validOffers = offers
-        .filter((offer: any) => {
-          try {
-            if (
-              !offer.adv ||
-              !offer.adv.price ||
-              typeof offer.adv.price !== "string"
-            ) {
-              return false;
-            }
-
-            const price = parseFloat(offer.adv.price);
-            if (isNaN(price)) {
-              return false;
-            }
-
-            // Try multiple field names for USDT amounts
-            const availableUSDT = parseFloat(
-              offer.adv.quantity ||
-                offer.adv.dynamicMaxSingleTransQuantity ||
-                offer.adv.maxSingleTransQuantity ||
-                "0"
-            );
-
-            const maxUSDT = parseFloat(
-              offer.adv.maxSingleTransQuantity ||
-                offer.adv.maxSingleTransAmount ||
-                "999999"
-            );
-
-            // If we can't find USDT amounts, estimate from BOB amounts
-            if (availableUSDT === 0 && offer.adv.price) {
-              const maxBOB = parseFloat(
-                offer.adv.maxSingleTransAmount || "999999"
-              );
-              const estimatedUSDT = maxBOB / price;
-              return estimatedUSDT >= minUsdtThreshold;
-            }
-
-            return availableUSDT >= minUsdtThreshold && maxUSDT > 0;
-          } catch (error) {
-            console.error("Error processing offer:", error, offer);
-            return false;
-          }
-        })
-        .map((offer: any) => {
-          try {
-            const price = parseFloat(offer.adv.price);
-
-            // Try multiple field names for USDT amounts
-            const availableUSDT = parseFloat(
-              offer.adv.quantity ||
-                offer.adv.dynamicMaxSingleTransQuantity ||
-                offer.adv.maxSingleTransQuantity ||
-                "0"
-            );
-
-            const maxUSDT = parseFloat(
-              offer.adv.maxSingleTransQuantity ||
-                offer.adv.maxSingleTransAmount ||
-                "999999"
-            );
-
-            const minUSDT = parseFloat(
-              offer.adv.minSingleTransQuantity ||
-                offer.adv.minSingleTransAmount ||
-                "0"
-            );
-
-            // Fallback: if we can't find USDT amounts, estimate from BOB amounts
-            let finalAvailableUSDT = availableUSDT;
-            if (availableUSDT === 0 && offer.adv.price) {
-              const maxBOB = parseFloat(
-                offer.adv.maxSingleTransAmount || "999999"
-              );
-              finalAvailableUSDT = maxBOB / price;
-            }
-
-            // Calculate how much USDT we can take from this offer
-            const amountToTake = Math.min(finalAvailableUSDT, maxUSDT);
-
-            return {
-              price,
-              availableAmount: amountToTake,
-              advertiser: offer.advertiser?.nickName || "Unknown",
-              userGrade: offer.advertiser?.userGrade || 0,
-              minAmount: minUSDT,
-              maxAmount: maxUSDT,
-              totalAvailable: finalAvailableUSDT,
-            };
-          } catch (error) {
-            console.error("Error mapping offer:", error, offer);
-            return null;
-          }
-        })
-        .filter(
-          (offer: any): offer is NonNullable<typeof offer> => offer !== null
-        )
-        .sort((a: any, b: any) => b.availableAmount - a.availableAmount); // Sort by available amount (highest first)
-
-      // Add valid offers to our collection
-      allOffers = allOffers.concat(validOffers);
-
-      // Calculate total available USDT from all offers
-      totalAvailableUsdt = allOffers.reduce(
-        (sum: number, offer: any) => sum + offer.availableAmount,
-        0
-      );
-
-      console.log(`Page ${page} added ${validOffers.length} valid offers`);
-      console.log(
-        `Total offers: ${allOffers.length}, Total available: ${totalAvailableUsdt.toFixed(0)} USDT`
-      );
-
-      // If we have enough offers, stop fetching
-      if (totalAvailableUsdt >= targetAmount) {
-        console.log(
-          `Reached target amount (${targetAmount} USDT) with ${totalAvailableUsdt.toFixed(0)} USDT available`
-        );
-        break;
-      }
-
-      // If we've fetched all pages and still don't have enough, break
-      if (page >= maxPages) {
-        console.log(
-          `Reached maximum pages (${maxPages}), stopping with ${totalAvailableUsdt.toFixed(0)} USDT available`
-        );
-        break;
-      }
-
-      page++;
-    }
-
-    // Second pass: if we still don't have enough, include smaller offers (≥100 USDT)
-    if (totalAvailableUsdt < targetAmount) {
-      console.log(
-        `Still need ${(targetAmount - totalAvailableUsdt).toFixed(0)} USDT, fetching smaller offers...`
-      );
-
-      // Reset page counter for second pass
-      page = 1;
-      const maxPagesSecondPass = 5; // Limit second pass to prevent too many API calls
-
-      while (totalAvailableUsdt < targetAmount && page <= maxPagesSecondPass) {
-        console.log(
-          `Second pass - Fetching page ${page}... (current total: ${totalAvailableUsdt.toFixed(0)} USDT)`
-        );
-
+      try {
         const response = await fetch(
           "https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search",
           {
@@ -332,36 +84,34 @@ export async function GET(request: Request) {
             body: JSON.stringify({
               fiat: "BOB",
               page: page,
-              rows: rowsToFetch,
+              rows: BATCH_SIZE,
               asset: "USDT",
               tradeType: "BUY",
-              transAmount: amount,
+              transAmount: searchAmount, // Use adjusted search amount
               sortType: "price",
             }),
-            signal: AbortSignal.timeout(8000), // Shorter timeout for second pass
+            signal: AbortSignal.timeout(10000),
           }
         );
 
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`Page ${page} Binance P2P API error:`, errorText);
+          console.error(`Batch ${page} - API error: ${response.status}`);
           break;
         }
 
         const data = await response.json();
 
         if (!data || typeof data !== "object") {
-          console.error(`Page ${page} invalid response - not an object:`, data);
+          console.error(`Batch ${page} - Invalid response`);
           break;
         }
 
-        // Check if we have a valid response structure
         if (data.success === false) {
-          console.error(`Page ${page} API returned success: false`);
+          console.error(`Batch ${page} - API returned success: false`);
           break;
         }
 
-        // Extract offers from response
+        // Extract offers array from response
         let offers = [];
         if (Array.isArray(data)) {
           offers = data;
@@ -370,8 +120,8 @@ export async function GET(request: Request) {
         } else if (data.offers && Array.isArray(data.offers)) {
           offers = data.offers;
         } else {
-          const keys = Object.keys(data);
-          for (const key of keys) {
+          // Search for any array in the response
+          for (const key of Object.keys(data)) {
             if (Array.isArray(data[key])) {
               offers = data[key];
               break;
@@ -379,67 +129,29 @@ export async function GET(request: Request) {
           }
         }
 
-        // Check if we have any offers
         if (!offers || offers.length === 0) {
-          console.log(`Page ${page} no offers found, stopping second pass`);
+          console.log(`Batch ${page} - No more offers available`);
           break;
         }
 
-        console.log(
-          `Second pass - Page ${page} processing ${offers.length} offers`
-        );
+        console.log(`Batch ${page} - Processing ${offers.length} offers`);
 
-        // Process offers with lower threshold (≥100 USDT) for second pass
-        const validOffers = offers
-          .filter((offer: any) => {
-            try {
-              if (
-                !offer.adv ||
-                !offer.adv.price ||
-                typeof offer.adv.price !== "string"
-              ) {
-                return false;
-              }
-
-              const price = parseFloat(offer.adv.price);
-              if (isNaN(price)) {
-                return false;
-              }
-
-              const availableUSDT = parseFloat(
-                offer.adv.quantity ||
-                  offer.adv.dynamicMaxSingleTransQuantity ||
-                  offer.adv.maxSingleTransQuantity ||
-                  "0"
-              );
-
-              const maxUSDT = parseFloat(
-                offer.adv.maxSingleTransQuantity ||
-                  offer.adv.maxSingleTransAmount ||
-                  "999999"
-              );
-
-              // Lower threshold for second pass (≥100 USDT)
-              if (availableUSDT === 0 && offer.adv.price) {
-                const maxBOB = parseFloat(
-                  offer.adv.maxSingleTransAmount || "999999"
-                );
-                const estimatedUSDT = maxBOB / price;
-                return estimatedUSDT >= 100; // Lower threshold
-              }
-
-              return availableUSDT >= 100 && maxUSDT > 0; // Lower threshold
-            } catch (error) {
-              console.error("Error processing offer:", error, offer);
-              return false;
-            }
-          })
+        // Filter and process offers: only >= MIN_USDT_THRESHOLD
+        const processedOffers = offers
           .map((offer: any) => {
             try {
-              const price = parseFloat(offer.adv.price);
+              if (!offer.adv?.price || typeof offer.adv.price !== "string") {
+                return null;
+              }
 
+              const price = parseFloat(offer.adv.price);
+              if (isNaN(price)) return null;
+
+              // Extract available USDT amount
               const availableUSDT = parseFloat(
-                offer.adv.quantity ||
+                offer.adv.surplusAmount ||
+                  offer.adv.tradableQuantity ||
+                  offer.adv.quantity ||
                   offer.adv.dynamicMaxSingleTransQuantity ||
                   offer.adv.maxSingleTransQuantity ||
                   "0"
@@ -451,18 +163,16 @@ export async function GET(request: Request) {
                   "999999"
               );
 
-              const minUSDT = parseFloat(
-                offer.adv.minSingleTransQuantity ||
-                  offer.adv.minSingleTransAmount ||
-                  "0"
-              );
-
+              // Fallback: estimate from BOB if USDT not found
               let finalAvailableUSDT = availableUSDT;
-              if (availableUSDT === 0 && offer.adv.price) {
-                const maxBOB = parseFloat(
-                  offer.adv.maxSingleTransAmount || "999999"
-                );
+              if (availableUSDT === 0 && price > 0) {
+                const maxBOB = parseFloat(offer.adv.maxSingleTransAmount || "0");
                 finalAvailableUSDT = maxBOB / price;
+              }
+
+              // Filter: only offers with >= MIN_USDT_THRESHOLD
+              if (finalAvailableUSDT < MIN_USDT_THRESHOLD) {
+                return null;
               }
 
               const amountToTake = Math.min(finalAvailableUSDT, maxUSDT);
@@ -472,84 +182,213 @@ export async function GET(request: Request) {
                 availableAmount: amountToTake,
                 advertiser: offer.advertiser?.nickName || "Unknown",
                 userGrade: offer.advertiser?.userGrade || 0,
-                minAmount: minUSDT,
-                maxAmount: maxUSDT,
-                totalAvailable: finalAvailableUSDT,
               };
             } catch (error) {
-              console.error("Error mapping offer:", error, offer);
+              console.error("Error processing offer:", error);
               return null;
             }
           })
-          .filter(
-            (offer: any): offer is NonNullable<typeof offer> => offer !== null
-          )
+          .filter((offer: any): offer is NonNullable<typeof offer> => offer !== null);
+
+        // Remove duplicates WITHIN this batch (keep only the one with highest amount per advertiser)
+        const uniqueOffersMap = new Map<string, any>();
+        for (const offer of processedOffers) {
+          const existing = uniqueOffersMap.get(offer.advertiser);
+          if (!existing || offer.availableAmount > existing.availableAmount) {
+            uniqueOffersMap.set(offer.advertiser, offer);
+          }
+        }
+        const validOffers = Array.from(uniqueOffersMap.values())
           .sort((a: any, b: any) => b.availableAmount - a.availableAmount);
 
-        // Add valid offers to our collection
-        allOffers = allOffers.concat(validOffers);
+        console.log(`Batch ${page} - Found ${processedOffers.length} offers, ${validOffers.length} unique advertisers (>= ${MIN_USDT_THRESHOLD} USDT)`);
 
-        // Calculate total available USDT from all offers
-        totalAvailableUsdt = allOffers.reduce(
-          (sum: number, offer: any) => sum + offer.availableAmount,
-          0
-        );
+        // Add to collection, but filter duplicates ACROSS batches
+        const existingAdvertisers = new Set(allOffers.map(o => o.advertiser));
+        const newUniqueOffers = validOffers.filter((offer: any) => !existingAdvertisers.has(offer.advertiser));
 
-        console.log(
-          `Second pass - Page ${page} added ${validOffers.length} valid offers`
-        );
-        console.log(
-          `Total offers: ${allOffers.length}, Total available: ${totalAvailableUsdt.toFixed(0)} USDT`
-        );
+        if (newUniqueOffers.length < validOffers.length) {
+          console.log(`  Filtered out ${validOffers.length - newUniqueOffers.length} duplicate advertisers`);
+        }
 
-        if (totalAvailableUsdt >= targetAmount) {
-          console.log(
-            `Reached target amount (${targetAmount} USDT) with ${totalAvailableUsdt.toFixed(0)} USDT available`
-          );
+        allOffers = allOffers.concat(newUniqueOffers);
+
+        const newTotal = allOffers.reduce((sum, o) => sum + o.availableAmount, 0);
+        console.log(`Total accumulated: ${newTotal.toFixed(0)} USDT from ${allOffers.length} offers`);
+
+        // Stop if we have enough to cover target amount
+        if (newTotal >= targetAmount) {
+          console.log(`✓ Target reached! ${newTotal.toFixed(0)} >= ${targetAmount} USDT`);
+          break;
+        }
+
+        // Stop if no new valid offers found
+        if (validOffers.length === 0) {
+          console.log(`No valid offers in this batch, stopping`);
           break;
         }
 
         page++;
+      } catch (error) {
+        console.error(`Batch ${page} - Fetch error:`, error);
+        break;
       }
     }
 
-    // For very large amounts, we'll work with what we have
-    // The second pass was causing issues with very large amounts
-    if (totalAvailableUsdt < targetAmount) {
-      console.log(
-        `Only found ${totalAvailableUsdt.toFixed(0)} USDT out of ${targetAmount} requested (${((totalAvailableUsdt / targetAmount) * 100).toFixed(1)}% coverage)`
-      );
+    // If no offers found with high threshold, try again with lower threshold
+    if (allOffers.length === 0) {
+      console.log(`No offers found with ${MIN_USDT_THRESHOLD} USDT threshold, trying with 100 USDT threshold...`);
+
+      const LOWER_THRESHOLD = 100;
+      page = 1;
+
+      while (page <= Math.min(MAX_PAGES, 20)) {
+        const currentTotal = allOffers.reduce((sum, o) => sum + o.availableAmount, 0);
+
+        console.log(`Retry batch ${page}... (accumulated: ${currentTotal.toFixed(0)} / ${targetAmount} USDT)`);
+
+        try {
+          const response = await fetch(
+            "https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "User-Agent": "Mozilla/5.0 (compatible; Next.js App)",
+              },
+              body: JSON.stringify({
+                fiat: "BOB",
+                page: page,
+                rows: BATCH_SIZE,
+                asset: "USDT",
+                tradeType: "BUY",
+                transAmount: searchAmount,
+                sortType: "price",
+              }),
+              signal: AbortSignal.timeout(10000),
+            }
+          );
+
+          if (!response.ok) break;
+
+          const data = await response.json();
+          if (!data || typeof data !== "object" || data.success === false) break;
+
+          let offers = [];
+          if (Array.isArray(data)) {
+            offers = data;
+          } else if (data.data && Array.isArray(data.data)) {
+            offers = data.data;
+          } else {
+            for (const key of Object.keys(data)) {
+              if (Array.isArray(data[key])) {
+                offers = data[key];
+                break;
+              }
+            }
+          }
+
+          if (!offers || offers.length === 0) break;
+
+          const processedOffers = offers
+            .map((offer: any) => {
+              try {
+                if (!offer.adv?.price || typeof offer.adv.price !== "string") return null;
+
+                const price = parseFloat(offer.adv.price);
+                if (isNaN(price)) return null;
+
+                const availableUSDT = parseFloat(
+                  offer.adv.surplusAmount ||
+                    offer.adv.tradableQuantity ||
+                    offer.adv.quantity ||
+                    offer.adv.dynamicMaxSingleTransQuantity ||
+                    offer.adv.maxSingleTransQuantity ||
+                    "0"
+                );
+
+                const maxUSDT = parseFloat(
+                  offer.adv.maxSingleTransQuantity ||
+                    offer.adv.maxSingleTransAmount ||
+                    "999999"
+                );
+
+                let finalAvailableUSDT = availableUSDT;
+                if (availableUSDT === 0 && price > 0) {
+                  const maxBOB = parseFloat(offer.adv.maxSingleTransAmount || "0");
+                  finalAvailableUSDT = maxBOB / price;
+                }
+
+                if (finalAvailableUSDT < LOWER_THRESHOLD) return null;
+
+                const amountToTake = Math.min(finalAvailableUSDT, maxUSDT);
+
+                return {
+                  price,
+                  availableAmount: amountToTake,
+                  advertiser: offer.advertiser?.nickName || "Unknown",
+                  userGrade: offer.advertiser?.userGrade || 0,
+                };
+              } catch (error) {
+                return null;
+              }
+            })
+            .filter((offer: any): offer is NonNullable<typeof offer> => offer !== null);
+
+          // Remove duplicates WITHIN this batch (keep only the one with highest amount per advertiser)
+          const uniqueOffersMap = new Map<string, any>();
+          for (const offer of processedOffers) {
+            const existing = uniqueOffersMap.get(offer.advertiser);
+            if (!existing || offer.availableAmount > existing.availableAmount) {
+              uniqueOffersMap.set(offer.advertiser, offer);
+            }
+          }
+          const validOffers = Array.from(uniqueOffersMap.values())
+            .sort((a: any, b: any) => b.availableAmount - a.availableAmount);
+
+          // Filter duplicates ACROSS batches
+          const existingAdvertisers = new Set(allOffers.map(o => o.advertiser));
+          const newUniqueOffers = validOffers.filter((offer: any) => !existingAdvertisers.has(offer.advertiser));
+
+          if (newUniqueOffers.length < validOffers.length) {
+            console.log(`  Filtered out ${validOffers.length - newUniqueOffers.length} duplicate advertisers`);
+          }
+
+          allOffers = allOffers.concat(newUniqueOffers);
+
+          const newTotal = allOffers.reduce((sum, o) => sum + o.availableAmount, 0);
+          console.log(`Retry batch ${page} - Found ${newUniqueOffers.length} unique offers (>= ${LOWER_THRESHOLD} USDT)`);
+
+          if (newTotal >= targetAmount || validOffers.length === 0) break;
+
+          page++;
+        } catch (error) {
+          console.error(`Retry batch ${page} error:`, error);
+          break;
+        }
+      }
     }
 
     if (allOffers.length === 0) {
-      console.error("No offers found in any page.");
-      throw new Error(
-        `No P2P offers found for {formatCurrency(targetAmount, "USD")}T. The requested amount may be too large for the current market. Try a smaller amount or check back later.`
+      console.error("No valid offers found even with lower threshold");
+      return NextResponse.json(
+        {
+          success: false,
+          error: `No P2P offers available for this amount. The market may not have enough liquidity.`,
+          targetAmount: targetAmount,
+        },
+        { status: 404 }
       );
     }
 
-    // Sort all offers by price (lowest first) for aggregation
-    allOffers.sort((a: any, b: any) => a.price - b.price);
+    // Sort offers by highest amount first for aggregation
+    allOffers.sort((a: any, b: any) => b.availableAmount - a.availableAmount);
 
-    console.log(
-      `Found ${allOffers.length} valid offers with ${totalAvailableUsdt.toFixed(0)} total USDT available`
-    );
+    const totalAvailable = allOffers.reduce((sum, o) => sum + o.availableAmount, 0);
+    console.log(`Final: ${allOffers.length} offers, ${totalAvailable.toFixed(0)} USDT available`);
 
-    // Check if we have enough offers to meet the target
-    if (totalAvailableUsdt < targetAmount * 0.5) {
-      console.warn(
-        `Only ${totalAvailableUsdt.toFixed(0)} USDT available out of ${targetAmount} requested (${((totalAvailableUsdt / targetAmount) * 100).toFixed(1)}% coverage)`
-      );
-    }
-
-    // Aggregate offers to meet the target amount
-    const aggregatedOffer = aggregateOffers(allOffers, targetAmount);
-
-    if (aggregatedOffer.totalAmount < targetAmount) {
-      console.warn(
-        `Only ${aggregatedOffer.totalAmount} USDT available out of ${targetAmount} requested`
-      );
-    }
+    // Calculate weighted average price
+    const aggregatedOffer = calculateWeightedAveragePrice(allOffers, targetAmount);
 
     const result = {
       success: true,
@@ -561,27 +400,17 @@ export async function GET(request: Request) {
         target_amount: targetAmount,
         available_amount: aggregatedOffer.totalAmount,
         offers_count: allOffers.length,
-        aggregated_offers_count: aggregatedOffer.offers.length,
+        valid_offers_count: aggregatedOffer.offers.length,
         offers_used: aggregatedOffer.offers,
         last_updated: Math.floor(Date.now() / 1000),
         source: "Binance P2P",
-        note: `Aggregated ${aggregatedOffer.offers.length} offers for ${targetAmount} USDT (${aggregatedOffer.totalAmount} available)`,
-        coverage_percentage: Math.round(
-          (aggregatedOffer.totalAmount / targetAmount) * 100
-        ),
-        strategy: "Progressive loading with high-amount prioritization",
-        total_usdt_available: totalAvailableUsdt,
-        pages_fetched: page - 1,
-        average_offers_per_trader:
-          Math.round(
-            (aggregatedOffer.offers.length /
-              new Set(aggregatedOffer.offers.map((o) => o.advertiser)).size) *
-              100
-          ) / 100,
+        coverage_percentage: Math.round((aggregatedOffer.totalAmount / targetAmount) * 100),
+        strategy: `Progressive batches of ${BATCH_SIZE}, filter >= ${MIN_USDT_THRESHOLD} USDT, weighted by amount`,
+        pages_fetched: page,
       },
     };
 
-    console.log("Returning P2P result:", JSON.stringify(result, null, 2));
+    console.log("Returning result:", JSON.stringify(result, null, 2));
     return NextResponse.json(result);
   } catch (error) {
     console.error("P2P API error:", error);
@@ -609,33 +438,41 @@ export async function GET(request: Request) {
   }
 }
 
-function aggregateOffers(
+/**
+ * Calculate weighted average price based on amount needed
+ * Offers with larger amounts have more weight in the average
+ * This ensures that a 2k USDT offer doesn't have the same impact as a 40k USDT offer
+ */
+function calculateWeightedAveragePrice(
   offers: Array<{
     price: number;
     availableAmount: number;
     advertiser: string;
     userGrade: number;
-    minAmount: number;
-    maxAmount: number;
-    totalAvailable: number;
   }>,
   targetAmount: number
 ): AggregatedOffer {
-  let remainingAmount = targetAmount;
   const usedOffers: Array<{
     price: number;
     availableAmount: number;
     advertiser: string;
     userGrade: number;
   }> = [];
+
+  let remainingAmount = targetAmount;
   let totalWeightedPrice = 0;
   let totalUsedAmount = 0;
 
-  // First pass: fill the target amount with best prices
-  for (const offer of offers) {
+  // Sort by highest amount first (already done in main function, but ensure it)
+  const sortedOffers = [...offers].sort((a, b) => b.availableAmount - a.availableAmount);
+
+  console.log(`Calculating weighted average for ${targetAmount} USDT from ${sortedOffers.length} offers`);
+
+  // Fill target amount by taking from offers with highest amounts first
+  for (const offer of sortedOffers) {
     if (remainingAmount <= 0) break;
 
-    // Calculate how much we can take from this offer
+    // Take as much as we can from this offer
     const amountToTake = Math.min(remainingAmount, offer.availableAmount);
 
     if (amountToTake > 0) {
@@ -646,56 +483,31 @@ function aggregateOffers(
         userGrade: offer.userGrade,
       });
 
+      // Weighted price: price * amount (weight is proportional to amount)
       totalWeightedPrice += offer.price * amountToTake;
       totalUsedAmount += amountToTake;
       remainingAmount -= amountToTake;
+
+      console.log(
+        `  - Using ${amountToTake.toFixed(0)} USDT @ ${offer.price} BOB from ${offer.advertiser}`
+      );
     }
   }
 
-  // Second pass: add a few more offers for better averaging (2-4 additional offers)
-  const additionalOffersNeeded = Math.min(
-    4,
-    Math.max(2, Math.floor(usedOffers.length * 0.3))
-  );
-  let additionalOffersAdded = 0;
-
-  for (const offer of offers) {
-    if (additionalOffersAdded >= additionalOffersNeeded) break;
-
-    // Skip if we already used this offer
-    const alreadyUsed = usedOffers.some(
-      (used) => used.advertiser === offer.advertiser
-    );
-    if (alreadyUsed) continue;
-
-    // Add a small amount from this offer for averaging
-    const amountToAdd = Math.min(offer.availableAmount * 0.1, 1000); // 10% of their offer or 1000 USDT max
-
-    if (amountToAdd > 0) {
-      usedOffers.push({
-        price: offer.price,
-        availableAmount: amountToAdd,
-        advertiser: offer.advertiser,
-        userGrade: offer.userGrade,
-      });
-
-      totalWeightedPrice += offer.price * amountToAdd;
-      totalUsedAmount += amountToAdd;
-      additionalOffersAdded++;
-    }
-  }
-
+  // Calculate weighted average: sum(price * amount) / sum(amount)
   const weightedAveragePrice =
     totalUsedAmount > 0
-      ? Math.round((totalWeightedPrice / totalUsedAmount) * 100) / 100
+      ? Math.round((totalWeightedPrice / totalUsedAmount) * 10000) / 10000 // 4 decimals
       : 0;
 
   const priceRange = {
-    min:
-      usedOffers.length > 0 ? Math.min(...usedOffers.map((o) => o.price)) : 0,
-    max:
-      usedOffers.length > 0 ? Math.max(...usedOffers.map((o) => o.price)) : 0,
+    min: usedOffers.length > 0 ? Math.min(...usedOffers.map((o) => o.price)) : 0,
+    max: usedOffers.length > 0 ? Math.max(...usedOffers.map((o) => o.price)) : 0,
   };
+
+  console.log(`Weighted average: ${weightedAveragePrice} BOB/USDT`);
+  console.log(`Used ${usedOffers.length} offers for ${totalUsedAmount.toFixed(0)} USDT`);
+  console.log(`Price range: ${priceRange.min} - ${priceRange.max} BOB`);
 
   return {
     totalAmount: totalUsedAmount,
