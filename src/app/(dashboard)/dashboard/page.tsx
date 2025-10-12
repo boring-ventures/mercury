@@ -21,6 +21,11 @@ export default function DashboardPage() {
         router.replace("/importador/dashboard");
         return;
       }
+
+      if (profile.role === "CAJERO") {
+        router.replace("/cajero/dashboard");
+        return;
+      }
     }
   }, [profile, isLoading, router]);
 
@@ -28,7 +33,7 @@ export default function DashboardPage() {
   if (
     isLoading ||
     (profile &&
-      (profile.role === "SUPERADMIN" || profile.role === "IMPORTADOR"))
+      (profile.role === "SUPERADMIN" || profile.role === "IMPORTADOR" || profile.role === "CAJERO"))
   ) {
     return (
       <div className="flex items-center justify-center min-h-screen">

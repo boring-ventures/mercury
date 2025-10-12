@@ -7,6 +7,7 @@ import { resend, FROM_EMAIL } from "@/lib/resend";
 import {
   generateQuotationAcceptedAdminEmail,
   generateQuotationRejectedAdminEmail,
+  generateCashierQuotationNotificationEmail,
 } from "@/lib/email-templates";
 import { notifyQuotationReceived } from "@/lib/notification-events";
 import { RequestStatus, QuotationStatus, Currency } from "@prisma/client";
@@ -223,6 +224,60 @@ export async function PUT(
             html,
           });
         }
+
+        // Send email notification to all cashiers
+        const cashiers = await prisma.profile.findMany({
+          where: {
+            role: "CAJERO",
+            status: "ACTIVE",
+          },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        });
+
+        const cashierEmails = cashiers
+          .map((c) => c.email)
+          .filter((e): e is string => Boolean(e));
+
+        if (cashierEmails.length > 0) {
+          const appUrl =
+            process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+          const cashierHtml = generateCashierQuotationNotificationEmail({
+            cashierName: "Cajero",
+            quotationCode: quotation.code,
+            requestCode: quotation.request.code,
+            companyName: quotation.request.company.name,
+            totalInBs: quotation.totalInBs.toString(),
+            amountUsdt: quotation.amount.toString(),
+            suggestedExchangeRate: quotation.exchangeRate.toString(),
+            link: `${appUrl}/cashier/transactions?quotation=${quotationId}`,
+            notifiedAt: new Date().toISOString(),
+          });
+
+          await resend.emails.send({
+            from: FROM_EMAIL,
+            to: cashierEmails,
+            subject: `Nueva cotización aceptada • ${quotation.code}`,
+            html: cashierHtml,
+          });
+        }
+
+        // Create in-app notifications for all cashiers
+        await Promise.all(
+          cashiers.map((cashier) =>
+            createSystemNotification("INFO", cashier.id, {
+              title: "Nueva Cotización Disponible",
+              message: `Cotización ${quotation.code} aceptada. Monto: ${quotation.totalInBs} Bs. ¡Puedes participar!`,
+              quotationId: quotationId,
+              quotationCode: quotation.code,
+              totalInBs: quotation.totalInBs.toString(),
+            })
+          )
+        );
       } catch (notificationError) {
         console.error(
           "Error sending notification/email to admin:",

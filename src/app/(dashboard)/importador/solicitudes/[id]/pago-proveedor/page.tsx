@@ -254,12 +254,12 @@ export default function PagoProveedorPage() {
         return;
       }
 
-      // Validate file size (5MB max)
-      const maxSize = 5 * 1024 * 1024;
+      // Validate file size (30MB max)
+      const maxSize = 30 * 1024 * 1024;
       if (file.size > maxSize) {
         toast({
           title: "Archivo demasiado grande",
-          description: "El tamaño máximo permitido es 5MB",
+          description: "El tamaño máximo permitido es 30MB",
           variant: "destructive",
         });
         return;
@@ -282,10 +282,13 @@ export default function PagoProveedorPage() {
         formData.append("notes", notes);
       }
 
-      const response = await fetch("/api/importador/contracts/upload-payment-proof", {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        "/api/importador/contracts/upload-payment-proof",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -343,8 +346,10 @@ export default function PagoProveedorPage() {
   );
 
   const canUploadProof = contract?.status === "COMPLETED" && !payment;
-  const isPending = payment?.status === "PENDING" || contract?.status === "PAYMENT_PENDING";
-  const isReviewed = payment?.status === "REVIEWED" || contract?.status === "PAYMENT_REVIEWED";
+  const isPending =
+    payment?.status === "PENDING" || contract?.status === "PAYMENT_PENDING";
+  const isReviewed =
+    payment?.status === "REVIEWED" || contract?.status === "PAYMENT_REVIEWED";
   const isCompleted =
     payment?.status === "COMPLETED" ||
     contract?.status === "PROVIDER_PAID" ||
@@ -368,9 +373,7 @@ export default function PagoProveedorPage() {
             <h1 className="text-3xl font-bold text-gray-900">
               Pago al Proveedor
             </h1>
-            <p className="text-gray-500 mt-1">
-              Solicitud: {requestData.code}
-            </p>
+            <p className="text-gray-500 mt-1">Solicitud: {requestData.code}</p>
           </div>
           {payment && (
             <Badge
@@ -426,9 +429,7 @@ export default function PagoProveedorPage() {
           <div className="flex items-start gap-3">
             <DollarSign className="h-5 w-5 text-green-500 mt-1" />
             <div>
-              <p className="text-sm font-medium text-gray-500">
-                Monto a Pagar
-              </p>
+              <p className="text-sm font-medium text-gray-500">Monto a Pagar</p>
               <p className="text-base font-semibold text-gray-900">
                 {contract?.currency || requestData.currency}{" "}
                 {(contract?.amount || requestData.amount).toLocaleString()}
@@ -470,7 +471,9 @@ export default function PagoProveedorPage() {
               <div className="flex items-center gap-4">
                 <Button
                   variant="outline"
-                  onClick={() => document.getElementById("file-upload")?.click()}
+                  onClick={() =>
+                    document.getElementById("file-upload")?.click()
+                  }
                   className="w-full sm:w-auto"
                 >
                   <Upload className="h-4 w-4 mr-2" />
@@ -629,7 +632,9 @@ export default function PagoProveedorPage() {
               </p>
               <Button
                 onClick={() =>
-                  router.push(`/importador/solicitudes/${requestId}/factura-final`)
+                  router.push(
+                    `/importador/solicitudes/${requestId}/factura-final`
+                  )
                 }
                 className="bg-green-600 hover:bg-green-700"
               >

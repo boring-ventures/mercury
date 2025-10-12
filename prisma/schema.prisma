@@ -24,15 +24,17 @@ model Profile {
   companyId          String?
   email              String?
   auditLogs          AuditLog[]
-  assignedContracts  Contract[]     @relation("ContractAssignedTo")
-  createdContracts   Contract[]     @relation("ContractCreatedBy")
-  notifications      Notification[]
-  providers          Provider[]
-  assignedQuotations Quotation[]    @relation("QuotationAssignedTo")
-  createdQuotations  Quotation[]    @relation("QuotationCreatedBy")
-  assignedRequests   Request[]      @relation("RequestAssignedTo")
-  createdRequests    Request[]      @relation("RequestCreatedBy")
-  company            Company?       @relation(fields: [companyId], references: [id])
+  assignedContracts   Contract[]           @relation("ContractAssignedTo")
+  createdContracts    Contract[]           @relation("ContractCreatedBy")
+  notifications       Notification[]
+  providers           Provider[]
+  assignedQuotations  Quotation[]          @relation("QuotationAssignedTo")
+  createdQuotations   Quotation[]          @relation("QuotationCreatedBy")
+  assignedRequests    Request[]            @relation("RequestAssignedTo")
+  createdRequests     Request[]            @relation("RequestCreatedBy")
+  cashierAssignments  CashierAssignment[]
+  cashierTransactions CashierTransaction[]
+  company             Company?             @relation(fields: [companyId], references: [id])
 
   @@index([userId])
   @@index([role])
@@ -206,6 +208,7 @@ model Quotation {
   swiftBankUSD                Decimal         @default(0) @db.Decimal(15, 2)
   contracts                   Contract[]
   documents                   Document[]
+  cashierTransactions         CashierTransaction[]
   assignedTo                  Profile?        @relation("QuotationAssignedTo", fields: [assignedToId], references: [id])
   company                     Company         @relation(fields: [companyId], references: [id])
   createdBy                   Profile         @relation("QuotationCreatedBy", fields: [createdById], references: [id])
@@ -325,9 +328,64 @@ model Configuration {
   updatedAt   DateTime @updatedAt
 }
 
+model CashierAccount {
+  id                   String                 @id @default(cuid())
+  name                 String
+  dailyLimitBs         Decimal                @db.Decimal(15, 2)
+  active               Boolean                @default(true)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  cashierAssignments   CashierAssignment[]
+  cashierTransactions  CashierTransaction[]
+
+  @@map("cashier_accounts")
+}
+
+model CashierAssignment {
+  id               String          @id @default(cuid())
+  cashierId        String
+  accountId        String
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  cashier          Profile         @relation(fields: [cashierId], references: [id])
+  account          CashierAccount  @relation(fields: [accountId], references: [id])
+
+  @@unique([cashierId, accountId])
+  @@index([cashierId])
+  @@index([accountId])
+  @@map("cashier_assignments")
+}
+
+model CashierTransaction {
+  id                    String                    @id @default(cuid())
+  quotationId           String
+  cashierId             String
+  accountId             String
+  assignedAmountBs      Decimal                   @db.Decimal(15, 2)
+  suggestedExchangeRate Decimal                   @db.Decimal(10, 4)
+  expectedUsdt          Decimal                   @db.Decimal(15, 6)
+  deliveredUsdt         Decimal?                  @db.Decimal(15, 6)
+  status                CashierTransactionStatus  @default(PENDING)
+  assignedAt            DateTime                  @default(now())
+  completedAt           DateTime?
+  notes                 String?
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  quotation             Quotation                 @relation(fields: [quotationId], references: [id])
+  cashier               Profile                   @relation(fields: [cashierId], references: [id])
+  account               CashierAccount            @relation(fields: [accountId], references: [id])
+
+  @@index([quotationId])
+  @@index([cashierId])
+  @@index([accountId])
+  @@index([status])
+  @@map("cashier_transactions")
+}
+
 enum UserRole {
   IMPORTADOR
   SUPERADMIN
+  CAJERO
 }
 
 enum UserStatus {
@@ -443,4 +501,11 @@ enum CompanyType {
   UNIPERSONAL
   SRL
   SA
+}
+
+enum CashierTransactionStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
 }

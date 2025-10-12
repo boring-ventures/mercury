@@ -165,12 +165,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate file size (5MB max)
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    // Validate file size (30MB max)
+    const maxSize = 30 * 1024 * 1024; // 30MB
     if (file.size > maxSize) {
       console.log("File too large:", file.size);
       return NextResponse.json(
-        { error: "El archivo no puede ser mayor a 5MB" },
+        { error: "El archivo no puede ser mayor a 30MB" },
         { status: 400 }
       );
     }

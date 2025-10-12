@@ -42,7 +42,7 @@ const createUserSchema = z
     lastName: z.string().min(2, "Last name must be at least 2 characters"),
     email: z.string().email("Invalid email address"),
     phone: z.string().optional(),
-    role: z.enum(["IMPORTADOR", "SUPERADMIN"]),
+    role: z.enum(["IMPORTADOR", "SUPERADMIN", "CAJERO"]),
     companyId: z.string().optional(),
     password: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string(),
@@ -82,9 +82,9 @@ export function CreateUserDialog({
   });
 
   // Fetch companies for company selection
-  const { data: companies } = useQuery({
+  const { data: companiesData } = useQuery({
     queryKey: ["companies"],
-    queryFn: async (): Promise<UserCompany[]> => {
+    queryFn: async (): Promise<{ companies: UserCompany[] }> => {
       const response = await fetch("/api/companies");
       if (!response.ok) {
         throw new Error("Failed to fetch companies");
@@ -93,6 +93,8 @@ export function CreateUserDialog({
     },
     staleTime: 300000, // 5 minutes
   });
+
+  const companies = companiesData?.companies || [];
 
   const selectedRole = form.watch("role");
 
@@ -105,7 +107,7 @@ export function CreateUserDialog({
         email: data.email,
         phone: data.phone || undefined,
         role: data.role,
-        companyId: data.companyId || undefined,
+        companyId: data.companyId && data.companyId !== "none" ? data.companyId : undefined,
         password: data.password,
       };
 
@@ -233,6 +235,7 @@ export function CreateUserDialog({
                       <SelectContent>
                         <SelectItem value="IMPORTADOR">Importador</SelectItem>
                         <SelectItem value="SUPERADMIN">Super Admin</SelectItem>
+                        <SelectItem value="CAJERO">Cajero</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -257,8 +260,8 @@ export function CreateUserDialog({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">No Company</SelectItem>
-                          {companies?.map((company) => (
+                          <SelectItem value="none">No Company</SelectItem>
+                          {companies.map((company) => (
                             <SelectItem key={company.id} value={company.id}>
                               {company.name}
                             </SelectItem>
