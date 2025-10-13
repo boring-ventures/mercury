@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { renderToStream } from "@react-pdf/renderer";
+import { renderToStream, Document } from "@react-pdf/renderer";
 import { QuotationPDFDocument } from "@/components/draft-quotation/quotation-pdf-document";
 import React from "react";
 
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
       swiftFee,
       correspondentFee,
       interestRate,
-      totals
+      totals,
     } = body;
 
     // Validate required fields
@@ -28,25 +28,29 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate PDF
-    const pdfDocument = React.createElement(QuotationPDFDocument, {
-      date,
-      company,
-      client,
-      amountToSend,
-      currency,
-      exchangeRate,
-      swiftFee,
-      correspondentFee,
-      interestRate,
-      totals,
-    });
+    const pdfDocument = React.createElement(
+      Document,
+      {},
+      React.createElement(QuotationPDFDocument, {
+        date,
+        company,
+        client,
+        amountToSend,
+        currency,
+        exchangeRate,
+        swiftFee,
+        correspondentFee,
+        interestRate,
+        totals,
+      })
+    );
 
     const stream = await renderToStream(pdfDocument);
 
     // Convert stream to buffer
-    const chunks: Uint8Array[] = [];
+    const chunks: Buffer[] = [];
     for await (const chunk of stream) {
-      chunks.push(chunk);
+      chunks.push(Buffer.from(chunk));
     }
     const buffer = Buffer.concat(chunks);
 

@@ -5,7 +5,7 @@ import { CashierTransactionStatus } from "@prisma/client";
 // POST: Cashier participates in a quotation
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await request.json();
@@ -19,7 +19,7 @@ export async function POST(
       );
     }
 
-    const quotationId = params.id;
+    const { id: quotationId } = await params;
     const amount = parseFloat(assignedAmountBs);
 
     if (amount <= 0) {
@@ -93,8 +93,19 @@ export async function POST(
 
     // Check daily limit
     const today = new Date();
-    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+    const startOfDay = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
+    const endOfDay = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+      23,
+      59,
+      59
+    );
 
     const todaysTransactions = await prisma.cashierTransaction.findMany({
       where: {

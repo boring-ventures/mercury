@@ -29,8 +29,8 @@ export async function GET(request: NextRequest) {
       where.quotation = {
         code: {
           contains: quotationCode,
-          mode: 'insensitive'
-        }
+          mode: "insensitive",
+        },
       };
     }
 
@@ -41,9 +41,9 @@ export async function GET(request: NextRequest) {
         company: {
           name: {
             contains: companyName,
-            mode: 'insensitive'
-          }
-        }
+            mode: "insensitive",
+          },
+        },
       };
     }
 
@@ -103,16 +103,33 @@ export async function GET(request: NextRequest) {
     // Calculate summary statistics
     const summary = {
       totalTransactions: transactions.length,
-      totalAssignedBs: transactions.reduce((sum, t) => sum + Number(t.assignedAmountBs), 0),
-      totalExpectedUsdt: transactions.reduce((sum, t) => sum + Number(t.expectedUsdt), 0),
-      totalDeliveredUsdt: transactions.reduce((sum, t) => sum + (t.deliveredUsdt ? Number(t.deliveredUsdt) : 0), 0),
-      completedCount: transactions.filter(t => t.status === CashierTransactionStatus.COMPLETED).length,
-      pendingCount: transactions.filter(t => t.status === CashierTransactionStatus.PENDING).length,
-      inProgressCount: transactions.filter(t => t.status === CashierTransactionStatus.IN_PROGRESS).length,
+      totalAssignedBs: transactions.reduce(
+        (sum, t) => sum + Number(t.assignedAmountBs),
+        0
+      ),
+      totalExpectedUsdt: transactions.reduce(
+        (sum, t) => sum + Number(t.expectedUsdt),
+        0
+      ),
+      totalDeliveredUsdt: transactions.reduce(
+        (sum, t) => sum + (t.deliveredUsdt ? Number(t.deliveredUsdt) : 0),
+        0
+      ),
+      completedCount: transactions.filter(
+        (t) => t.status === CashierTransactionStatus.COMPLETED
+      ).length,
+      pendingCount: transactions.filter(
+        (t) => t.status === CashierTransactionStatus.PENDING
+      ).length,
+      inProgressCount: transactions.filter(
+        (t) => t.status === CashierTransactionStatus.IN_PROGRESS
+      ).length,
+      surplusShortage: 0, // Will be calculated below
     };
 
     // Calculate surplus/shortage
-    summary.surplusShortage = summary.totalDeliveredUsdt - summary.totalExpectedUsdt;
+    summary.surplusShortage =
+      summary.totalDeliveredUsdt - summary.totalExpectedUsdt;
 
     if (format === "csv") {
       // Generate CSV
@@ -142,7 +159,9 @@ export async function GET(request: NextRequest) {
         return [
           t.id,
           new Date(t.assignedAt).toLocaleString("es-BO"),
-          t.completedAt ? new Date(t.completedAt).toLocaleString("es-BO") : "N/A",
+          t.completedAt
+            ? new Date(t.completedAt).toLocaleString("es-BO")
+            : "N/A",
           t.quotation.code,
           t.quotation.request.code,
           t.quotation.company.name,
@@ -160,13 +179,13 @@ export async function GET(request: NextRequest) {
 
       const csv = [
         csvHeaders.join(","),
-        ...csvRows.map(row => row.map(cell => `"${cell}"`).join(",")),
+        ...csvRows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
       ].join("\n");
 
       return new NextResponse(csv, {
         headers: {
           "Content-Type": "text/csv",
-          "Content-Disposition": `attachment; filename="cashier-report-${new Date().toISOString().split('T')[0]}.csv"`,
+          "Content-Disposition": `attachment; filename="cashier-report-${new Date().toISOString().split("T")[0]}.csv"`,
         },
       });
     }

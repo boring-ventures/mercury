@@ -5,11 +5,13 @@ import { CashierTransactionStatus } from "@prisma/client";
 // GET: Fetch a single cashier transaction
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: transactionId } = await params;
+
     const transaction = await prisma.cashierTransaction.findUnique({
-      where: { id: params.id },
+      where: { id: transactionId },
       include: {
         quotation: {
           select: {
@@ -71,9 +73,10 @@ export async function GET(
 // PATCH: Update a cashier transaction
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: transactionId } = await params;
     const body = await request.json();
     const { status, notes } = body;
 
@@ -82,7 +85,7 @@ export async function PATCH(
     if (notes !== undefined) updateData.notes = notes;
 
     const transaction = await prisma.cashierTransaction.update({
-      where: { id: params.id },
+      where: { id: transactionId },
       data: updateData,
       include: {
         quotation: {

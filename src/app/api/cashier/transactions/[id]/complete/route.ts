@@ -5,7 +5,7 @@ import { CashierTransactionStatus } from "@prisma/client";
 // POST: Complete a cashier transaction
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await request.json();
@@ -18,9 +18,11 @@ export async function POST(
       );
     }
 
+    const { id: transactionId } = await params;
+
     // Get existing transaction
     const existingTransaction = await prisma.cashierTransaction.findUnique({
-      where: { id: params.id },
+      where: { id: transactionId },
       include: {
         quotation: {
           select: {
@@ -47,7 +49,7 @@ export async function POST(
 
     // Update transaction
     const transaction = await prisma.cashierTransaction.update({
-      where: { id: params.id },
+      where: { id: transactionId },
       data: {
         deliveredUsdt: parseFloat(deliveredUsdt),
         status: CashierTransactionStatus.COMPLETED,

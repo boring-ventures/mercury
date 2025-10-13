@@ -71,10 +71,12 @@ export async function GET(request: NextRequest) {
 
         // Convert to BS if exchange rate is available
         if (contract.quotation?.exchangeRate) {
-          const amountInBS = contract.amount.mul(contract.quotation.exchangeRate);
+          const amountInBS = contract.amount.mul(
+            contract.quotation.exchangeRate
+          );
           totalApprovedBS = totalApprovedBS.add(amountInBS);
         }
-      } else if (contract.currency === "BS") {
+      } else if (contract.currency === "BOB") {
         totalApprovedBS = totalApprovedBS.add(contract.amount);
       }
 

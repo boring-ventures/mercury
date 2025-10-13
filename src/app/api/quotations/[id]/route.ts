@@ -269,7 +269,7 @@ export async function PUT(
         // Create in-app notifications for all cashiers
         await Promise.all(
           cashiers.map((cashier) =>
-            createSystemNotification("INFO", cashier.id, {
+            createSystemNotification("QUOTATION_RECEIVED", cashier.id, {
               title: "Nueva Cotización Disponible",
               message: `Cotización ${quotation.code} aceptada. Monto: ${quotation.totalInBs} Bs. ¡Puedes participar!`,
               quotationId: quotationId,

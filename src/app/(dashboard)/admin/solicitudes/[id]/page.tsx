@@ -3237,9 +3237,6 @@ export default function AdminSolicitudDetail() {
                           </span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-500">
-                            {(document.fileSize / 1024).toFixed(1)} KB
-                          </span>
                           <a
                             href={document.fileUrl}
                             target="_blank"
