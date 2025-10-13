@@ -164,44 +164,124 @@ export async function PUT(
   }
 }
 
-// DELETE: Delete a company (soft delete by setting status to INACTIVE)
+// DELETE: Delete a company
+// Query param ?hard=true for permanent deletion with cascade
+// Otherwise does soft delete by setting status to INACTIVE
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const { searchParams } = new URL(request.url);
+  const hardDelete = searchParams.get("hard") === "true";
+
   try {
     // Check if company exists
     const existingCompany = await prisma.company.findUnique({
       where: { id },
+      include: {
+        _count: {
+          select: {
+            users: true,
+            requests: true,
+            contracts: true,
+            quotations: true,
+            payments: true,
+            documents: true,
+          },
+        },
+      },
     });
 
     if (!existingCompany) {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
-    // Check if company has active users
-    const activeUsers = await prisma.profile.count({
-      where: {
-        companyId: id,
-        status: "ACTIVE",
-      },
-    });
+    if (hardDelete) {
+      // Hard delete with full cascade
+      // Delete in order to respect foreign key constraints
 
-    if (activeUsers > 0) {
-      return NextResponse.json(
-        { error: "Cannot delete company with active users" },
-        { status: 400 }
-      );
+      // 1. Delete cashier transactions related to quotations
+      await prisma.cashierTransaction.deleteMany({
+        where: {
+          quotation: {
+            companyId: id,
+          },
+        },
+      });
+
+      // 2. Delete documents
+      await prisma.document.deleteMany({
+        where: { companyId: id },
+      });
+
+      // 3. Delete payments
+      await prisma.payment.deleteMany({
+        where: { companyId: id },
+      });
+
+      // 4. Delete contracts
+      await prisma.contract.deleteMany({
+        where: { companyId: id },
+      });
+
+      // 5. Delete quotations
+      await prisma.quotation.deleteMany({
+        where: { companyId: id },
+      });
+
+      // 6. Delete requests
+      await prisma.request.deleteMany({
+        where: { companyId: id },
+      });
+
+      // 7. Delete registration request if exists
+      await prisma.registrationRequest.deleteMany({
+        where: { companyId: id },
+      });
+
+      // 8. Update users to remove company reference (instead of deleting users)
+      await prisma.profile.updateMany({
+        where: { companyId: id },
+        data: {
+          companyId: null,
+          status: "INACTIVE",
+        },
+      });
+
+      // 9. Finally delete the company
+      await prisma.company.delete({
+        where: { id },
+      });
+
+      return NextResponse.json({
+        message: "Company and all related data deleted permanently",
+        deletedCounts: existingCompany._count,
+      });
+    } else {
+      // Soft delete by setting status to INACTIVE
+      // Check if company has active users
+      const activeUsers = await prisma.profile.count({
+        where: {
+          companyId: id,
+          status: "ACTIVE",
+        },
+      });
+
+      if (activeUsers > 0) {
+        return NextResponse.json(
+          { error: "Cannot delete company with active users. Use hard delete to force deletion." },
+          { status: 400 }
+        );
+      }
+
+      await prisma.company.update({
+        where: { id },
+        data: { status: "INACTIVE" },
+      });
+
+      return NextResponse.json({ message: "Company deactivated successfully" });
     }
-
-    // Soft delete by setting status to INACTIVE
-    await prisma.company.update({
-      where: { id },
-      data: { status: "INACTIVE" },
-    });
-
-    return NextResponse.json({ message: "Company deleted successfully" });
   } catch (error) {
     console.error("Error deleting company:", error);
     return NextResponse.json(

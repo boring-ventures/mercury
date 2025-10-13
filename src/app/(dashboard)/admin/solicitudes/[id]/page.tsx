@@ -3167,39 +3167,20 @@ export default function AdminSolicitudDetail() {
                         </div>
                       )}
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-                        <div>
-                          <p className="text-gray-600">Monto Total</p>
-                          <p className="font-semibold">
-                            {formatCurrency(quotation.amount || 0, " ")}
-                            {quotation.currency}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600">Válida hasta</p>
+                      <div className="text-sm">
+                        <div className="flex items-center gap-2">
+                          <p className="text-gray-600">Válida hasta:</p>
                           <p
                             className={
                               isExpired && !isDraft
                                 ? "text-red-600 font-medium"
-                                : ""
+                                : "font-medium"
                             }
                           >
                             {format(
                               new Date(quotation.validUntil),
                               "dd/MM/yyyy HH:mm",
                               { locale: es }
-                            )}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600">Fecha de Creación</p>
-                          <p>
-                            {format(
-                              new Date(quotation.createdAt),
-                              "dd/MM/yyyy",
-                              {
-                                locale: es,
-                              }
                             )}
                           </p>
                         </div>
@@ -3234,31 +3215,44 @@ export default function AdminSolicitudDetail() {
         <Card className="mb-6">
           <CardHeader>
             <CardTitle>Documentos</CardTitle>
-            <div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
               {/* Request Documents */}
-              <div className="mb-6">
+              <div>
                 <h4 className="text-md font-medium mb-3 text-blue-600">
                   📋 Documentos de la Solicitud
                 </h4>
                 {request.documents && request.documents.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                     {request.documents.map((document: DocumentItem) => (
-                      <DocumentCard
+                      <div
                         key={document.id}
-                        document={document}
-                        requestId={request.id}
-                        compact={false}
-                      />
+                        className="border rounded-lg p-3 hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          <FileText className="h-4 w-4 text-blue-600" />
+                          <span className="text-sm font-medium truncate">
+                            {document.filename}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <a
+                            href={document.fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-600 hover:underline"
+                          >
+                            Ver
+                          </a>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 ) : (
-                  <Card>
-                    <CardContent className="py-4">
-                      <p className="text-sm text-gray-500 text-center">
-                        No hay documentos en esta solicitud
-                      </p>
-                    </CardContent>
-                  </Card>
+                  <p className="text-sm text-gray-500 text-center py-4">
+                    No hay documentos en esta solicitud
+                  </p>
                 )}
               </div>
 
@@ -3276,30 +3270,44 @@ export default function AdminSolicitudDetail() {
                   </div>
                 ) : userDocumentsData?.companyRegistrationDocuments &&
                   userDocumentsData.companyRegistrationDocuments.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                     {userDocumentsData.companyRegistrationDocuments.map(
                       (document: any) => (
-                        <DocumentCard
+                        <div
                           key={document.id}
-                          document={document}
-                          requestId={request.id}
-                          compact={true}
-                        />
+                          className="border rounded-lg p-3 hover:bg-gray-50 transition-colors"
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <FileText className="h-4 w-4 text-green-600" />
+                            <span className="text-sm font-medium truncate">
+                              {document.filename}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-500">
+                              {(document.fileSize / 1024).toFixed(1)} KB
+                            </span>
+                            <a
+                              href={document.fileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-green-600 hover:underline"
+                            >
+                              Ver
+                            </a>
+                          </div>
+                        </div>
                       )
                     )}
                   </div>
                 ) : (
-                  <Card>
-                    <CardContent className="py-4">
-                      <p className="text-sm text-gray-500 text-center">
-                        No hay documentos de registro de la empresa
-                      </p>
-                    </CardContent>
-                  </Card>
+                  <p className="text-sm text-gray-500 text-center py-4">
+                    No hay documentos de registro de la empresa
+                  </p>
                 )}
               </div>
             </div>
-          </CardHeader>
+          </CardContent>
         </Card>
 
         {/* History */}
@@ -3334,10 +3342,7 @@ export default function AdminSolicitudDetail() {
           </Collapsible>
         </Card>
 
-        {/* Documents and Notes */}
-        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
-          <InternalNotesCard requestId={request.id} />
-        </div>
+        {/* Documents and Notes section removed */}
       </div>
 
       {/* Edit Quotation Dialog */}

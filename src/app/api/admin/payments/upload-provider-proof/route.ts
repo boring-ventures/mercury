@@ -47,7 +47,10 @@ export async function POST(request: NextRequest) {
     const paymentId = formData.get("paymentId") as string;
 
     if (!file || !paymentId) {
-      return NextResponse.json({ error: "Archivo y ID de pago requeridos" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Archivo y ID de pago requeridos" },
+        { status: 400 }
+      );
     }
 
     // Validate file type
@@ -65,11 +68,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate file size (5MB max)
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    // Validate file size (30MB max)
+    const maxSize = 30 * 1024 * 1024; // 30MB
     if (file.size > maxSize) {
       return NextResponse.json(
-        { error: "El archivo es demasiado grande. Máximo 5MB." },
+        { error: "El archivo es demasiado grande. Máximo 30MB." },
         { status: 400 }
       );
     }

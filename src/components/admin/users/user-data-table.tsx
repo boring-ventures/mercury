@@ -83,6 +83,8 @@ export function UserDataTable({
         return "destructive";
       case "IMPORTADOR":
         return "default";
+      case "CAJERO":
+        return "secondary";
       default:
         return "outline";
     }
@@ -166,6 +168,8 @@ export function UserDataTable({
                     <Badge variant={getRoleBadgeVariant(user.role)}>
                       {user.role === "SUPERADMIN"
                         ? "Super Admin"
+                        : user.role === "CAJERO"
+                        ? "Cajero"
                         : "Importador"}
                     </Badge>
                   </TableCell>

@@ -70,11 +70,11 @@ export async function POST(
       );
     }
 
-    // Validate file size (5MB max)
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    // Validate file size (30MB max)
+    const maxSize = 30 * 1024 * 1024; // 30MB
     if (file.size > maxSize) {
       return NextResponse.json(
-        { error: "El archivo es demasiado grande. Máximo 5MB." },
+        { error: "El archivo es demasiado grande. Máximo 30MB." },
         { status: 400 }
       );
     }

@@ -25,7 +25,7 @@ VALUES (
   'nordex',
   'nordex',
   true, -- Make bucket public for easier file access
-  52428800, -- 50MB file size limit
+  31457280, -- 30MB file size limit
   '{"image/*","application/pdf","application/msword","application/vnd.openxmlformats-officedocument.wordprocessingml.document"}'::jsonb
 )
 ON CONFLICT (id) DO NOTHING;

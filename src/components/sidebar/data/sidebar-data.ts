@@ -1,16 +1,15 @@
 import {
   LayoutDashboard,
   Settings,
-  HelpCircle,
   Ship,
   Package,
   FileText,
   TrendingUp,
   Users,
   Building2,
-  ShieldCheck,
   UserPlus,
-  Bell,
+  Wallet,
+  DollarSign,
 } from "lucide-react";
 import type { SidebarData } from "../types";
 
@@ -42,11 +41,6 @@ export const adminSidebarData: SidebarData = {
           title: "Dashboard",
           url: "/admin/dashboard",
           icon: LayoutDashboard,
-        },
-        {
-          title: "Notificaciones",
-          url: "/dashboard/notifications",
-          icon: Bell,
         },
         {
           title: "Solicitudes",
@@ -92,26 +86,6 @@ export const adminSidebarData: SidebarData = {
           title: "Proveedores",
           url: "/admin/providers",
           icon: Ship,
-        },
-      ],
-    },
-    {
-      title: "Sistema",
-      items: [
-        {
-          title: "Configuración",
-          icon: Settings,
-          url: "/admin/configuracion",
-        },
-        {
-          title: "Auditoría",
-          url: "/admin/auditoria",
-          icon: ShieldCheck,
-        },
-        {
-          title: "Centro de Ayuda",
-          url: "/help-center",
-          icon: HelpCircle,
         },
       ],
     },
@@ -175,6 +149,38 @@ export const importadorSidebarData: SidebarData = {
   ],
 };
 
+// Cajero sidebar configuration
+export const cajeroSidebarData: SidebarData = {
+  ...baseSidebarData,
+  navGroups: [
+    {
+      title: "Cajero",
+      items: [
+        {
+          title: "Dashboard",
+          url: "/cajero/dashboard",
+          icon: LayoutDashboard,
+        },
+        {
+          title: "Cotizaciones",
+          url: "/cajero/cotizaciones",
+          icon: FileText,
+        },
+        {
+          title: "Transacciones",
+          url: "/cajero/transacciones",
+          icon: DollarSign,
+        },
+        {
+          title: "Mis Cuentas",
+          url: "/cajero/cuentas",
+          icon: Wallet,
+        },
+      ],
+    },
+  ],
+};
+
 // Default export for backward compatibility
 export const sidebarData = adminSidebarData;
 
@@ -186,6 +192,8 @@ export function getSidebarDataByRole(role: string): SidebarData {
       return adminSidebarData;
     case "IMPORTADOR":
       return importadorSidebarData;
+    case "CAJERO":
+      return cajeroSidebarData;
     case "DEFAULT":
     default:
       // Return a basic navigation for unknown roles or during loading
@@ -199,11 +207,6 @@ export function getSidebarDataByRole(role: string): SidebarData {
                 title: "Dashboard",
                 url: "/dashboard",
                 icon: LayoutDashboard,
-              },
-              {
-                title: "Centro de Ayuda",
-                url: "/help-center",
-                icon: HelpCircle,
               },
             ],
           },

@@ -41,7 +41,7 @@ const editUserSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
   lastName: z.string().min(2, "Last name must be at least 2 characters"),
   phone: z.string().optional(),
-  role: z.enum(["IMPORTADOR", "SUPERADMIN"]),
+  role: z.enum(["IMPORTADOR", "SUPERADMIN", "CAJERO"]),
   status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED"]),
   companyId: z.string().optional(),
   active: z.boolean(),
@@ -80,9 +80,9 @@ export function EditUserDialog({
   });
 
   // Fetch companies for company selection
-  const { data: companies } = useQuery({
+  const { data: companiesData } = useQuery({
     queryKey: ["companies"],
-    queryFn: async (): Promise<UserCompany[]> => {
+    queryFn: async (): Promise<{ companies: UserCompany[] }> => {
       const response = await fetch("/api/companies");
       if (!response.ok) {
         throw new Error("Failed to fetch companies");
@@ -91,6 +91,8 @@ export function EditUserDialog({
     },
     staleTime: 300000, // 5 minutes
   });
+
+  const companies = companiesData?.companies || [];
 
   // Update form when user data loads
   useEffect(() => {
@@ -120,7 +122,7 @@ export function EditUserDialog({
         phone: data.phone || undefined,
         role: data.role,
         status: data.status,
-        companyId: data.companyId || undefined,
+        companyId: data.companyId && data.companyId !== "none" ? data.companyId : undefined,
         active: data.active,
       };
 
@@ -237,6 +239,7 @@ export function EditUserDialog({
                           <SelectItem value="SUPERADMIN">
                             Super Admin
                           </SelectItem>
+                          <SelectItem value="CAJERO">Cajero</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -288,8 +291,8 @@ export function EditUserDialog({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">No Company</SelectItem>
-                          {companies?.map((company) => (
+                          <SelectItem value="none">No Company</SelectItem>
+                          {companies.map((company) => (
                             <SelectItem key={company.id} value={company.id}>
                               {company.name}
                             </SelectItem>

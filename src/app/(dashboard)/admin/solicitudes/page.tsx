@@ -22,17 +22,34 @@ import {
   FileText,
   AlertCircle,
   Loader2,
+  Trash2,
+  Building2,
+  Upload,
+  Ban,
   AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
 import {
   useRequests,
   useRequestStatusConfig,
+  useDeleteRequest,
   type RequestFilters,
 } from "@/hooks/use-requests";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { formatCurrency } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { RequestProgressTracker } from "@/components/admin/solicitudes/request-progress-tracker";
 
 const STATUS_FILTERS = [
   { value: "todos", label: "Todos" },
@@ -77,6 +94,15 @@ interface AdminRequestItem {
     status: string;
     validUntil: string;
   }>;
+  contracts?: Array<{
+    id: string;
+    status: string;
+  }>;
+  payments?: Array<{
+    id: string;
+    status: string;
+    type: string;
+  }>;
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -112,35 +138,200 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-// Utility function to check if a request has expired quotations
-function hasExpiredQuotations(
-  quotations?: Array<{ status: string; validUntil: string }>
-): boolean {
-  if (!quotations || quotations.length === 0) return false;
+// Function to determine workflow action button based on request state
+function getWorkflowActionButton(
+  request: AdminRequestItem,
+  creatingContract: string | null,
+  handleCreateContract: (request: AdminRequestItem, e: React.MouseEvent) => void,
+  router: any
+) {
+  // Check if there's an accepted quotation
+  const acceptedQuotation = request.quotations?.find(q => q.status === "ACCEPTED");
 
-  const now = new Date();
-  return quotations.some(
-    (q) =>
-      (q.status === "SENT" || q.status === "DRAFT") &&
-      new Date(q.validUntil) < now
-  );
-}
+  // Get the most recent contract if exists
+  const contract = request.contracts?.[0];
 
-// Utility function to get active (non-expired) quotations count
-function getActiveQuotationsCount(
-  quotations?: Array<{ status: string; validUntil: string }>
-): number {
-  if (!quotations || quotations.length === 0) return 0;
+  // If no accepted quotation, no workflow action available
+  if (!acceptedQuotation) {
+    return null;
+  }
 
-  const now = new Date();
-  return quotations.filter(
-    (q) =>
-      (q.status === "SENT" || q.status === "DRAFT") &&
-      new Date(q.validUntil) >= now
-  ).length;
+  // If accepted quotation exists but no contract, show "Create Contract"
+  if (!contract) {
+    return (
+      <Button
+        variant="default"
+        size="sm"
+        className="h-8 px-3 whitespace-nowrap"
+        onClick={(e) => handleCreateContract(request, e)}
+        disabled={creatingContract === request.id}
+      >
+        {creatingContract === request.id ? (
+          <>
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            Creando...
+          </>
+        ) : (
+          <>
+            <Building2 className="h-4 w-4 mr-2" />
+            Crear Contrato
+          </>
+        )}
+      </Button>
+    );
+  }
+
+  // Contract exists, show action based on contract status
+  switch (contract.status) {
+    case "DRAFT":
+      return (
+        <Button
+          variant="default"
+          size="sm"
+          className="h-8 px-3 whitespace-nowrap"
+          onClick={(e) => {
+            e.stopPropagation();
+            router.push(`/admin/contracts/${contract.id}`);
+          }}
+        >
+          <FileText className="h-4 w-4 mr-2" />
+          Ver Contrato
+        </Button>
+      );
+
+    case "ACTIVE":
+      return (
+        <Button
+          variant="default"
+          size="sm"
+          className="h-8 px-3 whitespace-nowrap"
+          onClick={(e) => {
+            e.stopPropagation();
+            router.push(`/admin/contracts/${contract.id}`);
+          }}
+        >
+          <Eye className="h-4 w-4 mr-2" />
+          Ver Contrato
+        </Button>
+      );
+
+    case "PAYMENT_PENDING":
+      return (
+        <Button
+          variant="default"
+          size="sm"
+          className="h-8 px-3 whitespace-nowrap bg-yellow-600 hover:bg-yellow-700"
+          onClick={(e) => {
+            e.stopPropagation();
+            router.push(`/admin/payments`);
+          }}
+        >
+          <AlertCircle className="h-4 w-4 mr-2" />
+          Revisar Pago
+        </Button>
+      );
+
+    case "PAYMENT_REVIEWED":
+      return (
+        <Button
+          variant="default"
+          size="sm"
+          className="h-8 px-3 whitespace-nowrap bg-blue-600 hover:bg-blue-700"
+          onClick={(e) => {
+            e.stopPropagation();
+            router.push(`/admin/payments`);
+          }}
+        >
+          <DollarSign className="h-4 w-4 mr-2" />
+          Pagar Proveedor
+        </Button>
+      );
+
+    case "PROVIDER_PAID":
+      return (
+        <Button
+          variant="default"
+          size="sm"
+          className="h-8 px-3 whitespace-nowrap bg-purple-600 hover:bg-purple-700"
+          onClick={(e) => {
+            e.stopPropagation();
+            router.push(`/admin/payments`);
+          }}
+        >
+          <Upload className="h-4 w-4 mr-2" />
+          Subir Factura
+        </Button>
+      );
+
+    case "PAYMENT_COMPLETED":
+    case "COMPLETED":
+      return (
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 px-3 whitespace-nowrap"
+          onClick={(e) => {
+            e.stopPropagation();
+            router.push(`/admin/contracts/${contract.id}`);
+          }}
+        >
+          <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+          Completado
+        </Button>
+      );
+
+    case "CANCELLED":
+      return (
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 px-3 whitespace-nowrap"
+          onClick={(e) => {
+            e.stopPropagation();
+            router.push(`/admin/contracts/${contract.id}`);
+          }}
+        >
+          <Ban className="h-4 w-4 mr-2 text-red-600" />
+          Cancelado
+        </Button>
+      );
+
+    case "EXPIRED":
+      return (
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 px-3 whitespace-nowrap"
+          onClick={(e) => {
+            e.stopPropagation();
+            router.push(`/admin/contracts/${contract.id}`);
+          }}
+        >
+          <AlertTriangle className="h-4 w-4 mr-2 text-orange-600" />
+          Expirado
+        </Button>
+      );
+
+    default:
+      return (
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 px-3 whitespace-nowrap"
+          onClick={(e) => {
+            e.stopPropagation();
+            router.push(`/admin/contracts/${contract.id}`);
+          }}
+        >
+          <Eye className="h-4 w-4 mr-2" />
+          Ver
+        </Button>
+      );
+  }
 }
 
 export default function AdminSolicitudes() {
+  const router = useRouter();
   const [filters, setFilters] = useState<RequestFilters>({
     status: "todos",
     country: "todos",
@@ -150,8 +341,12 @@ export default function AdminSolicitudes() {
     page: 1,
     limit: 20,
   });
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [requestToDelete, setRequestToDelete] = useState<string | null>(null);
+  const [creatingContract, setCreatingContract] = useState<string | null>(null);
 
   const { data, isLoading, error } = useRequests(filters);
+  const { deleteRequest, isLoading: isDeleting } = useDeleteRequest();
 
   const handleFilterChange = (key: keyof RequestFilters, value: string) => {
     setFilters((prev) => ({
@@ -164,6 +359,61 @@ export default function AdminSolicitudes() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Search is already handled by the filter state
+  };
+
+  const handleDeleteClick = (requestId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent row click
+    setRequestToDelete(requestId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (requestToDelete) {
+      deleteRequest(requestToDelete);
+      setDeleteDialogOpen(false);
+      setRequestToDelete(null);
+    }
+  };
+
+  const handleRowClick = (requestCode: string, requestId: string) => {
+    router.push(`/admin/solicitudes/${requestCode || requestId}`);
+  };
+
+  const handleCreateContract = async (request: AdminRequestItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    // Find the accepted quotation
+    const acceptedQuotation = request.quotations?.find(q => q.status === "ACCEPTED");
+    if (!acceptedQuotation) {
+      alert("No hay una cotización aceptada para crear el contrato");
+      return;
+    }
+
+    setCreatingContract(request.id);
+    try {
+      const response = await fetch("/api/admin/contracts/auto-create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          quotationId: acceptedQuotation.id,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Error al crear el contrato");
+      }
+
+      const result = await response.json();
+      router.push(`/admin/contracts/${result.contract.id}`);
+    } catch (error) {
+      console.error("Error creating contract:", error);
+      alert(error instanceof Error ? error.message : "Error desconocido");
+    } finally {
+      setCreatingContract(null);
+    }
   };
 
   if (error) {
@@ -300,30 +550,29 @@ export default function AdminSolicitudes() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
+                    <th className="text-left py-3 px-4">FECHA</th>
                     <th className="text-left py-3 px-4">REF</th>
                     <th className="text-left py-3 px-4">EMPRESA</th>
                     <th className="text-left py-3 px-4">DESTINO</th>
                     <th className="text-left py-3 px-4">MONTO</th>
-                    <th className="text-left py-3 px-4">RECHAZOS</th>
-                    <th className="text-left py-3 px-4">COTIZACIONES</th>
+                    <th className="text-left py-3 px-4">PROGRESO</th>
                     <th className="text-left py-3 px-4">ESTADO</th>
-                    <th className="text-left py-3 px-4">FECHA</th>
                     <th className="text-left py-3 px-4">ACCIONES</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.requests.map((request: AdminRequestItem) => {
-                    const hasExpired = hasExpiredQuotations(request.quotations);
-                    const activeCount = getActiveQuotationsCount(
-                      request.quotations
-                    );
-                    const totalQuotations = request.quotations?.length || 0;
-
                     return (
                       <tr
                         key={request.id}
-                        className="border-b hover:bg-gray-50"
+                        className="border-b hover:bg-gray-50 cursor-pointer transition-colors"
+                        onClick={() => handleRowClick(request.code, request.id)}
                       >
+                        <td className="py-3 px-4">
+                          {format(new Date(request.createdAt), "dd/MM/yy", {
+                            locale: es,
+                          })}
+                        </td>
                         <td className="py-3 px-4 font-medium">
                           {request.code}
                         </td>
@@ -337,85 +586,43 @@ export default function AdminSolicitudes() {
                           {formatCurrency(request.amount, request.currency)}
                         </td>
                         <td className="py-3 px-4">
-                          {request.rejectionCount ? (
-                            <div className="flex items-center gap-1">
-                              <span
-                                className={`font-medium ${
-                                  request.rejectionCount >= 2
-                                    ? "text-red-600"
-                                    : request.rejectionCount >= 1
-                                      ? "text-orange-600"
-                                      : "text-gray-600"
-                                }`}
-                              >
-                                {request.rejectionCount}
-                              </span>
-                              <span className="text-gray-400">/3</span>
-                              {request.rejectionCount >= 2 && (
-                                <XCircle className="h-4 w-4 text-red-500" />
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-gray-400">0/3</span>
-                          )}
-                        </td>
-                        <td className="py-3 px-4">
-                          {totalQuotations === 0 ? (
-                            <span className="text-gray-400">-</span>
-                          ) : (
-                            <div className="flex items-center gap-1">
-                              <span
-                                className={`font-medium ${
-                                  hasExpired && activeCount === 0
-                                    ? "text-red-600"
-                                    : hasExpired
-                                      ? "text-orange-600"
-                                      : "text-green-600"
-                                }`}
-                              >
-                                {activeCount}
-                              </span>
-                              <span className="text-gray-400">
-                                /{totalQuotations}
-                              </span>
-                              {hasExpired && (
-                                <AlertTriangle
-                                  className={`h-4 w-4 ${
-                                    activeCount === 0
-                                      ? "text-red-500"
-                                      : "text-orange-500"
-                                  }`}
-                                  aria-label={
-                                    activeCount === 0
-                                      ? "Todas las cotizaciones han expirado"
-                                      : "Algunas cotizaciones han expirado"
-                                  }
-                                />
-                              )}
-                            </div>
-                          )}
+                          <RequestProgressTracker
+                            status={request.status}
+                            quotations={request.quotations}
+                            contracts={request.contracts}
+                            payments={request.payments}
+                          />
                         </td>
                         <td className="py-3 px-4">
                           <StatusBadge status={request.status} />
                         </td>
                         <td className="py-3 px-4">
-                          {format(new Date(request.createdAt), "dd/MM/yy", {
-                            locale: es,
-                          })}
-                        </td>
-                        <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
+                            {getWorkflowActionButton(
+                              request,
+                              creatingContract,
+                              handleCreateContract,
+                              router
+                            )}
                             <Button
                               size="sm"
                               variant="outline"
                               className="h-8 px-2"
-                              asChild
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(`/admin/solicitudes/${request.code || request.id}`);
+                              }}
                             >
-                              <Link
-                                href={`/admin/solicitudes/${request.code || request.id}`}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Link>
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              onClick={(e) => handleDeleteClick(request.id, e)}
+                              disabled={isDeleting}
+                            >
+                              <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         </td>
@@ -465,6 +672,36 @@ export default function AdminSolicitudes() {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminará permanentemente la
+              solicitud y todos sus datos relacionados (cotizaciones, contratos,
+              pagos, etc.).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Eliminando...
+                </>
+              ) : (
+                "Eliminar"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

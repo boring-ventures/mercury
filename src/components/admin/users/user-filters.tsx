@@ -25,9 +25,9 @@ export function UserFilters({ filters, onFiltersChange }: UserFiltersProps) {
   const [searchValue, setSearchValue] = useState(filters.search || "");
 
   // Fetch companies for company filter
-  const { data: companies } = useQuery({
+  const { data: companiesData } = useQuery({
     queryKey: ["companies"],
-    queryFn: async (): Promise<UserCompany[]> => {
+    queryFn: async (): Promise<{ companies: UserCompany[] }> => {
       const response = await fetch("/api/companies");
       if (!response.ok) {
         throw new Error("Failed to fetch companies");
@@ -36,6 +36,8 @@ export function UserFilters({ filters, onFiltersChange }: UserFiltersProps) {
     },
     staleTime: 300000, // 5 minutes
   });
+
+  const companies = companiesData?.companies || [];
 
   // Debounced search
   useEffect(() => {
@@ -96,6 +98,7 @@ export function UserFilters({ filters, onFiltersChange }: UserFiltersProps) {
             <SelectItem value="all">All Roles</SelectItem>
             <SelectItem value="IMPORTADOR">Importador</SelectItem>
             <SelectItem value="SUPERADMIN">Super Admin</SelectItem>
+            <SelectItem value="CAJERO">Cajero</SelectItem>
           </SelectContent>
         </Select>
       </div>

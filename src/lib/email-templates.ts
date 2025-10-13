@@ -1323,6 +1323,323 @@ export const generateContractCompletedEmail = (data: {
   `;
 };
 
+interface CashierQuotationNotificationData {
+  cashierName: string;
+  quotationCode: string;
+  requestCode: string;
+  companyName: string;
+  totalInBs: number | string;
+  amountUsdt: number | string;
+  suggestedExchangeRate: number | string;
+  link: string;
+  notifiedAt: string;
+}
+
+export const generateCashierQuotationNotificationEmail = (
+  data: CashierQuotationNotificationData
+): string => {
+  return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nueva Cotización Aceptada - NORDEX Platform</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #ffffff;
+            color: #1f2937;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .logo {
+            color: #f59e0b;
+            font-size: 28px;
+            font-weight: bold;
+            margin: 0;
+        }
+        .tagline {
+            color: #6b7280;
+            font-size: 14px;
+            margin: 5px 0 0 0;
+        }
+        .hero-section {
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            border-radius: 12px;
+            padding: 40px 30px;
+            text-align: center;
+            margin: 30px 0;
+        }
+        .hero-title {
+            color: #1f2937;
+            font-size: 28px;
+            font-weight: bold;
+            margin: 0 0 15px 0;
+        }
+        .hero-subtitle {
+            color: #4b5563;
+            font-size: 16px;
+            margin: 0 0 25px 0;
+        }
+        .status-badge {
+            background-color: #d1fae5;
+            border: 1px solid #86efac;
+            color: #166534;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .details-section {
+            background-color: #f9fafb;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+        .section-title {
+            color: #1f2937;
+            font-size: 22px;
+            font-weight: bold;
+            margin: 0 0 20px 0;
+        }
+        .quotation-id-box {
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin: 20px 0;
+        }
+        .quotation-id-label {
+            color: #6b7280;
+            font-size: 14px;
+            margin: 0 0 5px 0;
+        }
+        .quotation-id-value {
+            color: #1f2937;
+            font-size: 18px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            margin: 0;
+        }
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .detail-row {
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .detail-label {
+            color: #6b7280;
+            font-size: 14px;
+            padding: 10px 0;
+            width: 50%;
+            vertical-align: top;
+        }
+        .detail-value {
+            color: #1f2937;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 10px 0;
+            vertical-align: top;
+            text-align: right;
+        }
+        .amount-highlight {
+            background-color: #fef3c7;
+            border: 1px solid #fcd34d;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .amount-label {
+            color: #92400e;
+            font-size: 14px;
+            margin: 0 0 10px 0;
+        }
+        .amount-value {
+            color: #78350f;
+            font-size: 32px;
+            font-weight: bold;
+            margin: 0;
+        }
+        .divider {
+            height: 1px;
+            background-color: #e5e7eb;
+            margin: 25px 0;
+            border: none;
+        }
+        .action-section {
+            background-color: #dcfce7;
+            border: 1px solid #86efac;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+        .action-title {
+            color: #166534;
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0 0 15px 0;
+        }
+        .action-text {
+            color: #4b5563;
+            font-size: 14px;
+            margin: 0 0 20px 0;
+        }
+        .cta-button {
+            background-color: #16a34a;
+            color: #ffffff;
+            padding: 16px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 16px;
+            display: inline-block;
+            transition: background-color 0.2s;
+            text-align: center;
+            min-width: 200px;
+            box-shadow: 0 2px 4px rgba(22, 163, 74, 0.2);
+        }
+        .cta-button:hover {
+            background-color: #15803d;
+            box-shadow: 0 4px 8px rgba(22, 163, 74, 0.3);
+        }
+        .footer {
+            border-top: 1px solid #e5e7eb;
+            padding: 25px 0;
+            text-align: center;
+            margin-top: 40px;
+        }
+        .footer-text {
+            color: #9ca3af;
+            font-size: 12px;
+            margin: 5px 0;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            .hero-section {
+                padding: 30px 20px;
+            }
+            .details-section, .action-section {
+                padding: 20px;
+            }
+            .hero-title {
+                font-size: 24px;
+            }
+            .amount-value {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1 class="logo">NORDEX</h1>
+            <p class="tagline">Plataforma especializada para gestión de envíos internacionales</p>
+        </div>
+
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <h2 class="hero-title">💰 Nueva Cotización Aceptada</h2>
+            <p class="hero-subtitle">
+                Se ha aceptado una cotización que requiere compra de USDT.
+                Por favor, revise los detalles y asigne el monto correspondiente.
+            </p>
+            <div class="status-badge">
+                Acción Requerida: Compra de USDT
+            </div>
+        </div>
+
+        <!-- Quotation Details -->
+        <div class="details-section">
+            <h3 class="section-title">Detalles de la Cotización</h3>
+
+            <div class="quotation-id-box">
+                <p class="quotation-id-label">Código de Cotización:</p>
+                <p class="quotation-id-value">${data.quotationCode}</p>
+            </div>
+
+            <p class="quotation-id-label" style="margin-top: 10px;">
+                Notificación enviada el: ${formatDate(data.notifiedAt)}
+            </p>
+
+            <hr class="divider">
+
+            <!-- Amount Highlight -->
+            <div class="amount-highlight">
+                <p class="amount-label">Total a Pagar (Bolivianos)</p>
+                <p class="amount-value">${data.totalInBs} Bs</p>
+            </div>
+
+            <!-- Transaction Details -->
+            <table class="detail-table">
+                <tr class="detail-row">
+                    <td class="detail-label">Solicitud:</td>
+                    <td class="detail-value">${data.requestCode}</td>
+                </tr>
+                <tr class="detail-row">
+                    <td class="detail-label">Empresa:</td>
+                    <td class="detail-value">${data.companyName}</td>
+                </tr>
+                <tr class="detail-row">
+                    <td class="detail-label">Monto USDT:</td>
+                    <td class="detail-value">${data.amountUsdt} USDT</td>
+                </tr>
+                <tr class="detail-row">
+                    <td class="detail-label">Tipo de Cambio Sugerido:</td>
+                    <td class="detail-value">${data.suggestedExchangeRate} BOB/USDT</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Action Section -->
+        <div class="action-section">
+            <h3 class="action-title">Próximos Pasos</h3>
+            <p class="action-text">
+                1. Ingrese a su panel de cajero<br>
+                2. Seleccione la cuenta bancaria a utilizar<br>
+                3. Indique el monto asignado<br>
+                4. Realice la compra de USDT externamente<br>
+                5. Registre la cantidad de USDT entregados
+            </p>
+
+            <a href="${data.link}" class="cta-button">
+                Ir a Panel de Cajero
+            </a>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <hr class="divider">
+            <p class="footer-text">
+                © 2025 NORDEX Platform. Todos los derechos reservados.
+            </p>
+            <p class="footer-text">
+                Este es un email automático del sistema de notificaciones.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+  `;
+};
+
 export const generateQuotationNotificationEmail = (
   data: QuotationNotificationData
 ): string => {
