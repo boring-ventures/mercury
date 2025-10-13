@@ -23,12 +23,8 @@ import {
   AlertCircle,
   Loader2,
   AlertTriangle,
-  Calendar,
-  Building,
-  User,
   FileSignature,
   Play,
-  Pause,
   CheckSquare,
 } from "lucide-react";
 import Link from "next/link";
@@ -40,6 +36,7 @@ import {
   type ContractFilters,
 } from "@/hooks/use-admin-contracts";
 import { formatCurrency } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 const STATUS_FILTERS = [
   { value: "todos", label: "Todos" },
@@ -106,6 +103,7 @@ function isExpired(endDate: string): boolean {
 }
 
 export default function AdminContracts() {
+  const router = useRouter();
   const [filters, setFilters] = useState<ContractFilters>({
     status: "todos",
     currency: "todos",
@@ -122,6 +120,10 @@ export default function AdminContracts() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setFilters((prev) => ({ ...prev, search: searchTerm }));
+  };
+
+  const handleRowClick = (contractId: string) => {
+    router.push(`/admin/contracts/${contractId}`);
   };
 
   if (isLoading) {
@@ -262,106 +264,98 @@ export default function AdminContracts() {
         </CardContent>
       </Card>
 
-      {/* Results */}
+      {/* Table */}
       <Card>
         <CardHeader>
           <CardTitle>Contratos ({contracts.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {contracts.map((contract) => (
-              <div
-                key={contract.id}
-                className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-              >
-                <div className="flex items-center space-x-4">
-                  <div className="flex flex-col space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium">{contract.code}</span>
-                      <StatusBadge status={contract.status} />
-                      {isExpired(contract.endDate) && (
-                        <Badge variant="destructive" className="text-xs">
-                          Expirado
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="text-sm font-medium text-foreground">
-                      {contract.title}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {contract.request &&
-                        `Solicitud: ${contract.request.code}`}
-                      {contract.quotation &&
-                        ` • Cotización: ${contract.quotation.code}`}
-                    </div>
-                    <div className="text-sm text-muted-foreground flex items-center gap-4">
-                      <span className="flex items-center gap-1">
-                        <Building className="h-3 w-3" />
-                        {contract.company.name}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <User className="h-3 w-3" />
-                        {contract.createdBy.firstName}{" "}
-                        {contract.createdBy.lastName}
-                      </span>
-                      {contract.signedAt && (
-                        <span className="flex items-center gap-1">
-                          <FileSignature className="h-3 w-3" />
-                          Firmado:{" "}
-                          {format(new Date(contract.signedAt), "dd/MM/yyyy", {
-                            locale: es,
-                          })}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-4">
-                  <div className="text-right">
-                    <div className="font-medium">
-                      {formatCurrency(contract.amount, contract.currency)}
-                    </div>
-                  </div>
-
-                  <div className="text-right">
-                    <div className="text-sm text-muted-foreground flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      Período
-                    </div>
-                    <div className="text-sm">
-                      {format(new Date(contract.startDate), "dd/MM/yyyy", {
-                        locale: es,
-                      })}{" "}
-                      -{" "}
-                      {format(new Date(contract.endDate), "dd/MM/yyyy", {
-                        locale: es,
-                      })}
-                    </div>
-                  </div>
-
-                  <Link href={`/admin/contracts/${contract.id}`}>
-                    <Button variant="outline" size="sm">
-                      <Eye className="h-4 w-4 mr-2" />
-                      Ver
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            ))}
-
-            {contracts.length === 0 && (
-              <div className="text-center py-8">
-                <FileSignature className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">
-                  No se encontraron contratos
-                </h3>
-                <p className="text-muted-foreground">
-                  No hay contratos que coincidan con los filtros aplicados.
-                </p>
-              </div>
-            )}
-          </div>
+          {contracts.length === 0 ? (
+            <div className="text-center py-8">
+              <FileSignature className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium mb-2">
+                No se encontraron contratos
+              </h3>
+              <p className="text-muted-foreground">
+                No hay contratos que coincidan con los filtros aplicados.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-3 px-4">CÓDIGO</th>
+                    <th className="text-left py-3 px-4">TÍTULO</th>
+                    <th className="text-left py-3 px-4">EMPRESA</th>
+                    <th className="text-left py-3 px-4">SOLICITUD/COTIZACIÓN</th>
+                    <th className="text-left py-3 px-4">MONTO</th>
+                    <th className="text-left py-3 px-4">PERÍODO</th>
+                    <th className="text-left py-3 px-4">ESTADO</th>
+                    <th className="text-left py-3 px-4">ACCIONES</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {contracts.map((contract) => (
+                    <tr
+                      key={contract.id}
+                      className="border-b hover:bg-gray-50 cursor-pointer transition-colors"
+                      onClick={() => handleRowClick(contract.id)}
+                    >
+                      <td className="py-3 px-4 font-medium">{contract.code}</td>
+                      <td className="py-3 px-4">{contract.title}</td>
+                      <td className="py-3 px-4">{contract.company.name}</td>
+                      <td className="py-3 px-4 text-sm">
+                        {contract.request && (
+                          <div>Sol: {contract.request.code}</div>
+                        )}
+                        {contract.quotation && (
+                          <div>Cot: {contract.quotation.code}</div>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        {formatCurrency(contract.amount, contract.currency)}
+                      </td>
+                      <td className="py-3 px-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          <div>
+                            {format(new Date(contract.startDate), "dd/MM/yy", {
+                              locale: es,
+                            })}
+                            {" - "}
+                            {format(new Date(contract.endDate), "dd/MM/yy", {
+                              locale: es,
+                            })}
+                          </div>
+                          {isExpired(contract.endDate) && (
+                            <Badge variant="destructive" className="text-xs">
+                              Expirado
+                            </Badge>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <StatusBadge status={contract.status} />
+                      </td>
+                      <td className="py-3 px-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 px-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRowClick(contract.id);
+                          }}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

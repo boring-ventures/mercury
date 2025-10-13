@@ -37,6 +37,16 @@ export async function GET(request: NextRequest) {
         contract: {
           include: {
             company: true,
+            quotation: {
+              include: {
+                request: {
+                  include: {
+                    provider: true,
+                  },
+                },
+              },
+            },
+            createdBy: true,
           },
         },
         documents: {

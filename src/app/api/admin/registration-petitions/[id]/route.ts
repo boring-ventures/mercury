@@ -687,7 +687,7 @@ function generateApprovalEmail(
 
         <div class="details-section">
             <h3 style="color: #1f2937; margin: 0 0 20px 0;">📋 Detalles de la Aprobación</h3>
-            
+
             <div class="review-info">
                 <p style="margin: 0 0 10px 0;"><strong>Revisado por:</strong> ${adminName}</p>
                 <p style="margin: 0;"><strong>Fecha de aprobación:</strong> ${reviewDate.toLocaleDateString(
@@ -731,12 +731,12 @@ function generateApprovalEmail(
             <p style="color: #6b7280; font-size: 14px; margin: 0 0 20px 0;">
                 Utilice estas credenciales para acceder a NORDEX Platform:
             </p>
-            
+
             <div class="credential-item">
                 <p class="credential-label">📧 Email de acceso:</p>
                 <p class="credential-value">${request.email}</p>
             </div>
-            
+
             <div class="credential-item">
                 <p class="credential-label">🔑 Contraseña temporal:</p>
                 <p class="credential-value">${temporaryPassword}</p>
@@ -769,7 +769,7 @@ function generateApprovalEmail(
         <div class="footer">
             <p class="footer-text">© 2024 NORDEX Platform. Todos los derechos reservados.</p>
             <p class="footer-text">
-                Si tiene alguna pregunta, contáctenos en 
+                Si tiene alguna pregunta, contáctenos en
                 <a href="mailto:support@nordex.com" style="color: #f59e0b;">support@nordex.com</a>
             </p>
         </div>
@@ -900,7 +900,7 @@ function generateRejectionEmail(
                 Estimado/a <strong>${request.contactName}</strong>,
             </p>
             <p style="color: #6b7280; margin: 0 0 25px 0;">
-                Gracias por su interés en formar parte de NORDEX Platform. 
+                Gracias por su interés en formar parte de NORDEX Platform.
                 Hemos revisado cuidadosamente su solicitud de registro para <strong>${request.companyName}</strong>.
             </p>
 
@@ -978,8 +978,8 @@ function generateRejectionEmail(
                 <div>
                     <p style="color: #16a34a; font-weight: 600; margin: 0 0 8px 0;">¿Necesita ayuda?</p>
                     <p style="color: #15803d; font-size: 14px; margin: 0;">
-                        Si tiene preguntas sobre los motivos de rechazo o necesita orientación para corregir su solicitud, 
-                        puede contactarnos en 
+                        Si tiene preguntas sobre los motivos de rechazo o necesita orientación para corregir su solicitud,
+                        puede contactarnos en
                         <a href="mailto:soporte@nordex.com" style="color: #f59e0b; font-weight: 600;">soporte@nordex.com</a>
                         <br>
                         <strong>Por favor incluya su ID de solicitud: ${request.id}</strong>
@@ -991,7 +991,7 @@ function generateRejectionEmail(
         <div class="footer">
             <p class="footer-text">© 2024 NORDEX Platform. Todos los derechos reservados.</p>
             <p class="footer-text">
-                Soporte técnico: 
+                Soporte técnico:
                 <a href="mailto:soporte@nordex.com" style="color: #f59e0b;">soporte@nordex.com</a>
             </p>
         </div>
@@ -999,4 +999,85 @@ function generateRejectionEmail(
 </body>
 </html>
   `;
+}
+
+// DELETE: Delete a registration request
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { id } = await params;
+
+    // Check authentication
+    const supabase = createServerComponentClient({ cookies });
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+    }
+
+    // Get user profile to check role
+    const profile = await prisma.profile.findUnique({
+      where: { userId: session.user.id },
+      select: { role: true },
+    });
+
+    if (!profile || profile.role !== "SUPERADMIN") {
+      return NextResponse.json(
+        { error: "No tienes permisos para realizar esta acción" },
+        { status: 403 }
+      );
+    }
+
+    // Find the registration request
+    const registrationRequest = await prisma.registrationRequest.findUnique({
+      where: { id },
+      include: {
+        company: true,
+        documents: true,
+      },
+    });
+
+    if (!registrationRequest) {
+      return NextResponse.json(
+        { error: "Solicitud de registro no encontrada" },
+        { status: 404 }
+      );
+    }
+
+    // Delete associated documents first
+    await prisma.document.deleteMany({
+      where: { registrationRequestId: id },
+    });
+
+    // If the registration was approved and created a company, we need to handle it
+    // Note: We don't delete the company, just unlink the registration request
+    if (registrationRequest.companyId) {
+      console.log(
+        `Registration request ${id} had associated company ${registrationRequest.companyId}, unlinking...`
+      );
+    }
+
+    // Delete the registration request
+    await prisma.registrationRequest.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Solicitud de registro eliminada correctamente",
+    });
+  } catch (error) {
+    console.error("Error deleting registration petition:", error);
+    return NextResponse.json(
+      {
+        error: "Error interno del servidor",
+        details:
+          process.env.NODE_ENV === "development"
+            ? (error as Error).message
+            : undefined,
+      },
+      { status: 500 }
+    );
+  }
 }

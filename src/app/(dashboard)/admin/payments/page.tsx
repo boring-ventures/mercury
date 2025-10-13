@@ -9,29 +9,23 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   CheckCircle,
-  Clock,
   AlertCircle,
   Eye,
   Download,
   DollarSign,
   FileText,
-  Building,
-  User,
   X,
   Maximize2,
   Upload,
+  ArrowLeft,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { formatCurrency } from "@/lib/utils";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 // Payment status badge
-function PaymentStatusBadge({
-  payment,
-  contract,
-}: {
-  payment: any;
-  contract: any;
-}) {
+function PaymentStatusBadge({ contract }: { contract: any }) {
   const getStatusConfig = (contractStatus: string) => {
     switch (contractStatus) {
       case "PAYMENT_PENDING":
@@ -189,139 +183,7 @@ function PaymentReviewModal({
           Revisar Pago - {payment.code}
         </h3>
 
-        {/* Payment Summary */}
-        <div className="bg-gray-50 p-4 rounded-lg mb-4">
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-gray-600">Contrato:</span>
-              <span className="font-medium ml-2">{payment.contract?.code}</span>
-            </div>
-            <div>
-              <span className="text-gray-600">Empresa:</span>
-              <span className="font-medium ml-2">
-                {payment.contract?.company?.name}
-              </span>
-            </div>
-            <div>
-              <span className="text-gray-600">Monto:</span>
-              <span className="font-medium ml-2">
-                {formatCurrency(payment.amount, payment.currency)}
-              </span>
-            </div>
-            <div>
-              <span className="text-gray-600">Proveedor:</span>
-              <span className="font-medium ml-2">
-                {payment.contract?.quotation?.provider?.name}
-              </span>
-            </div>
-          </div>
-        </div>
-
         <div className="space-y-4">
-          {/* Quotation Details */}
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h4 className="font-medium text-blue-900 mb-2">
-              Información de Cotización
-            </h4>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-blue-700">Cotización:</span>
-                <span className="font-medium ml-2">
-                  {payment.contract?.quotation?.code}
-                </span>
-              </div>
-              <div>
-                <span className="text-blue-700">Monto Cotización:</span>
-                <span className="font-medium ml-2">
-                  {payment.contract?.quotation?.amount &&
-                    formatCurrency(
-                      payment.contract.quotation.amount,
-                      payment.contract.quotation.currency
-                    )}
-                </span>
-              </div>
-              <div>
-                <span className="text-blue-700">Producto:</span>
-                <span className="font-medium ml-2">
-                  {payment.contract?.quotation?.request?.productName}
-                </span>
-              </div>
-              <div>
-                <span className="text-blue-700">Solicitud:</span>
-                <span className="font-medium ml-2">
-                  {payment.contract?.quotation?.request?.code}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Document Display */}
-          <div className="bg-green-50 p-4 rounded-lg">
-            <h4 className="font-medium text-green-900 mb-2">
-              Documento Subido por el Importador
-            </h4>
-            {payment.documents?.map((doc: any) => (
-              <div key={doc.id} className="space-y-3">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-green-700">Archivo:</span>
-                    <span className="font-medium ml-2 text-blue-600">
-                      {doc.filename}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-green-700">Tamaño:</span>
-                    <span className="font-medium ml-2">
-                      {(doc.fileSize / 1024 / 1024).toFixed(2)} MB
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-green-700">Tipo:</span>
-                    <span className="font-medium ml-2">{doc.mimeType}</span>
-                  </div>
-                  <div>
-                    <span className="text-green-700">Subido:</span>
-                    <span className="font-medium ml-2">
-                      {new Date(doc.createdAt).toLocaleDateString("es-ES")}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Document Preview */}
-                <div className="mt-3">
-                  <h5 className="text-sm font-medium text-green-800 mb-2">
-                    Vista Previa del Documento:
-                  </h5>
-                  <div className="border rounded-lg overflow-hidden bg-white">
-                    {doc.mimeType.startsWith("image/") ? (
-                      <Image
-                        src={doc.fileUrl}
-                        alt={doc.filename}
-                        width={400}
-                        height={256}
-                        className="w-full h-64 object-contain"
-                      />
-                    ) : doc.mimeType === "application/pdf" ? (
-                      <iframe
-                        src={doc.fileUrl}
-                        className="w-full h-64"
-                        title={doc.filename}
-                      />
-                    ) : (
-                      <div className="p-4 text-center text-gray-500">
-                        <FileText className="h-12 w-12 mx-auto mb-2" />
-                        <p>
-                          Vista previa no disponible para este tipo de archivo
-                        </p>
-                        <p className="text-sm">{doc.filename}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
           <div>
             <Label>Acción</Label>
             <div className="space-y-2 mt-2">
@@ -432,34 +294,6 @@ function ProviderProofUploadModal({
           Subir Comprobante de Pago al Proveedor - {payment.code}
         </h3>
 
-        {/* Payment Summary */}
-        <div className="bg-gray-50 p-4 rounded-lg mb-4">
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-gray-600">Contrato:</span>
-              <span className="font-medium ml-2">{payment.contract?.code}</span>
-            </div>
-            <div>
-              <span className="text-gray-600">Empresa:</span>
-              <span className="font-medium ml-2">
-                {payment.contract?.company?.name}
-              </span>
-            </div>
-            <div>
-              <span className="text-gray-600">Monto:</span>
-              <span className="font-medium ml-2">
-                {formatCurrency(payment.amount, payment.currency)}
-              </span>
-            </div>
-            <div>
-              <span className="text-gray-600">Proveedor:</span>
-              <span className="font-medium ml-2">
-                {payment.contract?.quotation?.provider?.name}
-              </span>
-            </div>
-          </div>
-        </div>
-
         <div className="space-y-4">
           <div>
             <Label htmlFor="providerProofFile">
@@ -513,14 +347,296 @@ function ProviderProofUploadModal({
   );
 }
 
-export default function AdminPayments() {
-  const [payments, setPayments] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedPayment, setSelectedPayment] = useState<any>(null);
+// Payment detail view component
+function PaymentDetailView({
+  payment,
+  onBack,
+  onAction,
+  onProviderProofUpload,
+}: {
+  payment: any;
+  onBack: () => void;
+  onAction: (action: string, reviewNotes?: string) => void;
+  onProviderProofUpload: (file: File, notes: string) => void;
+}) {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showProviderProofModal, setShowProviderProofModal] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [showDocumentPreview, setShowDocumentPreview] = useState(false);
+  const { toast } = useToast();
+
+  return (
+    <>
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="sm" onClick={onBack}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Volver a la lista
+          </Button>
+          <div className="flex-1">
+            <h2 className="text-xl font-bold">Pago {payment.code}</h2>
+            <div className="flex items-center gap-2 mt-1">
+              <PaymentStatusBadge contract={payment.contract} />
+              <span className="text-sm text-gray-600">
+                {formatCurrency(payment.amount, payment.currency)}
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {payment.contract?.status === "PAYMENT_PENDING" && (
+              <Button
+                variant="default"
+                onClick={() => setShowReviewModal(true)}
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Revisar Pago
+              </Button>
+            )}
+            {payment.contract?.status === "PAYMENT_REVIEWED" && (
+              <Button
+                variant="default"
+                onClick={() => setShowReviewModal(true)}
+              >
+                <DollarSign className="h-4 w-4 mr-2" />
+                Marcar Proveedor Pagado
+              </Button>
+            )}
+            {payment.contract?.status === "PROVIDER_PAID" && (
+              <Button
+                variant="default"
+                onClick={() => setShowProviderProofModal(true)}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Subir Comprobante
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Detalles del Pago</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Código:</span>
+                <span className="font-medium">{payment.code}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Monto:</span>
+                <span className="font-medium">
+                  {formatCurrency(payment.amount, payment.currency)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Tipo:</span>
+                <span className="font-medium">{payment.type}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Vencimiento:</span>
+                <span className="font-medium">
+                  {format(new Date(payment.dueDate), "dd/MM/yyyy", {
+                    locale: es,
+                  })}
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-gray-600 mb-1">Descripción:</span>
+                <span className="font-medium">{payment.description}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Contrato y Empresa</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Contrato:</span>
+                <span className="font-medium">{payment.contract?.code}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Empresa:</span>
+                <span className="font-medium">
+                  {payment.contract?.company?.name}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Importador:</span>
+                <span className="font-medium">
+                  {payment.contract?.createdBy?.firstName}{" "}
+                  {payment.contract?.createdBy?.lastName}
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-gray-600 mb-1">Email:</span>
+                <span className="font-medium text-blue-600 text-xs">
+                  {payment.contract?.createdBy?.email}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Estado Contrato:</span>
+                <Badge className="text-xs">{payment.contract?.status}</Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">
+                Cotización y Proveedor
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Cotización:</span>
+                <span className="font-medium">
+                  {payment.contract?.quotation?.code}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Proveedor:</span>
+                <span className="font-medium">
+                  {payment.contract?.quotation?.request?.provider?.name}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Monto Cotización:</span>
+                <span className="font-medium">
+                  {payment.contract?.quotation?.amount &&
+                    formatCurrency(
+                      payment.contract.quotation.amount,
+                      payment.contract.quotation.currency
+                    )}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Solicitud:</span>
+                <span className="font-medium">
+                  {payment.contract?.quotation?.request?.code}
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-gray-600 mb-1">Producto:</span>
+                <span className="font-medium">
+                  {payment.contract?.quotation?.request?.productName}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Documentos Subidos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {payment.documents?.map((doc: any) => (
+                <div key={doc.id} className="bg-gray-50 p-4 rounded-lg">
+                  <div className="space-y-2 text-sm mb-3">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Archivo:</span>
+                      <span className="font-medium text-blue-600 text-xs">
+                        {doc.filename}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Tamaño:</span>
+                      <span className="font-medium">
+                        {(doc.fileSize / 1024 / 1024).toFixed(2)} MB
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Tipo:</span>
+                      <span className="font-medium">{doc.mimeType}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Subido:</span>
+                      <span className="font-medium">
+                        {format(new Date(doc.createdAt), "dd/MM/yyyy", {
+                          locale: es,
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedDocument(doc);
+                        setShowDocumentPreview(true);
+                      }}
+                      className="flex-1"
+                    >
+                      <Maximize2 className="h-4 w-4 mr-2" />
+                      Vista Previa
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const link = document.createElement("a");
+                        link.href = doc.fileUrl;
+                        link.download = doc.filename;
+                        link.target = "_blank";
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        toast({
+                          title: "Descarga iniciada",
+                          description: "El documento se está descargando...",
+                        });
+                      }}
+                      className="flex-1"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Descargar
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {showReviewModal && (
+        <PaymentReviewModal
+          payment={payment}
+          onClose={() => setShowReviewModal(false)}
+          onAction={onAction}
+        />
+      )}
+
+      {showDocumentPreview && selectedDocument && (
+        <DocumentPreviewModal
+          document={selectedDocument}
+          onClose={() => {
+            setShowDocumentPreview(false);
+            setSelectedDocument(null);
+          }}
+        />
+      )}
+
+      {showProviderProofModal && (
+        <ProviderProofUploadModal
+          payment={payment}
+          onClose={() => setShowProviderProofModal(false)}
+          onUpload={onProviderProofUpload}
+        />
+      )}
+    </>
+  );
+}
+
+export default function AdminPayments() {
+  const [payments, setPayments] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const { toast } = useToast();
 
   const loadPayments = useCallback(async () => {
@@ -543,7 +659,6 @@ export default function AdminPayments() {
     }
   }, [toast]);
 
-  // Load payments on component mount
   useEffect(() => {
     loadPayments();
   }, [loadPayments]);
@@ -572,7 +687,8 @@ export default function AdminPayments() {
           title: "Éxito",
           description: result.message,
         });
-        loadPayments(); // Refresh the list
+        await loadPayments();
+        setSelectedPayment(null);
       } else {
         const error = await response.json();
         throw new Error(error.error || "Error al actualizar el pago");
@@ -612,7 +728,8 @@ export default function AdminPayments() {
           title: "Éxito",
           description: result.message,
         });
-        loadPayments(); // Refresh the list
+        await loadPayments();
+        setSelectedPayment(null);
       } else {
         const error = await response.json();
         throw new Error(error.error || "Error al subir el comprobante");
@@ -630,9 +747,8 @@ export default function AdminPayments() {
     }
   };
 
-  const openReviewModal = (payment: any) => {
+  const handleRowClick = (payment: any) => {
     setSelectedPayment(payment);
-    setShowReviewModal(true);
   };
 
   if (isLoading) {
@@ -643,6 +759,17 @@ export default function AdminPayments() {
           <p className="text-gray-600">Cargando pagos...</p>
         </div>
       </div>
+    );
+  }
+
+  if (selectedPayment) {
+    return (
+      <PaymentDetailView
+        payment={selectedPayment}
+        onBack={() => setSelectedPayment(null)}
+        onAction={handlePaymentAction}
+        onProviderProofUpload={handleProviderProofUpload}
+      />
     );
   }
 
@@ -672,301 +799,76 @@ export default function AdminPayments() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6">
-          {payments.map((payment) => (
-            <Card key={payment.id} className="overflow-hidden">
-              <CardHeader className="bg-gray-50 border-b">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-lg font-semibold">
-                      Pago {payment.code}
-                    </CardTitle>
-                    <div className="flex items-center gap-2 mt-2">
-                      <PaymentStatusBadge
-                        payment={payment}
-                        contract={payment.contract}
-                      />
-                      <span className="text-sm text-gray-600">
+        <Card>
+          <CardHeader>
+            <CardTitle>Listado de Pagos</CardTitle>
+            <p className="text-sm text-gray-600">
+              Mostrando {payments.length} pago(s)
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-3 px-4">CÓDIGO</th>
+                    <th className="text-left py-3 px-4">EMPRESA</th>
+                    <th className="text-left py-3 px-4">CONTRATO</th>
+                    <th className="text-left py-3 px-4">PROVEEDOR</th>
+                    <th className="text-left py-3 px-4">MONTO</th>
+                    <th className="text-left py-3 px-4">VENCIMIENTO</th>
+                    <th className="text-left py-3 px-4">ESTADO</th>
+                    <th className="text-left py-3 px-4">ACCIONES</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payments.map((payment) => (
+                    <tr
+                      key={payment.id}
+                      className="border-b hover:bg-gray-50 cursor-pointer transition-colors"
+                      onClick={() => handleRowClick(payment)}
+                    >
+                      <td className="py-3 px-4 font-medium">{payment.code}</td>
+                      <td className="py-3 px-4">
+                        {payment.contract?.company?.name || "N/A"}
+                      </td>
+                      <td className="py-3 px-4">
+                        {payment.contract?.code || "N/A"}
+                      </td>
+                      <td className="py-3 px-4">
+                        {payment.contract?.quotation?.request?.provider?.name || "N/A"}
+                      </td>
+                      <td className="py-3 px-4">
                         {formatCurrency(payment.amount, payment.currency)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openReviewModal(payment)}
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      Revisar
-                    </Button>
-                    {payment.contract?.status === "PROVIDER_PAID" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedPayment(payment);
-                          setShowProviderProofModal(true);
-                        }}
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Subir Comprobante
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent className="p-6">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Payment Details */}
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-3">
-                      Detalles del Pago
-                    </h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Código:</span>
-                        <span className="font-medium">{payment.code}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Monto:</span>
-                        <span className="font-medium">
-                          {formatCurrency(payment.amount, payment.currency)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Tipo:</span>
-                        <span className="font-medium">{payment.type}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Vencimiento:</span>
-                        <span className="font-medium">
-                          {new Date(payment.dueDate).toLocaleDateString(
-                            "es-ES"
-                          )}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Descripción:</span>
-                        <span className="font-medium">
-                          {payment.description}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Contract & Company Info */}
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-3">
-                      Contrato y Empresa
-                    </h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Contrato:</span>
-                        <span className="font-medium">
-                          {payment.contract?.code}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Empresa:</span>
-                        <span className="font-medium">
-                          {payment.contract?.company?.name}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Importador:</span>
-                        <span className="font-medium">
-                          {payment.contract?.createdBy?.firstName}{" "}
-                          {payment.contract?.createdBy?.lastName}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Email:</span>
-                        <span className="font-medium text-blue-600">
-                          {payment.contract?.createdBy?.email}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Estado Contrato:</span>
-                        <Badge className="text-xs">
-                          {payment.contract?.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Quotation & Provider Info */}
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-3">
-                      Cotización y Proveedor
-                    </h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Cotización:</span>
-                        <span className="font-medium">
-                          {payment.contract?.quotation?.code}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Proveedor:</span>
-                        <span className="font-medium">
-                          {payment.contract?.quotation?.provider?.name}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Monto Cotización:</span>
-                        <span className="font-medium">
-                          {payment.contract?.quotation?.amount &&
-                            formatCurrency(
-                              payment.contract.quotation.amount,
-                              payment.contract.quotation.currency
-                            )}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Solicitud:</span>
-                        <span className="font-medium">
-                          {payment.contract?.quotation?.request?.code}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Producto:</span>
-                        <span className="font-medium">
-                          {payment.contract?.quotation?.request?.productName}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Document Info */}
-                <div className="mt-6 pt-4 border-t">
-                  <h4 className="font-medium text-gray-900 mb-3">
-                    Documento Subido
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {payment.documents?.map((doc: any) => (
-                      <div key={doc.id} className="bg-gray-50 p-3 rounded-lg">
-                        <div className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Archivo:</span>
-                            <span className="font-medium text-blue-600">
-                              {doc.filename}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Tamaño:</span>
-                            <span className="font-medium">
-                              {(doc.fileSize / 1024 / 1024).toFixed(2)} MB
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Tipo:</span>
-                            <span className="font-medium">{doc.mimeType}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Subido:</span>
-                            <span className="font-medium">
-                              {new Date(doc.createdAt).toLocaleDateString(
-                                "es-ES"
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex gap-2 mt-3">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedDocument(doc);
-                              setShowDocumentPreview(true);
-                            }}
-                            className="flex-1"
-                          >
-                            <Maximize2 className="h-4 w-4 mr-2" />
-                            Vista Previa
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const link = document.createElement("a");
-                              link.href = doc.fileUrl;
-                              link.download = doc.filename;
-                              link.target = "_blank";
-                              document.body.appendChild(link);
-                              link.click();
-                              document.body.removeChild(link);
-                              toast({
-                                title: "Descarga iniciada",
-                                description:
-                                  "El documento se está descargando...",
-                              });
-                            }}
-                            className="flex-1"
-                          >
-                            <Download className="h-4 w-4 mr-2" />
-                            Descargar
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="mt-6 pt-4 border-t">
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openReviewModal(payment)}
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      Ver Detalles
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* Review Modal */}
-      {showReviewModal && selectedPayment && (
-        <PaymentReviewModal
-          payment={selectedPayment}
-          onClose={() => {
-            setShowReviewModal(false);
-            setSelectedPayment(null);
-          }}
-          onAction={handlePaymentAction}
-        />
-      )}
-
-      {/* Document Preview Modal */}
-      {showDocumentPreview && selectedDocument && (
-        <DocumentPreviewModal
-          document={selectedDocument}
-          onClose={() => {
-            setShowDocumentPreview(false);
-            setSelectedDocument(null);
-          }}
-        />
-      )}
-
-      {/* Provider Proof Upload Modal */}
-      {showProviderProofModal && selectedPayment && (
-        <ProviderProofUploadModal
-          payment={selectedPayment}
-          onClose={() => {
-            setShowProviderProofModal(false);
-            setSelectedPayment(null);
-          }}
-          onUpload={handleProviderProofUpload}
-        />
+                      </td>
+                      <td className="py-3 px-4">
+                        {format(new Date(payment.dueDate), "dd/MM/yyyy", {
+                          locale: es,
+                        })}
+                      </td>
+                      <td className="py-3 px-4">
+                        <PaymentStatusBadge contract={payment.contract} />
+                      </td>
+                      <td className="py-3 px-4">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 px-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRowClick(payment);
+                          }}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

@@ -1,16 +1,13 @@
 import {
   LayoutDashboard,
   Settings,
-  HelpCircle,
   Ship,
   Package,
   FileText,
   TrendingUp,
   Users,
   Building2,
-  ShieldCheck,
   UserPlus,
-  Bell,
   Wallet,
   DollarSign,
 } from "lucide-react";
@@ -44,11 +41,6 @@ export const adminSidebarData: SidebarData = {
           title: "Dashboard",
           url: "/admin/dashboard",
           icon: LayoutDashboard,
-        },
-        {
-          title: "Notificaciones",
-          url: "/dashboard/notifications",
-          icon: Bell,
         },
         {
           title: "Solicitudes",
@@ -94,26 +86,6 @@ export const adminSidebarData: SidebarData = {
           title: "Proveedores",
           url: "/admin/providers",
           icon: Ship,
-        },
-      ],
-    },
-    {
-      title: "Sistema",
-      items: [
-        {
-          title: "Configuración",
-          icon: Settings,
-          url: "/admin/configuracion",
-        },
-        {
-          title: "Auditoría",
-          url: "/admin/auditoria",
-          icon: ShieldCheck,
-        },
-        {
-          title: "Centro de Ayuda",
-          url: "/help-center",
-          icon: HelpCircle,
         },
       ],
     },
@@ -204,21 +176,6 @@ export const cajeroSidebarData: SidebarData = {
           url: "/cajero/cuentas",
           icon: Wallet,
         },
-        {
-          title: "Notificaciones",
-          url: "/dashboard/notifications",
-          icon: Bell,
-        },
-      ],
-    },
-    {
-      title: "Soporte",
-      items: [
-        {
-          title: "Centro de Ayuda",
-          url: "/help-center",
-          icon: HelpCircle,
-        },
       ],
     },
   ],
@@ -250,11 +207,6 @@ export function getSidebarDataByRole(role: string): SidebarData {
                 title: "Dashboard",
                 url: "/dashboard",
                 icon: LayoutDashboard,
-              },
-              {
-                title: "Centro de Ayuda",
-                url: "/help-center",
-                icon: HelpCircle,
               },
             ],
           },

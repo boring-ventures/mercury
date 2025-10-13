@@ -31,6 +31,11 @@ export interface AdminQuotationItem {
   company: {
     name: string;
   };
+  contracts?: Array<{
+    id: string;
+    code: string;
+    status: string;
+  }>;
 }
 
 export interface QuotationsResponse {

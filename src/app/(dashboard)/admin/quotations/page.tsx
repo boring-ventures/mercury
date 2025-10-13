@@ -23,10 +23,6 @@ import {
   AlertCircle,
   Loader2,
   AlertTriangle,
-  Calendar,
-  Building,
-  User,
-  Building2,
   Users,
   BarChart3,
 } from "lucide-react";
@@ -39,6 +35,7 @@ import {
   type QuotationFilters,
 } from "@/hooks/use-admin-quotations";
 import { formatCurrency } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 const STATUS_FILTERS = [
   { value: "todos", label: "Todos" },
@@ -101,15 +98,15 @@ function isExpired(validUntil: string): boolean {
 }
 
 export default function AdminQuotations() {
+  const router = useRouter();
   const [filters, setFilters] = useState<QuotationFilters>({
     status: "todos",
     currency: "todos",
     search: "",
   });
   const [searchTerm, setSearchTerm] = useState("");
-  const [creatingContract, setCreatingContract] = useState<string | null>(null);
 
-  const { data, isLoading, error, refetch } = useAdminQuotations(filters);
+  const { data, isLoading, error } = useAdminQuotations(filters);
 
   const handleFilterChange = (key: keyof QuotationFilters, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -120,34 +117,8 @@ export default function AdminQuotations() {
     setFilters((prev) => ({ ...prev, search: searchTerm }));
   };
 
-  const handleCreateContract = async (quotation: any) => {
-    setCreatingContract(quotation.id);
-    try {
-      const response = await fetch("/api/admin/contracts/auto-create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          quotationId: quotation.id,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Error al crear el contrato");
-      }
-
-      const result = await response.json();
-
-      // Redirect to the contract detail page
-      window.location.href = `/admin/contracts/${result.contract.id}`;
-    } catch (error) {
-      console.error("Error creating contract:", error);
-      alert(error instanceof Error ? error.message : "Error desconocido");
-    } finally {
-      setCreatingContract(null);
-    }
+  const handleRowClick = (quotationId: string) => {
+    router.push(`/admin/quotations/${quotationId}`);
   };
 
   if (isLoading) {
@@ -306,122 +277,99 @@ export default function AdminQuotations() {
         </CardContent>
       </Card>
 
-      {/* Results */}
+      {/* Table */}
       <Card>
         <CardHeader>
           <CardTitle>Cotizaciones ({quotations.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {quotations.map((quotation) => (
-              <div
-                key={quotation.id}
-                className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-              >
-                <div className="flex items-center space-x-4">
-                  <div className="flex flex-col space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium">{quotation.code}</span>
-                      <StatusBadge status={quotation.status} />
-                      {isExpired(quotation.validUntil) && (
-                        <Badge variant="destructive" className="text-xs">
-                          Expirado
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      Solicitud: {quotation.request.code}
-                    </div>
-                    <div className="text-sm text-muted-foreground flex items-center gap-4">
-                      <span className="flex items-center gap-1">
-                        <Building className="h-3 w-3" />
-                        {quotation.company.name}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <User className="h-3 w-3" />
-                        {quotation.createdBy.firstName}{" "}
-                        {quotation.createdBy.lastName}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-4">
-                  <div className="text-right">
-                    <div className="font-medium">
-                      {formatCurrency(quotation.amount, quotation.currency)}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {formatCurrency(quotation.totalInBs, "Bs")}
-                    </div>
-                  </div>
-
-                  <div className="text-right">
-                    <div className="text-sm text-muted-foreground flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      Válido hasta
-                    </div>
-                    <div className="text-sm">
-                      {format(new Date(quotation.validUntil), "dd/MM/yyyy", {
-                        locale: es,
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    {quotation.status === "ACCEPTED" && (
-                      <>
-                        <Link
-                          href={`/admin/cashier-reports?quotationId=${quotation.code}`}
-                        >
-                          <Button variant="secondary" size="sm">
-                            <BarChart3 className="h-4 w-4 mr-2" />
-                            Reportes
-                          </Button>
-                        </Link>
-                        <Button
-                          variant="default"
-                          size="sm"
-                          onClick={() => handleCreateContract(quotation)}
-                          disabled={creatingContract === quotation.id}
-                        >
-                          {creatingContract === quotation.id ? (
-                            <>
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              Creando...
-                            </>
-                          ) : (
-                            <>
-                              <Building2 className="h-4 w-4 mr-2" />
-                              Crear Contrato
-                            </>
+          {quotations.length === 0 ? (
+            <div className="text-center py-8">
+              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium mb-2">
+                No se encontraron cotizaciones
+              </h3>
+              <p className="text-muted-foreground">
+                No hay cotizaciones que coincidan con los filtros aplicados.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-3 px-4">CÓDIGO</th>
+                    <th className="text-left py-3 px-4">SOLICITUD</th>
+                    <th className="text-left py-3 px-4">EMPRESA</th>
+                    <th className="text-left py-3 px-4">MONTO</th>
+                    <th className="text-left py-3 px-4">TOTAL BS</th>
+                    <th className="text-left py-3 px-4">VÁLIDO HASTA</th>
+                    <th className="text-left py-3 px-4">ESTADO</th>
+                    <th className="text-left py-3 px-4">ACCIONES</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {quotations.map((quotation) => (
+                    <tr
+                      key={quotation.id}
+                      className="border-b hover:bg-gray-50 cursor-pointer transition-colors"
+                      onClick={() => handleRowClick(quotation.id)}
+                    >
+                      <td className="py-3 px-4 font-medium">{quotation.code}</td>
+                      <td className="py-3 px-4">{quotation.request.code}</td>
+                      <td className="py-3 px-4">{quotation.company.name}</td>
+                      <td className="py-3 px-4">
+                        {formatCurrency(quotation.amount, quotation.currency)}
+                      </td>
+                      <td className="py-3 px-4">
+                        {formatCurrency(quotation.totalInBs, "Bs")}
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <span>
+                            {format(new Date(quotation.validUntil), "dd/MM/yyyy", {
+                              locale: es,
+                            })}
+                          </span>
+                          {isExpired(quotation.validUntil) && (
+                            <Badge variant="destructive" className="text-xs">
+                              Expirado
+                            </Badge>
                           )}
-                        </Button>
-                      </>
-                    )}
-                    <Link href={`/admin/quotations/${quotation.id}`}>
-                      <Button variant="outline" size="sm">
-                        <Eye className="h-4 w-4 mr-2" />
-                        Ver
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            {quotations.length === 0 && (
-              <div className="text-center py-8">
-                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">
-                  No se encontraron cotizaciones
-                </h3>
-                <p className="text-muted-foreground">
-                  No hay cotizaciones que coincidan con los filtros aplicados.
-                </p>
-              </div>
-            )}
-          </div>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <StatusBadge status={quotation.status} />
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <Link
+                            href={`/admin/cashier-reports?quotationId=${quotation.code}`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Button variant="outline" size="sm" className="h-8 px-2">
+                              <BarChart3 className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 px-2"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRowClick(quotation.id);
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

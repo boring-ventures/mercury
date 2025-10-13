@@ -95,6 +95,17 @@ export async function GET(request: NextRequest) {
               name: true,
             },
           },
+          contracts: {
+            select: {
+              id: true,
+              code: true,
+              status: true,
+            },
+            orderBy: {
+              createdAt: "desc",
+            },
+            take: 1,
+          },
         },
         orderBy: { createdAt: "desc" },
         skip: (page - 1) * limit,

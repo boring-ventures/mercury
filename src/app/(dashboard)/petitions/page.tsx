@@ -25,7 +25,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/use-toast";
 import {
   Eye,
@@ -38,6 +48,9 @@ import {
   ChevronRight,
   Search,
   Filter,
+  Loader2,
+  Ban,
+  Trash2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -92,6 +105,17 @@ function PetitionsPageContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
+  // Reject dialog state
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [selectedPetition, setSelectedPetition] = useState<RegistrationPetition | null>(null);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [isRejecting, setIsRejecting] = useState(false);
+
+  // Delete dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [petitionToDelete, setPetitionToDelete] = useState<RegistrationPetition | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   useEffect(() => {
     fetchPetitions();
   }, []);
@@ -113,6 +137,122 @@ function PetitionsPageContent() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRejectClick = (petition: RegistrationPetition) => {
+    setSelectedPetition(petition);
+    setRejectionReason("");
+    setRejectDialogOpen(true);
+  };
+
+  const handleRejectConfirm = async () => {
+    if (!selectedPetition || !rejectionReason.trim()) {
+      toast({
+        title: "Error",
+        description: "La razón del rechazo es obligatoria",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsRejecting(true);
+
+    try {
+      const response = await fetch(
+        `/api/admin/registration-petitions/${selectedPetition.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "reject",
+            rejectionReason: rejectionReason.trim(),
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Error al rechazar la solicitud");
+      }
+
+      toast({
+        title: "Solicitud rechazada",
+        description: "Se ha enviado una notificación detallada al solicitante.",
+      });
+
+      // Refresh petitions list
+      await fetchPetitions();
+
+      // Close dialog and reset state
+      setRejectDialogOpen(false);
+      setSelectedPetition(null);
+      setRejectionReason("");
+    } catch (error) {
+      console.error("Error rejecting petition:", error);
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Error al rechazar la solicitud",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRejecting(false);
+    }
+  };
+
+  const handleDeleteClick = (petition: RegistrationPetition) => {
+    setPetitionToDelete(petition);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!petitionToDelete) return;
+
+    setIsDeleting(true);
+
+    try {
+      const response = await fetch(
+        `/api/admin/registration-petitions/${petitionToDelete.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Error al eliminar la solicitud");
+      }
+
+      toast({
+        title: "Solicitud eliminada",
+        description: "La solicitud de registro y sus documentos han sido eliminados.",
+      });
+
+      // Refresh petitions list
+      await fetchPetitions();
+
+      // Close dialog and reset state
+      setDeleteDialogOpen(false);
+      setPetitionToDelete(null);
+    } catch (error) {
+      console.error("Error deleting petition:", error);
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Error al eliminar la solicitud",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -329,12 +469,39 @@ function PetitionsPageContent() {
                         })}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="outline" size="sm" asChild>
-                          <Link href={`/petitions/${petition.id}`}>
-                            <Eye className="h-4 w-4 mr-1" />
-                            Ver Detalles
-                          </Link>
-                        </Button>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button variant="outline" size="sm" asChild>
+                            <Link href={`/petitions/${petition.id}`}>
+                              <Eye className="h-4 w-4 mr-1" />
+                              Ver Detalles
+                            </Link>
+                          </Button>
+                          {petition.status === "PENDING" && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRejectClick(petition);
+                              }}
+                            >
+                              <Ban className="h-4 w-4 mr-1" />
+                              Rechazar
+                            </Button>
+                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteClick(petition);
+                            }}
+                            className="border-red-200 text-red-600 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Eliminar
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -406,6 +573,183 @@ function PetitionsPageContent() {
           )}
         </CardContent>
       </Card>
+
+      {/* Reject Dialog */}
+      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-red-600">
+              Rechazar Solicitud de Registro
+            </DialogTitle>
+            <DialogDescription>
+              {selectedPetition && (
+                <>
+                  Rechazando solicitud de <strong>{selectedPetition.companyName}</strong>
+                  . Se enviará una notificación detallada al solicitante.
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <h4 className="font-medium text-red-800 mb-2">
+                ⚠️ Acciones que se realizarán:
+              </h4>
+              <ul className="text-sm text-red-700 space-y-1">
+                <li>• Marcar solicitud como rechazada</li>
+                <li>• Registrar motivos del rechazo</li>
+                <li>• Enviar email detallado al solicitante</li>
+                <li>• Permitir nueva solicitud en el futuro</li>
+              </ul>
+            </div>
+
+            <div>
+              <Label htmlFor="rejection-reason-quick">
+                Razón del Rechazo <span className="text-red-500">*</span>
+              </Label>
+              <Textarea
+                id="rejection-reason-quick"
+                placeholder="Explique detalladamente por qué se rechaza la solicitud..."
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                className="mt-1"
+                rows={4}
+                required
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Esta información aparecerá en el email de notificación
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRejectDialogOpen(false);
+                setSelectedPetition(null);
+                setRejectionReason("");
+              }}
+              disabled={isRejecting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleRejectConfirm}
+              disabled={!rejectionReason.trim() || isRejecting}
+            >
+              {isRejecting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Rechazando...
+                </>
+              ) : (
+                <>
+                  <Ban className="h-4 w-4 mr-2" />
+                  Confirmar Rechazo
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-red-600">
+              Eliminar Solicitud de Registro
+            </DialogTitle>
+            <DialogDescription>
+              {petitionToDelete && (
+                <>
+                  Eliminando solicitud de <strong>{petitionToDelete.companyName}</strong>
+                  . Esta acción no se puede deshacer.
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <h4 className="font-medium text-red-800 mb-2">
+                ⚠️ Esta acción eliminará permanentemente:
+              </h4>
+              <ul className="text-sm text-red-700 space-y-1">
+                <li>• La solicitud de registro</li>
+                <li>• Todos los documentos asociados</li>
+                <li>
+                  • Nota: Si la solicitud fue aprobada, la empresa creada NO
+                  será eliminada
+                </li>
+              </ul>
+            </div>
+
+            {petitionToDelete && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h4 className="font-medium text-gray-700 mb-2">
+                  Información de la solicitud:
+                </h4>
+                <dl className="text-sm space-y-1">
+                  <div className="flex justify-between">
+                    <dt className="text-gray-600">Empresa:</dt>
+                    <dd className="font-medium">{petitionToDelete.companyName}</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-gray-600">NIT:</dt>
+                    <dd className="font-medium">{petitionToDelete.nit}</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-gray-600">Contacto:</dt>
+                    <dd className="font-medium">{petitionToDelete.contactName}</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-gray-600">Estado:</dt>
+                    <dd>
+                      <Badge className={statusColors[petitionToDelete.status]}>
+                        {statusLabels[petitionToDelete.status]}
+                      </Badge>
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                setPetitionToDelete(null);
+              }}
+              disabled={isDeleting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Eliminando...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Confirmar Eliminación
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
