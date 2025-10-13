@@ -55,8 +55,8 @@ export default function CajeroDashboardPage() {
   const inProgressTransactions = transactions.filter(t => t.status === CashierTransactionStatus.IN_PROGRESS);
   const completedTransactions = transactions.filter(t => t.status === CashierTransactionStatus.COMPLETED);
 
-  const totalDelivered = completedTransactions.reduce((sum, t) => sum + (t.deliveredUsdt || 0), 0);
-  const totalExpected = completedTransactions.reduce((sum, t) => sum + t.expectedUsdt, 0);
+  const totalDelivered = completedTransactions.reduce((sum, t) => sum + Number(t.deliveredUsdt || 0), 0);
+  const totalExpected = completedTransactions.reduce((sum, t) => sum + Number(t.expectedUsdt), 0);
   const difference = totalDelivered - totalExpected;
 
   if (profileLoading || transactionsLoading) {
@@ -210,7 +210,7 @@ export default function CajeroDashboardPage() {
                     </p>
                     <div className="flex gap-4 text-sm">
                       <span className="text-muted-foreground">
-                        Esperado: <span className="font-medium text-foreground">{transaction.expectedUsdt.toFixed(2)} USDT</span>
+                        Esperado: <span className="font-medium text-foreground">{Number(transaction.expectedUsdt).toFixed(2)} USDT</span>
                       </span>
                       <span className="text-muted-foreground">
                         Cuenta: <span className="font-medium text-foreground">{transaction.account.name}</span>
@@ -239,7 +239,9 @@ export default function CajeroDashboardPage() {
           <CardContent>
             <div className="space-y-4">
               {completedTransactions.slice(0, 5).map((transaction) => {
-                const diff = (transaction.deliveredUsdt || 0) - transaction.expectedUsdt;
+                const deliveredUsdt = Number(transaction.deliveredUsdt || 0);
+                const expectedUsdt = Number(transaction.expectedUsdt);
+                const diff = deliveredUsdt - expectedUsdt;
                 return (
                   <div
                     key={transaction.id}
@@ -255,7 +257,7 @@ export default function CajeroDashboardPage() {
                       </p>
                       <div className="flex gap-4 text-sm">
                         <span className="text-muted-foreground">
-                          Entregado: <span className="font-medium text-foreground">{transaction.deliveredUsdt?.toFixed(2)} USDT</span>
+                          Entregado: <span className="font-medium text-foreground">{deliveredUsdt.toFixed(2)} USDT</span>
                         </span>
                         <span className={`font-medium ${diff >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                           {diff >= 0 ? '+' : ''}{diff.toFixed(2)} USDT

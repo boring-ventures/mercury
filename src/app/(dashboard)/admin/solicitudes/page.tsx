@@ -23,16 +23,29 @@ import {
   AlertCircle,
   Loader2,
   AlertTriangle,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import {
   useRequests,
   useRequestStatusConfig,
+  useDeleteRequest,
   type RequestFilters,
 } from "@/hooks/use-requests";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { formatCurrency } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const STATUS_FILTERS = [
   { value: "todos", label: "Todos" },
@@ -141,6 +154,7 @@ function getActiveQuotationsCount(
 }
 
 export default function AdminSolicitudes() {
+  const router = useRouter();
   const [filters, setFilters] = useState<RequestFilters>({
     status: "todos",
     country: "todos",
@@ -150,8 +164,11 @@ export default function AdminSolicitudes() {
     page: 1,
     limit: 20,
   });
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [requestToDelete, setRequestToDelete] = useState<string | null>(null);
 
   const { data, isLoading, error } = useRequests(filters);
+  const { deleteRequest, isLoading: isDeleting } = useDeleteRequest();
 
   const handleFilterChange = (key: keyof RequestFilters, value: string) => {
     setFilters((prev) => ({
@@ -164,6 +181,24 @@ export default function AdminSolicitudes() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Search is already handled by the filter state
+  };
+
+  const handleDeleteClick = (requestId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent row click
+    setRequestToDelete(requestId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (requestToDelete) {
+      deleteRequest(requestToDelete);
+      setDeleteDialogOpen(false);
+      setRequestToDelete(null);
+    }
+  };
+
+  const handleRowClick = (requestCode: string, requestId: string) => {
+    router.push(`/admin/solicitudes/${requestCode || requestId}`);
   };
 
   if (error) {
@@ -300,6 +335,7 @@ export default function AdminSolicitudes() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
+                    <th className="text-left py-3 px-4">FECHA</th>
                     <th className="text-left py-3 px-4">REF</th>
                     <th className="text-left py-3 px-4">EMPRESA</th>
                     <th className="text-left py-3 px-4">DESTINO</th>
@@ -307,7 +343,6 @@ export default function AdminSolicitudes() {
                     <th className="text-left py-3 px-4">RECHAZOS</th>
                     <th className="text-left py-3 px-4">COTIZACIONES</th>
                     <th className="text-left py-3 px-4">ESTADO</th>
-                    <th className="text-left py-3 px-4">FECHA</th>
                     <th className="text-left py-3 px-4">ACCIONES</th>
                   </tr>
                 </thead>
@@ -322,8 +357,14 @@ export default function AdminSolicitudes() {
                     return (
                       <tr
                         key={request.id}
-                        className="border-b hover:bg-gray-50"
+                        className="border-b hover:bg-gray-50 cursor-pointer transition-colors"
+                        onClick={() => handleRowClick(request.code, request.id)}
                       >
+                        <td className="py-3 px-4">
+                          {format(new Date(request.createdAt), "dd/MM/yy", {
+                            locale: es,
+                          })}
+                        </td>
                         <td className="py-3 px-4 font-medium">
                           {request.code}
                         </td>
@@ -399,23 +440,26 @@ export default function AdminSolicitudes() {
                           <StatusBadge status={request.status} />
                         </td>
                         <td className="py-3 px-4">
-                          {format(new Date(request.createdAt), "dd/MM/yy", {
-                            locale: es,
-                          })}
-                        </td>
-                        <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
                             <Button
                               size="sm"
                               variant="outline"
                               className="h-8 px-2"
-                              asChild
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(`/admin/solicitudes/${request.code || request.id}`);
+                              }}
                             >
-                              <Link
-                                href={`/admin/solicitudes/${request.code || request.id}`}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Link>
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              onClick={(e) => handleDeleteClick(request.id, e)}
+                              disabled={isDeleting}
+                            >
+                              <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         </td>
@@ -465,6 +509,36 @@ export default function AdminSolicitudes() {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminará permanentemente la
+              solicitud y todos sus datos relacionados (cotizaciones, contratos,
+              pagos, etc.).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Eliminando...
+                </>
+              ) : (
+                "Eliminar"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

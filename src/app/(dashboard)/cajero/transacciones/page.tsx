@@ -76,7 +76,7 @@ export default function CajeroTransaccionesPage() {
   };
 
   const renderTransaction = (transaction: CashierTransaction) => {
-    const diff = transaction.deliveredUsdt ? (transaction.deliveredUsdt - transaction.expectedUsdt) : null;
+    const diff = transaction.deliveredUsdt ? (Number(transaction.deliveredUsdt) - Number(transaction.expectedUsdt)) : null;
 
     return (
       <div

@@ -10,6 +10,8 @@ export async function GET(request: NextRequest) {
     const cashierId = searchParams.get("cashierId");
     const accountId = searchParams.get("accountId");
     const status = searchParams.get("status");
+    const quotationCode = searchParams.get("quotationCode");
+    const companyName = searchParams.get("companyName");
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
     const page = parseInt(searchParams.get("page") || "1");
@@ -21,6 +23,29 @@ export async function GET(request: NextRequest) {
     if (cashierId) where.cashierId = cashierId;
     if (accountId) where.accountId = accountId;
     if (status) where.status = status as CashierTransactionStatus;
+
+    // Filter by quotation code
+    if (quotationCode) {
+      where.quotation = {
+        code: {
+          contains: quotationCode,
+          mode: 'insensitive'
+        }
+      };
+    }
+
+    // Filter by company name
+    if (companyName) {
+      where.quotation = {
+        ...where.quotation,
+        company: {
+          name: {
+            contains: companyName,
+            mode: 'insensitive'
+          }
+        }
+      };
+    }
 
     if (startDate || endDate) {
       where.createdAt = {};

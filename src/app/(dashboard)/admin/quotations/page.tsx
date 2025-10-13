@@ -27,6 +27,8 @@ import {
   Building,
   User,
   Building2,
+  Users,
+  BarChart3,
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -158,6 +160,12 @@ export default function AdminQuotations() {
               Gestiona todas las cotizaciones del sistema
             </p>
           </div>
+          <Link href="/admin/cashier-reports">
+            <Button variant="outline">
+              <Users className="h-4 w-4 mr-2" />
+              Reportes de Cajeros
+            </Button>
+          </Link>
         </div>
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin" />
@@ -176,6 +184,12 @@ export default function AdminQuotations() {
               Gestiona todas las cotizaciones del sistema
             </p>
           </div>
+          <Link href="/admin/cashier-reports">
+            <Button variant="outline">
+              <Users className="h-4 w-4 mr-2" />
+              Reportes de Cajeros
+            </Button>
+          </Link>
         </div>
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
@@ -203,6 +217,12 @@ export default function AdminQuotations() {
             Gestiona todas las cotizaciones del sistema
           </p>
         </div>
+        <Link href="/admin/cashier-reports">
+          <Button variant="outline">
+            <Users className="h-4 w-4 mr-2" />
+            Reportes de Cajeros
+          </Button>
+        </Link>
       </div>
 
       {/* Filters */}
@@ -350,24 +370,34 @@ export default function AdminQuotations() {
 
                   <div className="flex gap-2">
                     {quotation.status === "ACCEPTED" && (
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => handleCreateContract(quotation)}
-                        disabled={creatingContract === quotation.id}
-                      >
-                        {creatingContract === quotation.id ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Creando...
-                          </>
-                        ) : (
-                          <>
-                            <Building2 className="h-4 w-4 mr-2" />
-                            Crear Contrato
-                          </>
-                        )}
-                      </Button>
+                      <>
+                        <Link
+                          href={`/admin/cashier-reports?quotationId=${quotation.code}`}
+                        >
+                          <Button variant="secondary" size="sm">
+                            <BarChart3 className="h-4 w-4 mr-2" />
+                            Reportes
+                          </Button>
+                        </Link>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => handleCreateContract(quotation)}
+                          disabled={creatingContract === quotation.id}
+                        >
+                          {creatingContract === quotation.id ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Creando...
+                            </>
+                          ) : (
+                            <>
+                              <Building2 className="h-4 w-4 mr-2" />
+                              Crear Contrato
+                            </>
+                          )}
+                        </Button>
+                      </>
                     )}
                     <Link href={`/admin/quotations/${quotation.id}`}>
                       <Button variant="outline" size="sm">
