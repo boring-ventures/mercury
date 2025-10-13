@@ -4,11 +4,12 @@ import prisma from "@/lib/prisma";
 // GET: Fetch a single cashier account
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const account = await prisma.cashierAccount.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         cashierAssignments: {
           include: {
@@ -71,9 +72,10 @@ export async function GET(
 // PATCH: Update a cashier account
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const { name, dailyLimitBs, active } = body;
 
@@ -83,7 +85,7 @@ export async function PATCH(
     if (active !== undefined) updateData.active = active;
 
     const account = await prisma.cashierAccount.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
       select: {
         id: true,
@@ -114,12 +116,13 @@ export async function PATCH(
 // DELETE: Delete a cashier account
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // Check if there are any assignments or transactions
     const account = await prisma.cashierAccount.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         _count: {
           select: {
@@ -147,13 +150,13 @@ export async function DELETE(
     // Delete assignments first
     if (account._count.cashierAssignments > 0) {
       await prisma.cashierAssignment.deleteMany({
-        where: { accountId: params.id },
+        where: { accountId: id },
       });
     }
 
     // Delete the account
     await prisma.cashierAccount.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ message: "Account deleted successfully" });

@@ -533,7 +533,7 @@ export default function CajeroCuentasPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar cuenta?</AlertDialogTitle>
             <AlertDialogDescription>
-              Estás a punto de eliminar la cuenta "{selectedAccount?.name}".
+              Estás a punto de eliminar la cuenta &quot;{selectedAccount?.name}&quot;.
               {selectedAccount && selectedAccount._count.cashierTransactions > 0 && (
                 <span className="block mt-2 text-red-600">
                   Esta cuenta tiene {selectedAccount._count.cashierTransactions} transacciones asociadas.

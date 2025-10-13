@@ -41,41 +41,57 @@ export function DraftQuotationModal({
     client: "",
     amountToSend: "",
     currency: "USD",
-    exchangeRate: "6.96",
+    exchangeRate: "6.96", // Default for USD
     swiftFee: "25", // En USD
     correspondentFee: "0", // En USD
     interestRate: "3",
   });
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      const updated = { ...prev, [field]: value };
+
+      // Update default exchange rate when currency changes
+      if (field === "currency") {
+        if (value === "USD") {
+          updated.exchangeRate = "6.96";
+        } else if (value === "EUR") {
+          updated.exchangeRate = "7.66"; // Approximate EUR/BOB rate
+        } else if (value === "BS") {
+          updated.exchangeRate = "1.00";
+        }
+      }
+
+      return updated;
+    });
   };
 
-  // Fetch exchange rate from Binance when amount or currency changes
+  // Fetch exchange rate from unified API when amount or currency changes
   const fetchExchangeRate = async () => {
     if (!formData.amountToSend || formData.currency === "BS") return;
 
     setIsFetchingRate(true);
     try {
       const response = await fetch(
-        `/api/binance/exchange-rate?amount=${formData.amountToSend}`
+        `/api/exchange-rate?currency=${formData.currency}&amount=${formData.amountToSend}`
       );
       if (!response.ok) {
         throw new Error("Error al obtener tipo de cambio");
       }
       const data = await response.json();
-      if (data.success && data.data?.usdt_bob) {
-        handleInputChange("exchangeRate", data.data.usdt_bob.toString());
+      if (data.success && data.data?.rate) {
+        handleInputChange("exchangeRate", data.data.rate.toString());
+        const source = data.data.source || "API";
         toast({
           title: "Tipo de cambio actualizado",
-          description: `Tasa P2P Binance: ${data.data.usdt_bob.toFixed(2)} Bs/${formData.currency}`,
+          description: `Tasa: ${data.data.rate.toFixed(2)} Bs/${formData.currency} (${source})`,
         });
       }
     } catch (error) {
       console.error("Error fetching exchange rate:", error);
       toast({
         title: "Error",
-        description: "No se pudo obtener el tipo de cambio de Binance",
+        description: "No se pudo obtener el tipo de cambio. Intente manualmente.",
         variant: "destructive",
       });
     } finally {
@@ -88,6 +104,7 @@ export function DraftQuotationModal({
     if (open && formData.amountToSend && formData.currency !== "BS") {
       fetchExchangeRate();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const calculateTotal = () => {
@@ -285,7 +302,7 @@ export function DraftQuotationModal({
                     size="icon"
                     onClick={fetchExchangeRate}
                     disabled={isFetchingRate || !formData.amountToSend}
-                    title="Obtener tasa de Binance P2P"
+                    title={`Obtener tasa actual de ${formData.currency} a BOB`}
                   >
                     {isFetchingRate ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -295,7 +312,7 @@ export function DraftQuotationModal({
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Click en el icono para obtener la tasa actual de Binance P2P
+                  Click en el icono para obtener la tasa actual del mercado
                 </p>
               </div>
             )}

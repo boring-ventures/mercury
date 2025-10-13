@@ -4,9 +4,10 @@ import prisma from "@/lib/prisma";
 // GET: Get a specific account
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { searchParams } = new URL(request.url);
     const cashierId = searchParams.get("cashierId");
 
@@ -19,7 +20,7 @@ export async function GET(
 
     const account = await prisma.cashierAccount.findFirst({
       where: {
-        id: params.id,
+        id,
         cashierAssignments: {
           some: {
             cashierId: cashierId,
@@ -55,9 +56,10 @@ export async function GET(
 // PATCH: Update an account
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const { cashierId, name, dailyLimitBs, active } = body;
 
@@ -71,7 +73,7 @@ export async function PATCH(
     // Verify the cashier owns this account
     const assignment = await prisma.cashierAssignment.findFirst({
       where: {
-        accountId: params.id,
+        accountId: id,
         cashierId: cashierId,
       },
     });
@@ -98,7 +100,7 @@ export async function PATCH(
     if (active !== undefined) updateData.active = active;
 
     const account = await prisma.cashierAccount.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
       include: {
         _count: {
@@ -122,9 +124,10 @@ export async function PATCH(
 // DELETE: Delete an account
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { searchParams } = new URL(request.url);
     const cashierId = searchParams.get("cashierId");
 
@@ -138,7 +141,7 @@ export async function DELETE(
     // Verify the cashier owns this account
     const assignment = await prisma.cashierAssignment.findFirst({
       where: {
-        accountId: params.id,
+        accountId: id,
         cashierId: cashierId,
       },
     });
@@ -153,7 +156,7 @@ export async function DELETE(
     // Check if there are any transactions using this account
     const transactionCount = await prisma.cashierTransaction.count({
       where: {
-        accountId: params.id,
+        accountId: id,
         status: {
           in: ["PENDING", "IN_PROGRESS"],
         },
@@ -176,7 +179,7 @@ export async function DELETE(
 
     // Then delete the account
     await prisma.cashierAccount.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ message: "Account deleted successfully" });
