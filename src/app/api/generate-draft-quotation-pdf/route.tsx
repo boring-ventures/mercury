@@ -28,21 +28,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate PDF
-    const pdfDocument = React.createElement(
-      Document,
-      {},
-      React.createElement(QuotationPDFDocument, {
-        date,
-        company,
-        client,
-        amountToSend,
-        currency,
-        exchangeRate,
-        swiftFee,
-        correspondentFee,
-        interestRate,
-        totals,
-      })
+    const pdfDocument = (
+      <Document>
+        <QuotationPDFDocument
+          date={date}
+          company={company}
+          client={client}
+          amountToSend={amountToSend}
+          currency={currency}
+          exchangeRate={exchangeRate}
+          swiftFee={swiftFee}
+          correspondentFee={correspondentFee}
+          interestRate={interestRate}
+          totals={totals}
+        />
+      </Document>
     );
 
     const stream = await renderToStream(pdfDocument);
