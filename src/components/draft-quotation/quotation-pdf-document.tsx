@@ -277,7 +277,7 @@ export const QuotationPDFDocument: React.FC<QuotationPDFDocumentProps> = ({
           )}
           <View style={styles.tableRow}>
             <Text style={styles.tableCell}>
-              Comisión Swift ({totals.swiftFeeUSD.toFixed(2)} USD)
+              Swift ({totals.swiftFeeUSD.toFixed(2)} USD)
             </Text>
             <Text style={styles.tableCell}>
               {totals.swiftFeeBS.toFixed(2)} Bs
@@ -285,15 +285,14 @@ export const QuotationPDFDocument: React.FC<QuotationPDFDocumentProps> = ({
           </View>
           <View style={styles.tableRow}>
             <Text style={styles.tableCell}>
-              Comisión Corresponsal ({totals.correspondentFeeUSD.toFixed(2)}{" "}
-              USD)
+              Corresponsal ({totals.correspondentFeeUSD.toFixed(2)} USD)
             </Text>
             <Text style={styles.tableCell}>
               {totals.correspondentFeeBS.toFixed(2)} Bs
             </Text>
           </View>
           <View style={styles.tableRow}>
-            <Text style={styles.tableCell}>Interés ({interestRate}%)</Text>
+            <Text style={styles.tableCell}>Comisión ({interestRate}%)</Text>
             <Text style={styles.tableCell}>
               {totals.interestAmount.toFixed(2)} Bs
             </Text>

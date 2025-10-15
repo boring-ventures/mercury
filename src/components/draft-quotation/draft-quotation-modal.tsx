@@ -22,6 +22,8 @@ import { FileDown, Loader2, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/components/ui/use-toast";
+import { useCompanySearch } from "@/hooks/use-company-search";
+import { CompanyAutocomplete } from "@/components/ui/company-autocomplete";
 
 interface DraftQuotationModalProps {
   open: boolean;
@@ -35,6 +37,16 @@ export function DraftQuotationModal({
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isFetchingRate, setIsFetchingRate] = useState(false);
+
+  // Company search hook
+  const {
+    query: companyQuery,
+    setQuery: setCompanyQuery,
+    companies,
+    isLoading: isSearchingCompanies,
+    error: searchError,
+    clearResults,
+  } = useCompanySearch();
   const [formData, setFormData] = useState({
     date: format(new Date(), "yyyy-MM-dd"),
     company: "",
@@ -62,8 +74,23 @@ export function DraftQuotationModal({
         }
       }
 
+      // Sync company field with search query
+      if (field === "company") {
+        setCompanyQuery(value);
+      }
+
       return updated;
     });
+  };
+
+  const handleCompanySelect = (company: any) => {
+    setFormData((prev) => ({
+      ...prev,
+      company: company.name,
+      client: company.contactName || "",
+    }));
+    setCompanyQuery(company.name);
+    clearResults();
   };
 
   // Fetch exchange rate from unified API when amount or currency changes
@@ -91,7 +118,8 @@ export function DraftQuotationModal({
       console.error("Error fetching exchange rate:", error);
       toast({
         title: "Error",
-        description: "No se pudo obtener el tipo de cambio. Intente manualmente.",
+        description:
+          "No se pudo obtener el tipo de cambio. Intente manualmente.",
         variant: "destructive",
       });
     } finally {
@@ -107,6 +135,13 @@ export function DraftQuotationModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
+  // Sync company field with search query
+  useEffect(() => {
+    if (formData.company !== companyQuery) {
+      setCompanyQuery(formData.company);
+    }
+  }, [formData.company, companyQuery, setCompanyQuery]);
+
   const calculateTotal = () => {
     const amount = parseFloat(formData.amountToSend) || 0;
     const rate = parseFloat(formData.exchangeRate) || 0;
@@ -121,7 +156,8 @@ export function DraftQuotationModal({
     if (formData.currency === "USD" || formData.currency === "EUR") {
       const amountInBs = amount * rate;
       const interestAmount = (amountInBs * interestRate) / 100;
-      const totalInBs = amountInBs + swiftFeeBS + correspondentFeeBS + interestAmount;
+      const totalInBs =
+        amountInBs + swiftFeeBS + correspondentFeeBS + interestAmount;
 
       return {
         amountInCurrency: amount,
@@ -136,7 +172,8 @@ export function DraftQuotationModal({
     } else {
       // BS
       const interestAmount = (amount * interestRate) / 100;
-      const totalInBs = amount + swiftFeeBS + correspondentFeeBS + interestAmount;
+      const totalInBs =
+        amount + swiftFeeBS + correspondentFeeBS + interestAmount;
 
       return {
         amountInCurrency: amount,
@@ -226,11 +263,14 @@ export function DraftQuotationModal({
             {/* Empresa */}
             <div className="space-y-2">
               <Label htmlFor="company">Empresa</Label>
-              <Input
-                id="company"
-                placeholder="Nombre de la empresa"
+              <CompanyAutocomplete
                 value={formData.company}
-                onChange={(e) => handleInputChange("company", e.target.value)}
+                onChange={(value) => handleInputChange("company", value)}
+                onSelectCompany={handleCompanySelect}
+                companies={companies}
+                isLoading={isSearchingCompanies}
+                error={searchError}
+                placeholder="Buscar empresa..."
               />
             </div>
 
@@ -319,7 +359,7 @@ export function DraftQuotationModal({
 
             {/* Swift Bancario */}
             <div className="space-y-2">
-              <Label htmlFor="swiftFee">Comisión Swift (USD)</Label>
+              <Label htmlFor="swiftFee">Swift (USD)</Label>
               <Input
                 id="swiftFee"
                 type="number"
@@ -332,9 +372,7 @@ export function DraftQuotationModal({
 
             {/* Comisión Corresponsal */}
             <div className="space-y-2">
-              <Label htmlFor="correspondentFee">
-                Comisión Corresponsal (USD)
-              </Label>
+              <Label htmlFor="correspondentFee">Corresponsal (USD)</Label>
               <Input
                 id="correspondentFee"
                 type="number"
@@ -347,9 +385,9 @@ export function DraftQuotationModal({
               />
             </div>
 
-            {/* Porcentaje Interés */}
+            {/* Porcentaje Comisión */}
             <div className="space-y-2">
-              <Label htmlFor="interestRate">Porcentaje Interés (%)</Label>
+              <Label htmlFor="interestRate">Porcentaje Comisión (%)</Label>
               <Input
                 id="interestRate"
                 type="number"
@@ -366,7 +404,9 @@ export function DraftQuotationModal({
           {/* Cálculos */}
           {formData.amountToSend && (
             <div className="border rounded-lg p-4 bg-gray-50 space-y-2 mt-6">
-              <h3 className="font-semibold text-sm mb-3">Resumen de Cotización</h3>
+              <h3 className="font-semibold text-sm mb-3">
+                Resumen de Cotización
+              </h3>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Monto en {formData.currency}:</span>
@@ -383,19 +423,21 @@ export function DraftQuotationModal({
                   </div>
                 )}
                 <div className="flex justify-between text-sm">
-                  <span>Comisión Swift ({totals.swiftFeeUSD.toFixed(2)} USD):</span>
+                  <span>Swift ({totals.swiftFeeUSD.toFixed(2)} USD):</span>
                   <span className="font-medium">
                     {totals.swiftFeeBS.toFixed(2)} Bs
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>Comisión Corresponsal ({totals.correspondentFeeUSD.toFixed(2)} USD):</span>
+                  <span>
+                    Corresponsal ({totals.correspondentFeeUSD.toFixed(2)} USD):
+                  </span>
                   <span className="font-medium">
                     {totals.correspondentFeeBS.toFixed(2)} Bs
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>Interés ({formData.interestRate}%):</span>
+                  <span>Comisión ({formData.interestRate}%):</span>
                   <span className="font-medium">
                     {totals.interestAmount.toFixed(2)} Bs
                   </span>
