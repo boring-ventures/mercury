@@ -177,17 +177,11 @@ export function CreateCompanyDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="SOCIEDAD_ANONIMA">
-                          Sociedad Anónima
-                        </SelectItem>
-                        <SelectItem value="SOCIEDAD_LIMITADA">
-                          Sociedad Limitada
-                        </SelectItem>
-                        <SelectItem value="EMPRESA_UNIPERSONAL">
+                        <SelectItem value="SA">Sociedad Anónima</SelectItem>
+                        <SelectItem value="SRL">Sociedad Limitada</SelectItem>
+                        <SelectItem value="UNIPERSONAL">
                           Empresa Unipersonal
                         </SelectItem>
-                        <SelectItem value="COOPERATIVA">Cooperativa</SelectItem>
-                        <SelectItem value="OTRO">Otro</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -211,15 +205,31 @@ export function CreateCompanyDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="COMERCIO">Comercio</SelectItem>
-                        <SelectItem value="INDUSTRIA">Industria</SelectItem>
-                        <SelectItem value="SERVICIOS">Servicios</SelectItem>
-                        <SelectItem value="AGRICULTURA">Agricultura</SelectItem>
-                        <SelectItem value="MINERIA">Minería</SelectItem>
-                        <SelectItem value="CONSTRUCCION">
-                          Construcción
+                        <SelectItem value="IMPORTACION_GENERAL">
+                          Importación General
                         </SelectItem>
-                        <SelectItem value="OTRO">Otro</SelectItem>
+                        <SelectItem value="IMPORTACION_ALIMENTOS">
+                          Importación Alimentos
+                        </SelectItem>
+                        <SelectItem value="IMPORTACION_TEXTILES">
+                          Importación Textiles
+                        </SelectItem>
+                        <SelectItem value="IMPORTACION_MAQUINARIA">
+                          Importación Maquinaria
+                        </SelectItem>
+                        <SelectItem value="IMPORTACION_ELECTRONICA">
+                          Importación Electrónica
+                        </SelectItem>
+                        <SelectItem value="IMPORTACION_VEHICULOS">
+                          Importación Vehículos
+                        </SelectItem>
+                        <SelectItem value="COMERCIO_MAYORISTA">
+                          Comercio Mayorista
+                        </SelectItem>
+                        <SelectItem value="COMERCIO_MINORISTA">
+                          Comercio Minorista
+                        </SelectItem>
+                        <SelectItem value="OTROS">Otros</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

@@ -30,6 +30,7 @@ export async function POST(
       terms,
       notes,
       status,
+      skipNotifications, // Flag to skip notifications in onboarding flow
     } = body;
 
     // Validate required fields
@@ -41,7 +42,10 @@ export async function POST(
     }
 
     // Get current user from session
-    const supabase = createServerComponentClient({ cookies });
+    const cookieStore = await cookies();
+    const supabase = createServerComponentClient({
+      cookies: () => cookieStore,
+    });
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -205,42 +209,45 @@ export async function POST(
     });
 
     // Step 2: Notify the importador about the new quotation (in-app + email)
-    try {
-      // Get the admin who created the quotation
-      const adminProfile = await prisma.profile.findUnique({
-        where: { id: profile.id },
-        select: {
-          firstName: true,
-          lastName: true,
-        },
-      });
+    // Skip notifications if skipNotifications flag is true (onboarding flow)
+    if (!skipNotifications) {
+      try {
+        // Get the admin who created the quotation
+        const adminProfile = await prisma.profile.findUnique({
+          where: { id: profile.id },
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        });
 
-      const createdBy = adminProfile
-        ? `${adminProfile.firstName} ${adminProfile.lastName}`.trim()
-        : "Administrador";
+        const createdBy = adminProfile
+          ? `${adminProfile.firstName} ${adminProfile.lastName}`.trim()
+          : "Administrador";
 
-      await notifyQuotationReceived({
-        quotationId: quotation.id,
-        code: quotation.code,
-        requestId: requestData.id,
-        companyId: requestData.companyId,
-        amount: Number(quotation.amount),
-        currency: quotation.currency,
-        totalInBs: Number(quotation.totalInBs),
-        exchangeRate: Number(quotation.exchangeRate),
-        validUntil: quotation.validUntil.toISOString(),
-        createdBy: createdBy,
-        createdAt: quotation.createdAt.toISOString(),
-        companyName: requestData.company?.name,
-        requestCode: requestData.code,
-        status: quotation.status,
-      });
-    } catch (notificationError) {
-      console.error(
-        "Error sending notification to importador:",
-        notificationError
-      );
-      // Don't fail the quotation creation if notification fails
+        await notifyQuotationReceived({
+          quotationId: quotation.id,
+          code: quotation.code,
+          requestId: requestData.id,
+          companyId: requestData.companyId,
+          amount: Number(quotation.amount),
+          currency: quotation.currency,
+          totalInBs: Number(quotation.totalInBs),
+          exchangeRate: Number(quotation.exchangeRate),
+          validUntil: quotation.validUntil.toISOString(),
+          createdBy: createdBy,
+          createdAt: quotation.createdAt.toISOString(),
+          companyName: requestData.company?.name,
+          requestCode: requestData.code,
+          status: quotation.status,
+        });
+      } catch (notificationError) {
+        console.error(
+          "Error sending notification to importador:",
+          notificationError
+        );
+        // Don't fail the quotation creation if notification fails
+      }
     }
 
     return NextResponse.json({
@@ -292,6 +299,155 @@ export async function GET(
     console.error("Error fetching quotations:", error);
     return NextResponse.json(
       { error: "Failed to fetch quotations" },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT: Accept or Reject quotation (for importador)
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: requestId } = await params;
+    const body = await request.json();
+    const { quotationId, action, notes } = body;
+
+    if (!quotationId || !action) {
+      return NextResponse.json(
+        { error: "Quotation ID and action are required" },
+        { status: 400 }
+      );
+    }
+
+    if (!["ACCEPTED", "REJECTED"].includes(action)) {
+      return NextResponse.json(
+        { error: "Invalid action. Must be ACCEPTED or REJECTED" },
+        { status: 400 }
+      );
+    }
+
+    // Get current user from session
+    const cookieStore = await cookies();
+    const supabase = createServerComponentClient({
+      cookies: () => cookieStore,
+    });
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    // Get user profile
+    const profile = await prisma.profile.findUnique({
+      where: { userId: session.user.id },
+      select: {
+        id: true,
+        role: true,
+        companyId: true,
+      },
+    });
+
+    if (!profile) {
+      return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+    }
+
+    // Find the request
+    const requestData = await prisma.request.findUnique({
+      where: { id: requestId },
+      include: {
+        company: true,
+      },
+    });
+
+    if (!requestData) {
+      return NextResponse.json({ error: "Request not found" }, { status: 404 });
+    }
+
+    // Check authorization: only importador from the same company or admin can accept/reject
+    if (
+      profile.role === "IMPORTADOR" &&
+      profile.companyId !== requestData.companyId
+    ) {
+      return NextResponse.json(
+        { error: "Not authorized to manage this quotation" },
+        { status: 403 }
+      );
+    }
+
+    // Find the quotation
+    const quotation = await prisma.quotation.findUnique({
+      where: { id: quotationId },
+    });
+
+    if (!quotation) {
+      return NextResponse.json(
+        { error: "Quotation not found" },
+        { status: 404 }
+      );
+    }
+
+    // Check if quotation belongs to this request
+    if (quotation.requestId !== requestId) {
+      return NextResponse.json(
+        { error: "Quotation does not belong to this request" },
+        { status: 400 }
+      );
+    }
+
+    // Check if quotation is in SENT status
+    if (quotation.status !== "SENT") {
+      return NextResponse.json(
+        { error: "Only SENT quotations can be accepted or rejected" },
+        { status: 400 }
+      );
+    }
+
+    // Update quotation status
+    const updatedQuotation = await prisma.quotation.update({
+      where: { id: quotationId },
+      data: {
+        status: action,
+        rejectionReason: action === "REJECTED" ? notes : null,
+      },
+    });
+
+    // If accepted, update request status to APPROVED
+    if (action === "ACCEPTED") {
+      await prisma.request.update({
+        where: { id: requestId },
+        data: {
+          status: "APPROVED",
+        },
+      });
+    }
+
+    // Create audit log
+    await prisma.auditLog.create({
+      data: {
+        action: action === "ACCEPTED" ? "ACCEPT_QUOTATION" : "REJECT_QUOTATION",
+        entity: "Quotation",
+        entityId: quotationId,
+        newValues: {
+          status: action,
+          notes: notes || null,
+        },
+        profileId: profile.id,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      quotation: updatedQuotation,
+      message: `Quotation ${action.toLowerCase()} successfully`,
+    });
+  } catch (error) {
+    console.error("Error updating quotation:", error);
+    return NextResponse.json(
+      { error: "Failed to update quotation" },
       { status: 500 }
     );
   }

@@ -31,7 +31,10 @@ export async function PUT(
     }
 
     // Get current user from session
-    const supabase = createServerComponentClient({ cookies });
+    const cookieStore = await cookies();
+    const supabase = createServerComponentClient({
+      cookies: () => cookieStore,
+    });
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -376,7 +379,8 @@ export async function PUT(
 
 // Helper function to get authenticated admin user
 async function getAuthenticatedAdminUser() {
-  const supabase = createServerComponentClient({ cookies });
+  const cookieStore = await cookies();
+  const supabase = createServerComponentClient({ cookies: () => cookieStore });
   const {
     data: { session },
   } = await supabase.auth.getSession();

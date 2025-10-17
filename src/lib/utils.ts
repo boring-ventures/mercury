@@ -24,8 +24,19 @@ export function formatNumber(
 
   // Convert to number and round to specified decimals
   const numValue = Number(value);
+
+  // Check if the conversion resulted in NaN
+  if (isNaN(numValue)) {
+    return currency ? `${currency}0,00` : "0,00";
+  }
+
   const roundedValue =
     Math.round(numValue * Math.pow(10, decimals)) / Math.pow(10, decimals);
+
+  // Additional check for roundedValue
+  if (isNaN(roundedValue)) {
+    return currency ? `${currency}0,00` : "0,00";
+  }
 
   // Format with Spanish locale (commas for thousands, dots for decimals)
   const formatted = roundedValue.toLocaleString("es-ES", {
@@ -48,10 +59,13 @@ export function formatCurrency(
   currency: string = "USD",
   decimals: number = 2
 ): string {
-  const currencySymbol = currency === "Bs" ? "" : "$";
+  // Handle undefined or null currency
+  const safeCurrency = currency || "USD";
+  const currencySymbol = safeCurrency === "Bs" ? "" : "$";
+
   return (
     formatNumber(amount, decimals, currencySymbol) +
-    (currency === "Bs" ? " Bs" : ` ${currency}`)
+    (safeCurrency === "Bs" ? " Bs" : ` ${safeCurrency}`)
   );
 }
 

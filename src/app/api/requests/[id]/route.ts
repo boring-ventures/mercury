@@ -8,7 +8,10 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = createServerComponentClient({ cookies });
+    const cookieStore = await cookies();
+    const supabase = createServerComponentClient({
+      cookies: () => cookieStore,
+    });
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -152,6 +155,34 @@ export async function GET(
                 fileUrl: true,
                 type: true,
                 status: true,
+                createdAt: true,
+              },
+            },
+            quotation: {
+              select: {
+                id: true,
+                code: true,
+                amount: true,
+                totalInBs: true,
+                createdAt: true,
+              },
+            },
+            company: {
+              select: {
+                id: true,
+                name: true,
+                nit: true,
+                city: true,
+                contactName: true,
+                contactPosition: true,
+              },
+            },
+            payments: {
+              select: {
+                id: true,
+                type: true,
+                status: true,
+                amount: true,
               },
             },
           },
@@ -196,7 +227,10 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = createServerComponentClient({ cookies });
+    const cookieStore = await cookies();
+    const supabase = createServerComponentClient({
+      cookies: () => cookieStore,
+    });
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -338,7 +372,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = createServerComponentClient({ cookies });
+    const cookieStore = await cookies();
+    const supabase = createServerComponentClient({
+      cookies: () => cookieStore,
+    });
     const {
       data: { session },
     } = await supabase.auth.getSession();

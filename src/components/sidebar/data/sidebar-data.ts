@@ -10,6 +10,7 @@ import {
   UserPlus,
   Wallet,
   DollarSign,
+  Workflow,
 } from "lucide-react";
 import type { SidebarData } from "../types";
 
@@ -61,6 +62,11 @@ export const adminSidebarData: SidebarData = {
           title: "Pagos",
           url: "/admin/payments",
           icon: TrendingUp,
+        },
+        {
+          title: "Flujo de Adaptación",
+          url: "/admin/onboarding-flow",
+          icon: Workflow,
         },
       ],
     },

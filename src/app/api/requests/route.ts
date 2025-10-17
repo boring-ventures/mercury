@@ -74,7 +74,10 @@ interface DocumentUpload {
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createServerComponentClient({ cookies });
+    const cookieStore = await cookies();
+    const supabase = createServerComponentClient({
+      cookies: () => cookieStore,
+    });
 
     // Use getUser() instead of getSession() for better security
     const {
@@ -316,7 +319,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createServerComponentClient({ cookies });
+    const cookieStore = await cookies();
+    const supabase = createServerComponentClient({
+      cookies: () => cookieStore,
+    });
 
     // Use getUser() instead of getSession() for better security
     const {

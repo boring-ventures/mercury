@@ -6,7 +6,7 @@ import { createSystemNotification } from "@/lib/notifications";
 import { generateContractCompletedEmail } from "@/lib/email-templates";
 import { resend, FROM_EMAIL } from "@/lib/resend";
 
-export async function POST(
+async function completeContract(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -34,7 +34,10 @@ export async function POST(
     }
 
     // Authenticate admin user
-    const supabase = createServerComponentClient({ cookies });
+    const cookieStore = await cookies();
+    const supabase = createServerComponentClient({
+      cookies: () => cookieStore,
+    });
     const {
       data: { user },
       error: authError,
@@ -127,16 +130,6 @@ export async function POST(
       },
     });
 
-    // Update request status if it exists
-    if (contract.requestId) {
-      await prisma.request.update({
-        where: { id: contract.requestId },
-        data: {
-          status: "COMPLETED",
-        },
-      });
-    }
-
     // Send notifications to importers
     try {
       const importers = contract.company.users;
@@ -162,50 +155,52 @@ export async function POST(
           )
         );
 
-        // Send email notifications
-        const importersWithEmail = importers.filter((i) => i.email);
+        // Send email notifications - DISABLED for onboarding flow
+        // const importersWithEmail = importers.filter((i) => i.email);
 
-        if (importersWithEmail.length > 0) {
-          const appUrl =
-            process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+        // if (importersWithEmail.length > 0) {
+        //   const appUrl =
+        //     process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
-          await Promise.all(
-            importersWithEmail.map(async (importer) => {
-              try {
-                const emailContent = generateContractCompletedEmail({
-                  importerName: `${importer.firstName} ${importer.lastName}`,
-                  contractCode: contract.code,
-                  quotationCode: contract.quotation?.code || "N/A",
-                  requestCode: contract.request?.code || "N/A",
-                  companyName: contract.company.name,
-                  amount: Number(contract.amount),
-                  currency: contract.currency,
-                  startDate: startDate.toISOString(),
-                  endDate: endDate.toISOString(),
-                  completedBy: `${profile.firstName} ${profile.lastName}`,
-                  completedAt: new Date().toISOString(),
-                  link: `${appUrl}/importador/contratos/${contract.id}`,
-                });
+        //   await Promise.all(
+        //     importersWithEmail.map(async (importer) => {
+        //       try {
+        //         const emailContent = generateContractCompletedEmail({
+        //           importerName: `${importer.firstName} ${importer.lastName}`,
+        //           contractCode: contract.code,
+        //           quotationCode: contract.quotation?.code || "N/A",
+        //           requestCode: contract.request?.code || "N/A",
+        //           companyName: contract.company.name,
+        //           amount: Number(contract.amount),
+        //           currency: contract.currency,
+        //           startDate: startDate.toISOString(),
+        //           endDate: endDate.toISOString(),
+        //           completedBy: `${profile.firstName} ${profile.lastName}`,
+        //           completedAt: new Date().toISOString(),
+        //           link: `${appUrl}/importador/contratos/${contract.id}`,
+        //         });
 
-                await resend.emails.send({
-                  from: FROM_EMAIL,
-                  to: importer.email!,
-                  subject: `✅ Contrato Completado - ${contract.code}`,
-                  html: emailContent,
-                });
+        //         await resend.emails.send({
+        //           from: FROM_EMAIL,
+        //           to: importer.email!,
+        //           subject: `✅ Contrato Completado - ${contract.code}`,
+        //           html: emailContent,
+        //         });
 
-                console.log(
-                  `Contract completion email sent to ${importer.email} for contract ${contract.code}`
-                );
-              } catch (emailError) {
-                console.error(
-                  `Error sending email to ${importer.email}:`,
-                  emailError
-                );
-              }
-            })
-          );
-        }
+        //         console.log(
+        //           `Contract completion email sent to ${importer.email} for contract ${contract.code}`
+        //         );
+        //       } catch (emailError) {
+        //         console.error(
+        //           `Error sending email to ${importer.email}:`,
+        //           emailError
+        //         );
+        //       }
+        //     })
+        //   );
+        // }
+
+        console.log("Email notifications skipped for onboarding flow");
       }
     } catch (notificationError) {
       console.error("Error sending notifications:", notificationError);
@@ -235,4 +230,19 @@ export async function POST(
       { status: 500 }
     );
   }
+}
+
+// Export both POST and PUT methods
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  return completeContract(request, { params });
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  return completeContract(request, { params });
 }

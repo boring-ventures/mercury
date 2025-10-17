@@ -11,7 +11,8 @@ export async function POST(request: NextRequest) {
     console.log("=== PROVIDER PROOF UPLOAD API START ===");
 
     // Authenticate admin user
-    const supabase = createRouteHandlerClient({ cookies });
+    const cookieStore = await cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
     const {
       data: { user },
       error: authError,
@@ -202,64 +203,66 @@ export async function POST(request: NextRequest) {
 
           console.log("In-app notifications sent");
 
-          // Send email notifications
-          const importerEmails = importerProfiles
-            .map((importer) => importer.email)
-            .filter(
-              (email): email is string => email !== null && email !== undefined
-            );
+          // Send email notifications - DISABLED for onboarding flow
+          // const importerEmails = importerProfiles
+          //   .map((importer) => importer.email)
+          //   .filter(
+          //     (email): email is string => email !== null && email !== undefined
+          //   );
 
-          if (importerEmails.length > 0) {
-            await resend.emails.send({
-              from: FROM_EMAIL,
-              to: importerEmails,
-              subject:
-                "📄 Comprobante de Pago al Proveedor Subido - NORDEX Platform",
-              html: `
-                <!DOCTYPE html>
-                <html lang="es">
-                <head>
-                  <meta charset="UTF-8">
-                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                  <title>Comprobante de Pago al Proveedor Subido - NORDEX Platform</title>
-                  <style>
-                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                    .header { background-color: #f59e0b; color: white; padding: 20px; text-align: center; }
-                    .content { padding: 20px; background-color: #f9f9f9; }
-                    .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
-                    .success-badge { background-color: #dcfce7; color: #166534; padding: 10px; border-radius: 5px; margin: 15px 0; }
-                  </style>
-                </head>
-                <body>
-                  <div class="container">
-                    <div class="header">
-                      <h1>NORDEX Platform</h1>
-                    </div>
-                    <div class="content">
-                      <div class="success-badge">
-                        <strong>✅ Proceso de Pago Completado</strong>
-                      </div>
-                      <h2>Comprobante de pago al proveedor subido</h2>
-                      <p><strong>Contrato:</strong> ${payment.contract?.code || "N/A"}</p>
-                      <p><strong>Pago:</strong> ${payment.code}</p>
-                      <p><strong>Archivo:</strong> ${filename}</p>
-                      <p><strong>Fecha de subida:</strong> ${new Date().toLocaleDateString("es-ES")}</p>
-                      ${notes ? `<p><strong>Notas del administrador:</strong> ${notes}</p>` : ""}
-                      <p>El proceso de pago ha sido completado exitosamente. El administrador ha subido el comprobante de pago al proveedor.</p>
-                      <p><strong>Estado del contrato:</strong> Completado</p>
-                    </div>
-                    <div class="footer">
-                      <p>Este es un mensaje automático del sistema NORDEX Platform.</p>
-                    </div>
-                  </div>
-                </body>
-                </html>
-              `,
-            });
+          // if (importerEmails.length > 0) {
+          //   await resend.emails.send({
+          //     from: FROM_EMAIL,
+          //     to: importerEmails,
+          //     subject:
+          //       "📄 Comprobante de Pago al Proveedor Subido - NORDEX Platform",
+          //     html: `
+          //       <!DOCTYPE html>
+          //       <html lang="es">
+          //       <head>
+          //         <meta charset="UTF-8">
+          //         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          //         <title>Comprobante de Pago al Proveedor Subido - NORDEX Platform</title>
+          //         <style>
+          //           body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          //           .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          //           .header { background-color: #f59e0b; color: white; padding: 20px; text-align: center; }
+          //           .content { padding: 20px; background-color: #f9f9f9; }
+          //           .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+          //           .success-badge { background-color: #dcfce7; color: #166534; padding: 10px; border-radius: 5px; margin: 15px 0; }
+          //         </style>
+          //       </head>
+          //       <body>
+          //         <div class="container">
+          //           <div class="header">
+          //             <h1>NORDEX Platform</h1>
+          //           </div>
+          //           <div class="content">
+          //             <div class="success-badge">
+          //               <strong>✅ Proceso de Pago Completado</strong>
+          //             </div>
+          //             <h2>Comprobante de pago al proveedor subido</h2>
+          //             <p><strong>Contrato:</strong> ${payment.contract?.code || "N/A"}</p>
+          //             <p><strong>Pago:</strong> ${payment.code}</p>
+          //             <p><strong>Archivo:</strong> ${filename}</p>
+          //             <p><strong>Fecha de subida:</strong> ${new Date().toLocaleDateString("es-ES")}</p>
+          //             ${notes ? `<p><strong>Notas del administrador:</strong> ${notes}</p>` : ""}
+          //             <p>El proceso de pago ha sido completado exitosamente. El administrador ha subido el comprobante de pago al proveedor.</p>
+          //             <p><strong>Estado del contrato:</strong> Completado</p>
+          //           </div>
+          //           <div class="footer">
+          //             <p>Este es un mensaje automático del sistema NORDEX Platform.</p>
+          //           </div>
+          //         </div>
+          //       </body>
+          //       </html>
+          //     `,
+          //   });
 
-            console.log("Email notifications sent");
-          }
+          //   console.log("Email notifications sent");
+          // }
+
+          console.log("Email notifications skipped for onboarding flow");
         } else {
           console.log(
             "No importer profiles found for company:",
